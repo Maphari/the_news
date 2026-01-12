@@ -1,0 +1,1596 @@
+openapi: 3.0.3
+info:
+  title: The News App Backend API
+  description: |
+    Backend API specification for The News mindful news reading application.
+    This API handles authentication, article management, user engagement, and preferences.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@thenews.app
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.thenews.app/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Articles
+    description: News article operations
+  - name: Comments
+    description: Article comments CRUD operations
+  - name: Engagement
+    description: Article likes, shares, and engagement tracking
+  - name: User Preferences
+    description: Saved articles, followed publishers, and user preferences
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from authentication endpoints
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "An error occurred"
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+      properties:
+        id:
+          type: string
+          example: "qutBoSSqjTsS8bJLCoL1"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "John Doe"
+        photoUrl:
+          type: string
+          format: uri
+          example: "https://example.com/photo.jpg"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastLogin:
+          type: string
+          format: date-time
+
+    Article:
+      type: object
+      required:
+        - articleId
+        - title
+        - description
+      properties:
+        articleId:
+          type: string
+          example: "41ef11f809065964f39326190157874f"
+        title:
+          type: string
+          example: "Breaking News: Technology Advances"
+        description:
+          type: string
+          example: "Latest developments in AI technology..."
+        content:
+          type: string
+        imageUrl:
+          type: string
+          format: uri
+        sourceId:
+          type: string
+        sourceName:
+          type: string
+        sourceIcon:
+          type: string
+          format: uri
+        sourceUrl:
+          type: string
+          format: uri
+        pubDate:
+          type: string
+          format: date-time
+        category:
+          type: array
+          items:
+            type: string
+        country:
+          type: array
+          items:
+            type: string
+        language:
+          type: string
+        sentiment:
+          type: object
+          properties:
+            negative:
+              type: number
+              format: float
+            neutral:
+              type: number
+              format: float
+            positive:
+              type: number
+              format: float
+
+    Comment:
+      type: object
+      required:
+        - id
+        - articleId
+        - userId
+        - text
+        - createdAt
+      properties:
+        id:
+          type: string
+          example: "comment_123"
+        articleId:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: string
+        userPhotoUrl:
+          type: string
+          format: uri
+        text:
+          type: string
+        parentCommentId:
+          type: string
+          nullable: true
+        likeCount:
+          type: integer
+          default: 0
+        isLiked:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Engagement:
+      type: object
+      required:
+        - articleId
+        - likeCount
+        - commentCount
+        - shareCount
+        - isLiked
+      properties:
+        articleId:
+          type: string
+        likeCount:
+          type: integer
+          default: 0
+        commentCount:
+          type: integer
+          default: 0
+        shareCount:
+          type: integer
+          default: 0
+        isLiked:
+          type: boolean
+          default: false
+
+paths:
+  # ========================================
+  # AUTHENTICATION ENDPOINTS
+  # ========================================
+  /auth/google:
+    post:
+      tags:
+        - Authentication
+      summary: Google Sign In
+      description: Authenticate user with Google OAuth credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - accessToken
+                - email
+                - name
+                - userId
+              properties:
+                accessToken:
+                  type: string
+                provider:
+                  type: string
+                  default: "google"
+                email:
+                  type: string
+                  format: email
+                name:
+                  type: string
+                photoUrl:
+                  type: string
+                  format: uri
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  token:
+                    type: string
+                    description: JWT authentication token
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/apple:
+    post:
+      tags:
+        - Authentication
+      summary: Apple Sign In
+      description: Authenticate user with Apple credentials
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identityToken
+                - authorizationCode
+              properties:
+                identityToken:
+                  type: string
+                authorizationCode:
+                  type: string
+                givenName:
+                  type: string
+                familyName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                provider:
+                  type: string
+                  default: "apple"
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/validate-token:
+    get:
+      tags:
+        - Authentication
+      summary: Validate JWT Token
+      description: Validate if the provided JWT token is still valid
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  valid:
+                    type: boolean
+                    example: true
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get Current User
+      description: Retrieve current authenticated user's data
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: User data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ========================================
+  # ARTICLES ENDPOINTS
+  # ========================================
+  /articles:
+    get:
+      tags:
+        - Articles
+      summary: Get Articles
+      description: Fetch news articles with optional filtering and pagination
+      parameters:
+        - name: limit
+          in: query
+          description: Number of articles to return
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+            enum: [all, politics, business, technology, sports, entertainment, health, science]
+        - name: offset
+          in: query
+          description: Pagination offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Articles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  articles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /articles/batch:
+    post:
+      tags:
+        - Articles
+      summary: Bulk Save Articles
+      description: Save multiple articles from external API to database
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - articles
+              properties:
+                articles:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Article'
+      responses:
+        '200':
+          description: Articles saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  savedCount:
+                    type: integer
+                  skippedCount:
+                    type: integer
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ========================================
+  # COMMENTS ENDPOINTS
+  # ========================================
+  /comments/{articleId}:
+    get:
+      tags:
+        - Comments
+      summary: Get Article Comments
+      description: Retrieve all comments for a specific article
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: Current user ID to check if comments are liked
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  comments:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Comment'
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /comments:
+    post:
+      tags:
+        - Comments
+      summary: Create Comment
+      description: Add a new comment to an article
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - articleId
+                - userId
+                - userName
+                - text
+              properties:
+                articleId:
+                  type: string
+                userId:
+                  type: string
+                userName:
+                  type: string
+                userPhotoUrl:
+                  type: string
+                  format: uri
+                text:
+                  type: string
+                parentCommentId:
+                  type: string
+                  nullable: true
+      responses:
+        '201':
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  comment:
+                    $ref: '#/components/schemas/Comment'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /comments/{commentId}:
+    put:
+      tags:
+        - Comments
+      summary: Update Comment
+      description: Update an existing comment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - text
+              properties:
+                userId:
+                  type: string
+                  description: Must match comment owner
+                text:
+                  type: string
+      responses:
+        '200':
+          description: Comment updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  comment:
+                    $ref: '#/components/schemas/Comment'
+        '403':
+          description: Not authorized to update this comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Comments
+      summary: Delete Comment
+      description: Delete a comment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+                  description: Must match comment owner
+      responses:
+        '200':
+          description: Comment deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '403':
+          description: Not authorized to delete this comment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /comments/like:
+    post:
+      tags:
+        - Comments
+      summary: Like Comment
+      description: Add a like to a comment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - commentId
+                - userId
+              properties:
+                commentId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Comment liked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Comments
+      summary: Unlike Comment
+      description: Remove like from a comment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - commentId
+                - userId
+              properties:
+                commentId:
+                  type: string
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Comment unliked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Comment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ========================================
+  # ENGAGEMENT ENDPOINTS
+  # ========================================
+  /engagement/{articleId}:
+    get:
+      tags:
+        - Engagement
+      summary: Get Article Engagement
+      description: Retrieve engagement stats for an article
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: query
+          description: User ID to check if article is liked by user
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Engagement retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  engagement:
+                    $ref: '#/components/schemas/Engagement'
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /engagement/like:
+    post:
+      tags:
+        - Engagement
+      summary: Like Article
+      description: Add a like to an article
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - articleId
+              properties:
+                userId:
+                  type: string
+                articleId:
+                  type: string
+      responses:
+        '200':
+          description: Article liked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Engagement
+      summary: Unlike Article
+      description: Remove like from an article
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - articleId
+              properties:
+                userId:
+                  type: string
+                articleId:
+                  type: string
+      responses:
+        '200':
+          description: Article unliked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /engagement/share:
+    post:
+      tags:
+        - Engagement
+      summary: Track Article Share
+      description: Record when an article is shared
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - articleId
+              properties:
+                userId:
+                  type: string
+                articleId:
+                  type: string
+                platform:
+                  type: string
+                  description: Platform where article was shared
+                  enum: [twitter, facebook, whatsapp, telegram, linkedin, reddit, other]
+      responses:
+        '200':
+          description: Share tracked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ========================================
+  # USER PREFERENCES ENDPOINTS
+  # ========================================
+  /saved-articles/{userId}:
+    get:
+      tags:
+        - User Preferences
+      summary: Get Saved Articles
+      description: Retrieve user's bookmarked articles
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Saved articles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  articleIds:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /saved-articles:
+    post:
+      tags:
+        - User Preferences
+      summary: Save Article
+      description: Bookmark an article
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - articleId
+              properties:
+                userId:
+                  type: string
+                articleId:
+                  type: string
+      responses:
+        '200':
+          description: Article saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /saved-articles/{articleId}:
+    delete:
+      tags:
+        - User Preferences
+      summary: Remove Saved Article
+      description: Remove article from bookmarks
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: Article removed from saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /followed-publishers/{userId}:
+    get:
+      tags:
+        - User Preferences
+      summary: Get Followed Publishers
+      description: Retrieve list of publishers user follows
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Followed publishers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  publishers:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /followed-publishers/follow:
+    post:
+      tags:
+        - User Preferences
+      summary: Follow Publisher
+      description: Add publisher to user's followed list
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - publisherName
+              properties:
+                userId:
+                  type: string
+                publisherName:
+                  type: string
+      responses:
+        '200':
+          description: Publisher followed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /followed-publishers/unfollow:
+    post:
+      tags:
+        - User Preferences
+      summary: Unfollow Publisher
+      description: Remove publisher from user's followed list
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - publisherName
+              properties:
+                userId:
+                  type: string
+                publisherName:
+                  type: string
+      responses:
+        '200':
+          description: Publisher unfollowed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /disliked-articles/{userId}:
+    get:
+      tags:
+        - User Preferences
+      summary: Get Disliked Articles
+      description: Retrieve articles user has marked as disliked
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Disliked articles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  articleIds:
+                    type: array
+                    items:
+                      type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /disliked-articles:
+    post:
+      tags:
+        - User Preferences
+      summary: Dislike Article
+      description: Mark article as disliked
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - articleId
+              properties:
+                userId:
+                  type: string
+                articleId:
+                  type: string
+      responses:
+        '200':
+          description: Article marked as disliked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Article not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================
+  # CROSS-DEVICE SYNC ENDPOINTS
+  # ============================================
+
+  /user/preferences/{userId}:
+    get:
+      tags:
+        - User Preferences
+      summary: Get User Preferences
+      description: Retrieve all user preferences for cross-device sync
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Preferences retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  preferences:
+                    type: object
+                    properties:
+                      isDarkMode:
+                        type: boolean
+                        example: true
+                      themeMode:
+                        type: string
+                        example: "dark"
+                      languageCode:
+                        type: string
+                        example: "en"
+                      fontSize:
+                        type: number
+                        example: 16.0
+                      fontFamily:
+                        type: string
+                        example: "Default"
+                      lineHeight:
+                        type: number
+                        example: 1.5
+                      notificationsEnabled:
+                        type: boolean
+                        example: true
+                      digestNotifications:
+                        type: boolean
+                        example: true
+                      breakingNewsNotifications:
+                        type: boolean
+                        example: false
+                      aiProvider:
+                        type: string
+                        example: "openai"
+                      aiSummaryEnabled:
+                        type: boolean
+                        example: true
+                      autoDownloadOnWiFi:
+                        type: boolean
+                        example: false
+                      downloadImagesOffline:
+                        type: boolean
+                        example: true
+                      highContrast:
+                        type: boolean
+                        example: false
+                      screenReaderEnabled:
+                        type: boolean
+                        example: false
+                      lastModified:
+                        type: integer
+                        example: 1735466400000
+        '404':
+          description: No preferences found (first time user)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  preferences:
+                    type: object
+                    example: {}
+
+  /user/preferences:
+    put:
+      tags:
+        - User Preferences
+      summary: Update User Preferences
+      description: Update all user preferences (full sync)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - preferences
+              properties:
+                userId:
+                  type: string
+                  example: "qutBoSSqjTsS8bJLCoL1"
+                preferences:
+                  type: object
+                  properties:
+                    isDarkMode:
+                      type: boolean
+                    themeMode:
+                      type: string
+                    languageCode:
+                      type: string
+                    fontSize:
+                      type: number
+                    fontFamily:
+                      type: string
+                    lineHeight:
+                      type: number
+                    notificationsEnabled:
+                      type: boolean
+                    digestNotifications:
+                      type: boolean
+                    breakingNewsNotifications:
+                      type: boolean
+                    aiProvider:
+                      type: string
+                    aiSummaryEnabled:
+                      type: boolean
+                    autoDownloadOnWiFi:
+                      type: boolean
+                    downloadImagesOffline:
+                      type: boolean
+                    highContrast:
+                      type: boolean
+                    screenReaderEnabled:
+                      type: boolean
+                    lastModified:
+                      type: integer
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Preferences updated successfully"
+
+  /user/reading-history/{userId}:
+    get:
+      tags:
+        - User Preferences
+      summary: Get Reading History
+      description: Retrieve user's reading history for analytics and personalization
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 1000
+          description: Maximum number of entries to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Reading history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  entries:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        articleId:
+                          type: string
+                          example: "41ef11f809065964f39326190157874f"
+                        articleTitle:
+                          type: string
+                          example: "Breaking News Title"
+                        readAt:
+                          type: string
+                          format: date-time
+                          example: "2025-12-29T10:30:00Z"
+                        readDuration:
+                          type: integer
+                          description: Reading time in seconds
+                          example: 180
+                  total:
+                    type: integer
+                    example: 150
+        '404':
+          description: No reading history found
+    delete:
+      tags:
+        - User Preferences
+      summary: Clear Reading History
+      description: Delete all reading history for a user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Reading history cleared successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+
+  /user/reading-history:
+    post:
+      tags:
+        - User Preferences
+      summary: Add Reading History Entries
+      description: Upload reading history entries (batch operation for sync)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - entries
+              properties:
+                userId:
+                  type: string
+                  example: "qutBoSSqjTsS8bJLCoL1"
+                entries:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - articleId
+                      - articleTitle
+                      - readAt
+                      - readDuration
+                    properties:
+                      articleId:
+                        type: string
+                      articleTitle:
+                        type: string
+                      readAt:
+                        type: string
+                        format: date-time
+                      readDuration:
+                        type: integer
+      responses:
+        '201':
+          description: Reading history entries added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  entriesAdded:
+                    type: integer
+                    example: 15
+
+  /user/analytics/{userId}:
+    get:
+      tags:
+        - User Preferences
+      summary: Get Reading Analytics
+      description: Get analytics derived from reading history
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+          description: Number of days to analyze
+      responses:
+        '200':
+          description: Analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  analytics:
+                    type: object
+                    properties:
+                      totalArticlesRead:
+                        type: integer
+                        example: 150
+                      totalReadingTimeMinutes:
+                        type: integer
+                        example: 450
+                      averageReadingTimeMinutes:
+                        type: integer
+                        example: 3
+                      articlesByDate:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        example:
+                          "2025-12-28": 5
+                          "2025-12-29": 3
+                      mostActiveDay:
+                        type: string
+                        example: "2025-12-28"
+                      maxArticlesInDay:
+                        type: integer
+                        example: 5
+                      last7DaysCount:
+                        type: integer
+                        example: 35
+                      last30DaysCount:
+                        type: integer
+                        example: 150
+                      topCategories:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            category:
+                              type: string
+                            count:
+                              type: integer
+                        example:
+                          - category: "technology"
+                            count: 50
+                          - category: "business"
+                            count: 30

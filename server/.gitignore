@@ -1,0 +1,132 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+*.env
+!.env.example
+
+# Firebase credentials
+firebase_service.json
+server/src/firebase_service.json
+**/firebase_service.json
+serviceAccountKey.json
+**/serviceAccountKey.json
+
+# Google Services
+google-services.json
+**/google-services.json
+
+# API Keys and secrets
+**/secrets.js
+**/secrets.json
+**/api_keys.js
+**/credentials.json
+
+# Build output
+dist/
+build/
+out/
+*.js.map
+
+# TypeScript cache
+*.tsbuildinfo
+.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+*.lcov
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Runtime data
+lib-cov/
+.grunt/
+.lock-wscript/
+.npm/
+.node_repl_history/
+.node_gyp/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads/User content (if storing locally)
+uploads/
+user-uploads/
+
+# SSL certificates (if storing locally)
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
