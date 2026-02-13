@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/controller/apple_controller.dart';
 import 'package:the_news/controller/google_controller.dart';
@@ -29,14 +30,9 @@ class _LoginPageState extends State<LoginPage> {
   final String _forgotPasswordText = 'Forgot Password?';
   final String _registerPrompt = "Don't have an account? ";
 
-  //? Colors
-  final Color _screenBackgroundColor = KAppColors.background;
-
   @override
   void initState() {
     super.initState();
-    //? Set status bar to light mode for this page
-    StatusBarHelper.setLightStatusBar();
     //? Load saved credentials
     loadSavedCredentials(mounted: mounted);
   }
@@ -49,10 +45,15 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final backgroundColor = KAppColors.getBackground(context);
+    final onSurface = KAppColors.getOnSurface(context);
+    final onBackground = KAppColors.getOnBackground(context);
+
     return StatusBarHelper.wrapWithStatusBar(
-      backgroundColor: _screenBackgroundColor,
+      backgroundColor: backgroundColor,
       child: Scaffold(
-        backgroundColor: _screenBackgroundColor,
+        backgroundColor: backgroundColor,
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -65,22 +66,22 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       _loginHeader,
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: KAppColors.onSurface,
+                        color: onSurface,
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
 
                     Text(
                       _loginSubHeader,
                       style: Theme.of(
                         context,
-                      ).textTheme.bodyLarge?.copyWith(color: KAppColors.getOnBackground(context).withValues(alpha: 0.5)),
+                      ).textTheme.bodyLarge?.copyWith(color: onBackground.withValues(alpha: 0.5)),
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: KDesignConstants.spacing40),
 
                     //? Email Field
                     ValueListenableBuilder(
@@ -97,7 +98,7 @@ class _LoginPageState extends State<LoginPage> {
                           },
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KDesignConstants.spacing16),
 
                     //? Password Field
                     ValueListenableBuilder(
@@ -119,7 +120,7 @@ class _LoginPageState extends State<LoginPage> {
                           },
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: KDesignConstants.spacing12),
 
                     //? Remember Me and Forgot Password Row
                     Row(
@@ -140,10 +141,10 @@ class _LoginPageState extends State<LoginPage> {
                                           passwordTextController.value.text,
                                     );
                                   },
-                                  activeColor: KAppColors.secondary,
-                                  checkColor: KAppColors.onPrimary,
-                                  side: const BorderSide(
-                                    color: KAppColors.secondary,
+                                  activeColor: colorScheme.primary,
+                                  checkColor: colorScheme.onPrimary,
+                                  side: BorderSide(
+                                    color: colorScheme.primary,
                                     width: 2,
                                   ),
                                 );
@@ -151,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             Text(
                               'Remember me',
-                              style: TextStyle(color: KAppColors.getOnBackground(context).withValues(alpha: 0.4)),
+                              style: TextStyle(color: onBackground.withValues(alpha: 0.4)),
                             ),
                           ],
                         ),
@@ -159,8 +160,8 @@ class _LoginPageState extends State<LoginPage> {
                           onPressed: () {},
                           child: Text(
                             _forgotPasswordText,
-                            style: const TextStyle(
-                              color: KAppColors.onSurface,
+                            style: TextStyle(
+                              color: onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -168,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: KDesignConstants.spacing24),
 
                     //? Login Button
                     SizedBox(
@@ -187,20 +188,20 @@ class _LoginPageState extends State<LoginPage> {
                                     formKey: _formKey,
                                   ),
                             style: FilledButton.styleFrom(
-                              backgroundColor: KAppColors.secondary,
-                              foregroundColor: KAppColors.onPrimary,
+                              backgroundColor: colorScheme.primary,
+                              foregroundColor: colorScheme.onPrimary,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: KBorderRadius.lg,
                               ),
                               elevation: 0,
                             ),
                             child: isLoading
-                                ? const SizedBox(
+                                ? SizedBox(
                                     height: 24,
                                     width: 24,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: KAppColors.secondary,
+                                      color: colorScheme.onPrimary,
                                     ),
                                   )
                                 : const Text(
@@ -215,7 +216,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: KDesignConstants.spacing24),
 
                     //? Bottom Section Widget for Social Login and Register Link
                     RegisterLoginBottomSectionWidget(

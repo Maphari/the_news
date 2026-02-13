@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../config/firebase.connection';
 import Paystack from 'paystack-node';
+import { getOptionalString } from '../utils/request.utils';
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || '';
 const paystack = new Paystack(PAYSTACK_SECRET_KEY);
@@ -11,7 +12,13 @@ const paystack = new Paystack(PAYSTACK_SECRET_KEY);
  */
 export const getSubscriptionStatus = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing userId',
+      });
+    }
 
     const subscriptionRef = db.collection('subscriptions').doc(userId);
     const subscriptionDoc = await subscriptionRef.get();
@@ -116,6 +123,13 @@ export const updateSubscription = async (req: Request, res: Response) => {
  */
 export const initializePayment = async (req: Request, res: Response) => {
   try {
+    if (!PAYSTACK_SECRET_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: 'Paystack secret key is not configured',
+      });
+    }
+
     const { userId, email, amount, currency, reference, plan } = req.body;
 
     if (!userId || !email || !amount || !reference || !plan) {
@@ -128,7 +142,7 @@ export const initializePayment = async (req: Request, res: Response) => {
     console.log(`💳 Initializing payment for user ${userId}: ${plan} - ${currency} ${amount / 100}`);
 
     // Initialize transaction with Paystack
-    const response = await paystack.transaction.initialize({
+    const response = await paystack.transactions.initialize({
       email,
       amount,
       currency: currency || 'ZAR',
@@ -228,6 +242,13 @@ export const savePendingSubscription = async (req: Request, res: Response) => {
  */
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
+    if (!PAYSTACK_SECRET_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: 'Paystack secret key is not configured',
+      });
+    }
+
     const { reference } = req.body;
 
     if (!reference) {
@@ -238,7 +259,7 @@ export const verifyPayment = async (req: Request, res: Response) => {
     }
 
     // Verify payment with Paystack
-    const verification = await paystack.transaction.verify({ reference });
+    const verification = await paystack.transactions.verify({ reference });
 
     if (!verification.status || verification.data.status !== 'success') {
       return res.status(400).json({
@@ -300,6 +321,29 @@ export const verifyPayment = async (req: Request, res: Response) => {
       subscriptionStartDate: now,
       subscriptionEndDate: endDate,
     });
+
+    const authorization = verification.data.authorization;
+    if (authorization?.authorization_code) {
+      const methodsRef = db.collection('paymentMethods').doc(userId).collection('methods');
+      const defaultSnapshot = await methodsRef.where('isDefault', '==', true).limit(1).get();
+      const isDefault = defaultSnapshot.empty;
+
+      await methodsRef.doc(authorization.authorization_code).set(
+        {
+          authorizationCode: authorization.authorization_code,
+          cardType: authorization.card_type || 'card',
+          last4: authorization.last4 || '',
+          expiryMonth: authorization.exp_month || '',
+          expiryYear: authorization.exp_year || '',
+          bank: authorization.bank || '',
+          isDefault,
+          reusable: authorization.reusable ?? false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        { merge: true },
+      );
+    }
 
     // Update pending subscription status
     await pendingRef.update({
@@ -438,7 +482,13 @@ export const cancelSubscription = async (req: Request, res: Response) => {
  */
 export const getPaymentHistory = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing userId',
+      });
+    }
 
     const historySnapshot = await db
       .collection('paymentHistory')
@@ -464,6 +514,158 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to get payment history',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Get saved payment methods for a user
+ * GET /api/v1/subscriptions/payment-methods/:userId
+ */
+export const getPaymentMethods = async (req: Request, res: Response) => {
+  try {
+    const userId = getOptionalString(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing userId',
+      });
+    }
+
+    const methodsSnapshot = await db
+      .collection('paymentMethods')
+      .doc(userId)
+      .collection('methods')
+      .orderBy('createdAt', 'desc')
+      .limit(20)
+      .get();
+
+    const paymentMethods = methodsSnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.(),
+      updatedAt: doc.data().updatedAt?.toDate?.()?.toISOString?.(),
+    }));
+
+    return res.status(200).json({
+      success: true,
+      paymentMethods,
+    });
+  } catch (error: any) {
+    console.error('❌ Get payment methods error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get payment methods',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Set default payment method for a user
+ * PUT /api/v1/subscriptions/payment-methods/:userId/default
+ */
+export const setDefaultPaymentMethod = async (req: Request, res: Response) => {
+  try {
+    const userId = getOptionalString(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing userId',
+      });
+    }
+    const { authorizationCode } = req.body;
+
+    if (!authorizationCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing authorizationCode',
+      });
+    }
+
+    const methodsRef = db.collection('paymentMethods').doc(userId).collection('methods');
+    const methodsSnapshot = await methodsRef.get();
+
+    if (methodsSnapshot.empty) {
+      return res.status(404).json({
+        success: false,
+        message: 'No payment methods found',
+      });
+    }
+
+    const batch = db.batch();
+    methodsSnapshot.forEach((doc) => {
+      batch.update(doc.ref, {
+        isDefault: doc.id === authorizationCode,
+        updatedAt: new Date(),
+      });
+    });
+
+    await batch.commit();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Default payment method updated',
+    });
+  } catch (error: any) {
+    console.error('❌ Set default payment method error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to update default payment method',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Remove a payment method for a user
+ * DELETE /api/v1/subscriptions/payment-methods/:userId
+ */
+export const removePaymentMethod = async (req: Request, res: Response) => {
+  try {
+    const userId = getOptionalString(req.params.userId);
+    const { authorizationCode } = req.body;
+
+    if (!userId || !authorizationCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing userId or authorizationCode',
+      });
+    }
+
+    const methodsRef = db.collection('paymentMethods').doc(userId).collection('methods');
+    const methodDoc = await methodsRef.doc(authorizationCode).get();
+
+    if (!methodDoc.exists) {
+      return res.status(404).json({
+        success: false,
+        message: 'Payment method not found',
+      });
+    }
+
+    const wasDefault = methodDoc.data()?.isDefault === true;
+    await methodDoc.ref.delete();
+
+    if (wasDefault) {
+      const remaining = await methodsRef.orderBy('createdAt', 'desc').limit(1).get();
+      if (!remaining.empty) {
+        await remaining.docs[0].ref.update({
+          isDefault: true,
+          updatedAt: new Date(),
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Payment method removed',
+    });
+  } catch (error: any) {
+    console.error('❌ Remove payment method error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to remove payment method',
       error: error.message,
     });
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class SavedArticleCard extends StatelessWidget {
   const SavedArticleCard({
@@ -20,14 +22,14 @@ class SavedArticleCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
           width: 1,
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -35,15 +37,15 @@ class SavedArticleCard extends StatelessWidget {
               // Navigate to article detail
             },
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: KDesignConstants.paddingSm,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Article Image
                   if (article.imageUrl != null)
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Image.network(
+                      borderRadius: KBorderRadius.lg,
+                      child: SafeNetworkImage(
                         article.imageUrl!,
                         width: 100,
                         height: 100,
@@ -54,7 +56,7 @@ class SavedArticleCard extends StatelessWidget {
                             height: 100,
                             decoration: BoxDecoration(
                               color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: KBorderRadius.lg,
                             ),
                             child: Icon(
                               Icons.image_outlined,
@@ -65,7 +67,7 @@ class SavedArticleCard extends StatelessWidget {
                         },
                       ),
                     ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: KDesignConstants.spacing16),
                   
                   // Article Content
                   Expanded(
@@ -79,18 +81,18 @@ class SavedArticleCard extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _getCategoryColor().withValues(alpha: 0.2),
+                            color: _getCategoryColor(context: context).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             article.category.toString(),
                             style: KAppTextStyles.labelSmall.copyWith(
-                              color: _getCategoryColor(),
+                              color: _getCategoryColor(context: context),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: KDesignConstants.spacing8),
                         
                         // Title
                         Text(
@@ -103,7 +105,7 @@ class SavedArticleCard extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: KDesignConstants.spacing8),
                         
                         // Metadata Row
                         Row(
@@ -113,7 +115,7 @@ class SavedArticleCard extends StatelessWidget {
                               size: 14,
                               color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: KDesignConstants.spacing4),
                             Expanded(
                               child: Text(
                                 article.pubDateTZ,
@@ -124,17 +126,17 @@ class SavedArticleCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: KDesignConstants.spacing8),
                             // Remove Button
                             InkWell(
                               onTap: onRemove,
                               borderRadius: BorderRadius.circular(8),
                               child: Padding(
-                                padding: const EdgeInsets.all(4),
+                                padding: KDesignConstants.paddingXs,
                                 child: Icon(
                                   Icons.bookmark,
                                   size: 20,
-                                  color: KAppColors.primary,
+                                  color: KAppColors.getPrimary(context),
                                 ),
                               ),
                             ),
@@ -152,22 +154,22 @@ class SavedArticleCard extends StatelessWidget {
     );
   }
 
-  Color _getCategoryColor() {
+  Color _getCategoryColor({required BuildContext context}) {
     switch (article.category.toString().toLowerCase()) {
       case 'technology':
-        return KAppColors.tertiary;
+        return KAppColors.getTertiary(context);
       case 'business':
-        return KAppColors.secondary;
+        return KAppColors.getSecondary(context);
       case 'sports':
-        return const Color(0xFFFFC5C9);
+        return KAppColors.red;
       case 'entertainment':
-        return const Color(0xFFFFD4A3);
+        return KAppColors.orange;
       case 'science':
-        return const Color(0xFFC5D9FF);
+        return KAppColors.blue;
       case 'health':
-        return const Color(0xFFFFB8B8);
+        return KAppColors.pink;
       default:
-        return KAppColors.primary;
+        return KAppColors.getPrimary(context);
     }
   }
 }

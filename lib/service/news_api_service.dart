@@ -49,6 +49,28 @@ class NewsApiService {
     }
   }
 
+  String _buildCacheKey({
+    String? category,
+    String? country,
+    String? language,
+    String? query,
+  }) {
+    final safeCategory = (category ?? 'all').toLowerCase();
+    final safeCountry = (country ?? 'any').toLowerCase();
+    final safeLanguage = (language ?? 'en').toLowerCase();
+    final safeQuery = (query ?? '').toLowerCase().trim();
+
+    final parts = <String>[
+      'cat=$safeCategory',
+      'cty=$safeCountry',
+      'lang=$safeLanguage',
+    ];
+    if (safeQuery.isNotEmpty) {
+      parts.add('q=$safeQuery');
+    }
+    return parts.join('|');
+  }
+
   /// Fetch latest news articles
   ///
   /// Parameters:
@@ -63,9 +85,16 @@ class NewsApiService {
     String? query,
     bool useCache = true,
   }) async {
+    final cacheKey = _buildCacheKey(
+      category: category,
+      country: country,
+      language: language,
+      query: query,
+    );
+
     // Check cache first
     if (useCache) {
-      final cached = await _getCachedNews(category ?? 'all');
+      final cached = await _getCachedNews(cacheKey);
       if (cached != null) {
         return cached;
       }
@@ -112,7 +141,7 @@ class NewsApiService {
             .toList();
 
         // Cache the results
-        await _cacheNews(category ?? 'all', articles);
+        await _cacheNews(cacheKey, articles);
 
         return articles;
       } else if (response.statusCode == 429) {
@@ -126,7 +155,7 @@ class NewsApiService {
       log('Error fetching news: $e');
 
       // Try to return cached data even if expired
-      final cached = await _getCachedNews(category ?? 'all', ignoreExpiration: true);
+      final cached = await _getCachedNews(cacheKey, ignoreExpiration: true);
       if (cached != null && cached.isNotEmpty) {
         log('Returning expired cache due to error');
         return cached;

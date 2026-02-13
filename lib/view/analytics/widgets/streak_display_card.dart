@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/reading_streak_model.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 class StreakDisplayCard extends StatelessWidget {
   final ReadingStreakModel streak;
@@ -23,10 +25,10 @@ class StreakDisplayCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: KBorderRadius.md,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: KDesignConstants.paddingLg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -34,10 +36,10 @@ class StreakDisplayCard extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.local_fire_department,
-                    color: streak.isStreakActive ? Colors.orange : Colors.grey,
+                    color: streak.isStreakActive ? Colors.orange : KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                     size: 32,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KDesignConstants.spacing12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +59,7 @@ class StreakDisplayCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: KDesignConstants.spacing20),
               Row(
                 children: [
                   Expanded(
@@ -70,7 +72,7 @@ class StreakDisplayCard extends StatelessWidget {
                       Colors.blue,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: KDesignConstants.spacing16),
                   Expanded(
                     child: _buildStreakStat(
                       context,
@@ -99,15 +101,15 @@ class StreakDisplayCard extends StatelessWidget {
     Color color,
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: KDesignConstants.cardPaddingCompact,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: KBorderRadius.sm,
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             value,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -119,7 +121,7 @@ class StreakDisplayCard extends StatelessWidget {
             unit,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: KDesignConstants.spacing4),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(

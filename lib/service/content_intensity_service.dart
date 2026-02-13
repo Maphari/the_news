@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/clickbait_detector_service.dart';
 
-class ContentIntensityService {
+class ContentIntensityService extends ChangeNotifier {
   static final ContentIntensityService instance = ContentIntensityService._init();
 
   IntensityLevel _currentFilter = IntensityLevel.all;
@@ -15,6 +16,7 @@ class ContentIntensityService {
   // Set filter level
   void setFilter(IntensityLevel level) {
     _currentFilter = level;
+    notifyListeners();
   }
 
   // Calculate intensity of an article based on sentiment

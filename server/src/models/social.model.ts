@@ -11,6 +11,19 @@ export interface UserProfile {
   bio?: string;
   avatarUrl?: string;
   coverImageUrl?: string;
+  socialLinks?: {
+    website?: string;
+    x?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  privacySettings?: {
+    showStats?: boolean;
+    showLists?: boolean;
+    showActivity?: boolean;
+    showHighlights?: boolean;
+  };
+  featuredListId?: string | null;
   joinedDate: Timestamp | Date | string;
   followersCount: number;
   followingCount: number;
@@ -62,18 +75,54 @@ export interface ActivityFeedItem {
   userId: string;
   username: string;
   userAvatarUrl?: string;
-  activityType: 'readArticle' | 'createList' | 'updateList' | 'addToList' | 'followUser' | 'shareList' | 'commentArticle' | 'likeArticle';
+  activityType: 'readArticle' | 'createList' | 'updateList' | 'addToList' | 'followUser' | 'shareList' | 'shareArticle' | 'commentArticle' | 'likeArticle';
   timestamp: Timestamp | Date | string;
 
   // Optional fields depending on activity type
   articleId?: string;
   articleTitle?: string;
+  articleSourceName?: string;
+  articleImageUrl?: string;
+  articleUrl?: string;
+  articleDescription?: string;
   listId?: string;
   listName?: string;
   followedUserId?: string;
   followedUsername?: string;
   commentId?: string;
   commentText?: string;
+}
+
+/**
+ * Network Post Model
+ * Represents a user-authored post in social feed
+ */
+export interface NetworkPost {
+  id?: string;
+  userId: string;
+  username: string;
+  userAvatarUrl?: string | null;
+  heading?: string | null;
+  text: string;
+  articleId?: string | null;
+  articleTitle?: string | null;
+  articleImageUrl?: string | null;
+  articleUrl?: string | null;
+  shareCount: number;
+  likeCount: number;
+  commentCount: number;
+  createdAt: Timestamp | Date | string;
+  updatedAt: Timestamp | Date | string;
+}
+
+export interface CreateNetworkPostRequest {
+  userId: string;
+  text: string;
+  heading?: string;
+  articleId?: string;
+  articleTitle?: string;
+  articleImageUrl?: string;
+  articleUrl?: string;
 }
 
 // Request/Response types
@@ -84,6 +133,19 @@ export interface CreateUserProfileRequest {
   displayName: string;
   bio?: string;
   avatarUrl?: string;
+  socialLinks?: {
+    website?: string;
+    x?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  privacySettings?: {
+    showStats?: boolean;
+    showLists?: boolean;
+    showActivity?: boolean;
+    showHighlights?: boolean;
+  };
+  featuredListId?: string | null;
 }
 
 export interface UpdateUserProfileRequest {
@@ -95,6 +157,19 @@ export interface UpdateUserProfileRequest {
   coverImageUrl?: string;
   isPublic?: boolean;
   interests?: string[];
+  socialLinks?: {
+    website?: string;
+    x?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  privacySettings?: {
+    showStats?: boolean;
+    showLists?: boolean;
+    showActivity?: boolean;
+    showHighlights?: boolean;
+  };
+  featuredListId?: string | null;
 }
 
 export interface FollowUserRequest {
@@ -121,11 +196,20 @@ export interface UpdateReadingListRequest {
 export interface AddArticleToListRequest {
   listId: string;
   articleId: string;
+  userId?: string;
 }
 
 export interface AddCollaboratorRequest {
   listId: string;
-  userId: string;
+  ownerId: string;
+  collaboratorId?: string;
+  userId?: string;
+}
+
+export interface ReorderListArticlesRequest {
+  listId: string;
+  articleIds: string[];
+  userId?: string;
 }
 
 export interface CreateActivityRequest {

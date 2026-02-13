@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 class SavedHeader extends StatelessWidget {
@@ -34,7 +35,7 @@ class SavedHeader extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: KDesignConstants.spacing4),
                     Text(
                       '$savedCount articles saved',
                       style: KAppTextStyles.bodyLarge.copyWith(
@@ -52,7 +53,7 @@ class SavedHeader extends StatelessWidget {
                       // Handle search
                     },
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   _ActionButton(
                     icon: isGridView ? Icons.view_list : Icons.grid_view,
                     onTap: onViewToggle,
@@ -80,12 +81,12 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: KBorderRadius.md,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: KBorderRadius.md,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           ),

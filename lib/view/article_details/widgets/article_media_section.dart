@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:video_player/video_player.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class ArticleMediaSection extends StatefulWidget {
   const ArticleMediaSection({
@@ -78,7 +81,7 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: KBorderRadius.xxl,
       child: Stack(
         children: [
           // Media (Image or Video)
@@ -100,13 +103,13 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
                   onPressed: widget.onLikePressed,
                   isActive: widget.isLiked,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 _buildActionButton(
                   icon: widget.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                   onPressed: widget.onBookmarkPressed,
                   isActive: widget.isBookmarked,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 _buildActionButton(
                   icon: Icons.share,
                   onPressed: widget.onSharePressed,
@@ -121,22 +124,22 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
 
   Widget _buildImage() {
     return widget.imageUrl.isNotEmpty
-        ? Image.network(
+        ? SafeNetworkImage(
             widget.imageUrl,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               return Container(
-                color: Colors.grey.shade800,
-                child: const Center(
-                  child: Icon(Icons.image, size: 64, color: Colors.white54),
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.8),
+                child: Center(
+                  child: Icon(Icons.image, size: 64, color: KAppColors.darkOnBackground.withValues(alpha: 0.54)),
                 ),
               );
             },
           )
         : Container(
-            color: Colors.grey.shade800,
-            child: const Center(
-              child: Icon(Icons.image, size: 64, color: Colors.white54),
+            color: KAppColors.getOnBackground(context).withValues(alpha: 0.8),
+            child: Center(
+              child: Icon(Icons.image, size: 64, color: KAppColors.darkOnBackground.withValues(alpha: 0.54)),
             ),
           );
   }
@@ -145,7 +148,7 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
     return GestureDetector(
       onTap: _togglePlayPause,
       child: Container(
-        color: Colors.black,
+        color: KAppColors.darkBackground,
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -162,14 +165,14 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
                 ),
               )
             else if (widget.imageUrl.isNotEmpty)
-              Image.network(
+              SafeNetworkImage(
                 widget.imageUrl,
                 fit: BoxFit.cover,
                 width: double.infinity,
               )
             else
               Container(
-                color: Colors.grey.shade900,
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.9),
                 child: const Center(
                   child: CircularProgressIndicator(),
                 ),
@@ -179,7 +182,7 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
             if (!_isPlaying)
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: KAppColors.imageScrim.withValues(alpha: 0.3),
                 ),
               ),
 
@@ -191,19 +194,19 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: KAppColors.onImage,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     _isPlaying ? Icons.pause : Icons.play_arrow,
                     size: 48,
-                    color: Colors.black,
+                    color: KAppColors.imageScrim,
                   ),
                 ),
               )
             else
               const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor: AlwaysStoppedAnimation<Color>(KAppColors.onImage),
               ),
 
             // VIDEO badge
@@ -213,17 +216,17 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: KAppColors.error,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.videocam, color: Colors.white, size: 16),
-                    const SizedBox(width: 4),
+                    Icon(Icons.videocam, color: KAppColors.onImage, size: 16),
+                    const SizedBox(width: KDesignConstants.spacing4),
                     const Text(
                       'VIDEO',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: KAppColors.onImage,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -250,8 +253,8 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
 
                     return LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: Colors.white.withValues(alpha: 0.3),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
+                      backgroundColor: KAppColors.onImage.withValues(alpha: 0.3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(KAppColors.error),
                       minHeight: 3,
                     );
                   },
@@ -271,17 +274,17 @@ class _ArticleMediaSectionState extends State<ArticleMediaSection> {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.7),
+          color: KAppColors.imageScrim.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(50),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.2),
+            color: KAppColors.onImage.withValues(alpha: 0.2),
           ),
         ),
         child: Icon(
           icon,
-          color: isActive ? Colors.red : Colors.white,
+          color: isActive ? KAppColors.error : KAppColors.onImage,
           size: 22,
         ),
       ),

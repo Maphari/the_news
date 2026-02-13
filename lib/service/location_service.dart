@@ -38,9 +38,13 @@ class LocationService extends ChangeNotifier {
   Future<void> _loadPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      _preferredCountries = prefs.getStringList('preferred_countries') ?? [];
-      _currentCountry = prefs.getString('current_country');
-      _currentCountryCode = prefs.getString('current_country_code');
+      _preferredCountries = prefs.getStringList('preferredCountries') ??
+          prefs.getStringList('preferred_countries') ??
+          [];
+      _currentCountry = prefs.getString('currentCountry') ??
+          prefs.getString('current_country');
+      _currentCountryCode = prefs.getString('currentCountryCode') ??
+          prefs.getString('current_country_code');
       notifyListeners();
       log('📍 Loaded location preferences: $_preferredCountries');
     } catch (e) {
@@ -48,16 +52,24 @@ class LocationService extends ChangeNotifier {
     }
   }
 
+  /// Reload preferences from local storage
+  Future<void> reloadPreferences() async {
+    await _loadPreferences();
+  }
+
   /// Save country preferences to local storage
   Future<void> _savePreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('preferred_countries', _preferredCountries);
+      await prefs.setStringList('preferredCountries', _preferredCountries);
       if (_currentCountry != null) {
         await prefs.setString('current_country', _currentCountry!);
+        await prefs.setString('currentCountry', _currentCountry!);
       }
       if (_currentCountryCode != null) {
         await prefs.setString('current_country_code', _currentCountryCode!);
+        await prefs.setString('currentCountryCode', _currentCountryCode!);
       }
       log('💾 Saved location preferences');
     } catch (e) {
@@ -181,12 +193,13 @@ class LocationService extends ChangeNotifier {
 
   /// Add a country to preferred countries list
   Future<void> addPreferredCountry(String countryName) async {
-    if (!_preferredCountries.contains(countryName)) {
-      _preferredCountries.add(countryName);
-      await _savePreferences();
-      notifyListeners();
-      log('➕ Added preferred country: $countryName');
-    }
+    if (_preferredCountries.contains(countryName)) return;
+
+    // Keep most recently selected country at the top
+    _preferredCountries.insert(0, countryName);
+    await _savePreferences();
+    notifyListeners();
+    log('➕ Added preferred country: $countryName');
   }
 
   /// Remove a country from preferred countries list

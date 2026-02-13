@@ -1,5 +1,6 @@
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 class ShimmerLoading extends StatefulWidget {
   const ShimmerLoading({
@@ -52,9 +53,9 @@ class _ShimmerLoadingState extends State<ShimmerLoading>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withValues(alpha: 0.05),
-                        Colors.white.withValues(alpha: 0.15),
-                        Colors.white.withValues(alpha: 0.05),
+                        KAppColors.darkOnBackground.withValues(alpha: 0.05),
+                        KAppColors.darkOnBackground.withValues(alpha: 0.15),
+                        KAppColors.darkOnBackground.withValues(alpha: 0.05),
                       ],
                       stops: [
                         _controller.value - 0.3,
@@ -92,10 +93,10 @@ class ArticleCardSkeleton extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             // Content skeleton
             Expanded(
               child: Column(
@@ -112,7 +113,7 @@ class ArticleCardSkeleton extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: KDesignConstants.spacing4),
                       Container(
                         width: 40,
                         height: 18,
@@ -123,7 +124,7 @@ class ArticleCardSkeleton extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: KDesignConstants.spacing8),
                   // Title
                   Container(
                     width: double.infinity,
@@ -142,7 +143,7 @@ class ArticleCardSkeleton extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: KDesignConstants.spacing8),
                   // Metadata
                   Container(
                     width: 100,
@@ -169,11 +170,11 @@ class CardStackSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerLoading(
       child: Container(
-        margin: const EdgeInsets.all(16),
+        margin: KDesignConstants.paddingMd,
         height: 500,
         decoration: BoxDecoration(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: KBorderRadius.xxl,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,7 +206,7 @@ class CardStackSkeleton extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: KDesignConstants.spacing8),
                       Container(
                         width: 50,
                         height: 20,
@@ -216,7 +217,7 @@ class CardStackSkeleton extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KDesignConstants.spacing16),
                   // Title
                   Container(
                     width: double.infinity,
@@ -226,7 +227,7 @@ class CardStackSkeleton extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: KDesignConstants.spacing8),
                   Container(
                     width: double.infinity * 0.8,
                     height: 20,
@@ -235,7 +236,7 @@ class CardStackSkeleton extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KDesignConstants.spacing16),
                   // Description
                   Container(
                     width: double.infinity,

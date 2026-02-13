@@ -1,5 +1,6 @@
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/service/reading_tracker_service.dart';
 
 class ReadingStatsWidget extends StatefulWidget {
@@ -70,20 +71,20 @@ class _ReadingStatsWidgetState extends State<ReadingStatsWidget> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       margin: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            KAppColors.primary.withValues(alpha: 0.15),
-            KAppColors.tertiary.withValues(alpha: 0.15),
+            KAppColors.getPrimary(context).withValues(alpha: 0.15),
+            KAppColors.getTertiary(context).withValues(alpha: 0.15),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
-          color: KAppColors.primary.withValues(alpha: 0.3),
+          color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -94,7 +95,7 @@ class _ReadingStatsWidgetState extends State<ReadingStatsWidget> {
             icon: Icons.article_outlined,
             value: articlesReadToday.toString(),
             label: 'Read Today',
-            color: KAppColors.primary,
+            color: KAppColors.getPrimary(context),
           ),
           Container(
             width: 1,
@@ -105,7 +106,7 @@ class _ReadingStatsWidgetState extends State<ReadingStatsWidget> {
             icon: Icons.schedule_outlined,
             value: _formatReadingTime(readingTimeToday),
             label: 'Time Today',
-            color: KAppColors.tertiary,
+            color: KAppColors.getTertiary(context),
           ),
           if (articlesReadToday > 0) ...[
             Container(

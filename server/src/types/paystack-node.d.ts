@@ -48,7 +48,8 @@ declare module 'paystack-node' {
 
   class Paystack {
     constructor(secretKey: string);
-    transaction: PaystackTransaction;
+    transactions: PaystackTransaction;
+    transaction?: PaystackTransaction;
   }
 
   export = Paystack;

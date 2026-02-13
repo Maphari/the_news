@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/view/social/user_profile_page.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/model/user_profile_model.dart';
 import 'package:the_news/service/social_features_backend_service.dart';
-import 'package:the_news/view/social/user_profile_view_page.dart';
+import 'package:the_news/utils/image_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 enum FollowListType { followers, following }
 
@@ -69,16 +73,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
 
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
-        backgroundColor: KAppColors.getBackground(context),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: KAppColors.getOnBackground(context),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: KAppBar(
         title: Text(
           title,
           style: KAppTextStyles.headlineSmall.copyWith(
@@ -86,7 +81,10 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-      ),
+        backgroundColor: KAppColors.getBackground(context),
+        elevation: 0,
+        leading: AppBackButton(onPressed: () => Navigator.pop(context),),
+          ),
       body: _isLoading
           ? _buildLoadingState()
           : _error != null
@@ -103,9 +101,9 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(KAppColors.primary),
+            valueColor: AlwaysStoppedAnimation(KAppColors.getPrimary(context)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Text(
             'Loading...',
             style: KAppTextStyles.bodyMedium.copyWith(
@@ -120,7 +118,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
   Widget _buildErrorState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: KDesignConstants.paddingXl,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -129,7 +127,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
               size: 64,
               color: Colors.red.withValues(alpha: 0.7),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
             Text(
               'Error loading users',
               style: KAppTextStyles.headlineSmall.copyWith(
@@ -137,15 +135,18 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
             ElevatedButton(
               onPressed: _loadUsers,
               style: ElevatedButton.styleFrom(
-                backgroundColor: KAppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                backgroundColor: KAppColors.getPrimary(context),
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: KDesignConstants.spacing32,
+                  vertical: KDesignConstants.spacing12,
+                ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                 ),
               ),
               child: const Text('Retry'),
@@ -159,7 +160,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
   Widget _buildEmptyState(String title) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: KDesignConstants.paddingXl,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -168,7 +169,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
               size: 80,
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
             Text(
               'No $title',
               style: KAppTextStyles.headlineMedium.copyWith(
@@ -176,7 +177,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             Text(
               widget.listType == FollowListType.followers
                   ? 'Nobody is following this user yet'
@@ -195,33 +196,41 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
   Widget _buildUsersList() {
     return RefreshIndicator(
       onRefresh: _loadUsers,
-      color: KAppColors.primary,
+      color: KAppColors.getPrimary(context),
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: KDesignConstants.spacing16,
+          vertical: KDesignConstants.spacing8,
+        ),
         itemCount: _users.length,
         itemBuilder: (context, index) {
           final user = _users[index];
           final isCurrentUser = user.userId == widget.currentUser.userId;
 
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            color: KAppColors.secondary.withValues(alpha: 0.3),
+            margin: const EdgeInsets.only(bottom: KDesignConstants.spacing12),
+            color: KAppColors.getSurface(context),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
+              side: BorderSide(
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
+                width: 1,
+              ),
             ),
             child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: KDesignConstants.spacing16,
+                vertical: KDesignConstants.spacing8,
+              ),
               leading: CircleAvatar(
                 radius: 28,
-                backgroundColor: KAppColors.primary.withValues(alpha: 0.2),
-                backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-                    ? NetworkImage(user.avatarUrl!)
-                    : null,
+                backgroundColor: KAppColors.getPrimary(context).withValues(alpha: 0.2),
+                backgroundImage: resolveImageProvider(user.avatarUrl),
                 child: user.avatarUrl == null || user.avatarUrl!.isEmpty
                     ? Text(
                         user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : 'U',
                         style: KAppTextStyles.headlineSmall.copyWith(
-                          color: KAppColors.primary,
+                          color: KAppColors.getPrimary(context),
                           fontWeight: FontWeight.bold,
                         ),
                       )
@@ -237,7 +246,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 2),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Text(
                     '@${user.username}',
                     style: KAppTextStyles.bodyMedium.copyWith(
@@ -245,7 +254,7 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
                     ),
                   ),
                   if (user.bio != null && user.bio!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: KDesignConstants.spacing4),
                     Text(
                       user.bio!,
                       style: KAppTextStyles.bodySmall.copyWith(
@@ -259,15 +268,18 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
               ),
               trailing: isCurrentUser
                   ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: KDesignConstants.spacing12,
+                        vertical: KDesignConstants.spacing4,
+                      ),
                       decoration: BoxDecoration(
-                        color: KAppColors.primary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
+                        color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
+                        borderRadius: KBorderRadius.sm,
                       ),
                       child: Text(
                         'You',
                         style: TextStyle(
-                          color: KAppColors.primary,
+                          color: KAppColors.getPrimary(context),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -284,9 +296,8 @@ class _FollowersFollowingPageState extends State<FollowersFollowingPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => UserProfileViewPage(
-                            currentUser: widget.currentUser,
-                            profileUserId: user.userId,
+                          builder: (context) => UserProfilePage(
+                            userId: user.userId,
                           ),
                         ),
                       );

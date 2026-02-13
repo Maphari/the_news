@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { db } from "../config/firebase.connection";
 import { Timestamp } from "firebase-admin/firestore";
+import { getOptionalString } from "../utils/request.utils";
 
 const userPreferencesCollection = db.collection("userPreferences");
 
@@ -10,7 +11,7 @@ const userPreferencesCollection = db.collection("userPreferences");
  */
 export const getUserPreferences = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
 
     if (!userId) {
       return res.status(400).json({
@@ -124,7 +125,7 @@ export const updateUserPreferences = async (req: Request, res: Response) => {
  */
 export const deleteUserPreferences = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
 
     if (!userId) {
       return res.status(400).json({

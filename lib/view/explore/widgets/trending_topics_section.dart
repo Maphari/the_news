@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/service/news_provider_service.dart';
 
 class TrendingTopicsSection extends StatelessWidget {
@@ -15,14 +16,14 @@ class TrendingTopicsSection extends StatelessWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: KDesignConstants.paddingHorizontalLg,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.trending_up, color: Colors.orange.shade300, size: 24),
-              const SizedBox(width: 8),
+              Icon(Icons.trending_up, color: KAppColors.orange, size: 24),
+              const SizedBox(width: KDesignConstants.spacing8),
               Text(
                 'Trending Topics',
                 style: KAppTextStyles.titleLarge.copyWith(
@@ -32,17 +33,17 @@ class TrendingTopicsSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             'What people are talking about',
             style: KAppTextStyles.bodyMedium.copyWith(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Wrap(
-            spacing: 8.0,
-            runSpacing: 8.0,
+            spacing: KDesignConstants.spacing8,
+            runSpacing: KDesignConstants.spacing8,
             children: trendingTopics.map((topic) {
               return Chip(
                 label: Text(topic),

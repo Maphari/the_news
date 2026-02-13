@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class PageTransitions {
   // Smooth fade and slide transition
@@ -127,7 +128,7 @@ class HeroImage extends StatelessWidget {
       tag: tag,
       child: ClipRRect(
         borderRadius: borderRadius ?? BorderRadius.circular(12),
-        child: Image.network(
+        child: SafeNetworkImage(
           imageUrl,
           width: width,
           height: height,

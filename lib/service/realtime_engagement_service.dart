@@ -54,7 +54,15 @@ class RealtimeEngagementService extends ChangeNotifier {
         });
       },
       onError: (error) {
-        log('❌ Error in real-time listener for $articleId: $error');
+        // Permission errors are expected if Firestore rules aren't configured
+        // Fall back to HTTP-only engagement silently
+        if (error.toString().contains('permission-denied')) {
+          log('ℹ️ Firestore real-time disabled for $articleId (using HTTP fallback)');
+        } else {
+          log('❌ Error in real-time listener for $articleId: $error');
+        }
+        // Clean up failed listener
+        _listeners.remove(articleId);
       },
     );
 

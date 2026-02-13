@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
 import 'package:share_plus/share_plus.dart';
+import 'package:the_news/utils/share_utils.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'package:the_news/model/reading_session_model.dart';
@@ -14,7 +15,7 @@ class StatsSharingService {
   StatsSharingService._init();
 
   // Share today's reading stats
-  Future<void> shareTodayStats() async {
+  Future<void> shareTodayStats(BuildContext context) async {
     final stats = await _tracker.getQuickStats();
     final articlesRead = stats['articlesReadToday'] as int;
     final readingTime = stats['readingTimeToday'] as int;
@@ -33,11 +34,12 @@ Building healthier news habits! 🌱
 #MindfulNews #MindfulReading
 ''';
 
-    await Share.share(text);
+    await ShareUtils.shareText(context, text);
   }
 
   // Share weekly wellness report
   Future<void> shareWeeklyReport({
+    required BuildContext context,
     required int totalArticles,
     required int totalMinutes,
     required int daysActive,
@@ -62,11 +64,12 @@ Making mindful reading a habit! 🌱
 #MindfulNews #WellnessJourney
 ''';
 
-    await Share.share(text);
+    await ShareUtils.shareText(context, text);
   }
 
   // Share achievement unlock
   Future<void> shareAchievement({
+    required BuildContext context,
     required String title,
     required String description,
   }) async {
@@ -82,11 +85,12 @@ Building better news habits with Mindful News! 🌱
 #MindfulNews #Achievement
 ''';
 
-    await Share.share(text);
+    await ShareUtils.shareText(context, text);
   }
 
   // Share reading streak
   Future<void> shareStreak({
+    required BuildContext context,
     required int currentStreak,
     required int longestStreak,
   }) async {
@@ -108,11 +112,11 @@ Consistency is key to mindful reading! 📚
 #MindfulNews #ReadingStreak #Consistency
 ''';
 
-    await Share.share(text);
+    await ShareUtils.shareText(context, text);
   }
 
   // Generate stats card image (for future enhancement)
-  Future<void> shareStatsAsImage(GlobalKey key) async {
+  Future<void> shareStatsAsImage(BuildContext context, GlobalKey key) async {
     try {
       final boundary =
           key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -128,9 +132,11 @@ Consistency is key to mindful reading! 📚
       final imageFile = File(imagePath);
       await imageFile.writeAsBytes(pngBytes);
 
-      await Share.shareXFiles([
-        XFile(imagePath),
-      ], text: 'My Mindful News Stats 📊');
+      await ShareUtils.shareFiles(
+        context,
+        [XFile(imagePath)],
+        text: 'My Mindful News Stats 📊',
+      );
     } catch (e) {
       debugPrint('Error sharing stats as image: $e');
     }

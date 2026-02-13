@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 /// Heatmap calendar showing reading activity over time
 class ReadingHeatmap extends StatelessWidget {
@@ -26,7 +27,7 @@ class ReadingHeatmap extends StatelessWidget {
       children: [
         // Title
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: KDesignConstants.cardPadding,
           child: Text(
             'Reading Activity',
             style: TextStyle(
@@ -40,14 +41,14 @@ class ReadingHeatmap extends StatelessWidget {
         // Heatmap grid
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: KDesignConstants.paddingHorizontalMd,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Day labels
               Row(
                 children: [
-                  const SizedBox(width: 30),
+                  const SizedBox(width: KDesignConstants.spacing32),
                   ...List.generate(weeks.length, (index) {
                     if (index % 4 == 0) {
                       final weekStart = weeks[index][0];
@@ -67,17 +68,17 @@ class ReadingHeatmap extends StatelessWidget {
                   }),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: KDesignConstants.spacing8),
 
               // Heatmap rows (one per weekday)
               ...List.generate(7, (dayIndex) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.only(bottom: KDesignConstants.spacing4),
                   child: Row(
                     children: [
                       // Day label
                       SizedBox(
-                        width: 30,
+                        width: KDesignConstants.spacing32,
                         child: Text(
                           _getDayLabel(dayIndex),
                           style: TextStyle(
@@ -95,7 +96,7 @@ class ReadingHeatmap extends StatelessWidget {
                         final count = data[dateKey] ?? 0;
 
                         return Padding(
-                          padding: const EdgeInsets.only(right: 4),
+                          padding: const EdgeInsets.only(right: KDesignConstants.spacing4),
                           child: _HeatmapCell(
                             date: date,
                             count: count,
@@ -108,7 +109,7 @@ class ReadingHeatmap extends StatelessWidget {
                 );
               }),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: KDesignConstants.spacing16),
 
               // Legend
               Row(
@@ -121,19 +122,19 @@ class ReadingHeatmap extends StatelessWidget {
                           .withValues(alpha: 0.6),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   ...[0.0, 0.25, 0.5, 0.75, 1.0].map((intensity) {
                     return Container(
                       width: 12,
                       height: 12,
-                      margin: const EdgeInsets.only(right: 4),
+                      margin: const EdgeInsets.only(right: KDesignConstants.spacing4),
                       decoration: BoxDecoration(
                         color: _getColorForIntensity(intensity, context),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     );
                   }),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Text(
                     'More',
                     style: TextStyle(
@@ -198,7 +199,7 @@ class ReadingHeatmap extends StatelessWidget {
     if (intensity == 0.0) {
       return KAppColors.getOnBackground(context).withValues(alpha: 0.1);
     }
-    return KAppColors.primary.withValues(alpha: 0.2 + (intensity * 0.8));
+    return KAppColors.getPrimary(context).withValues(alpha: 0.2 + (intensity * 0.8));
   }
 }
 
@@ -231,7 +232,7 @@ class _HeatmapCell extends StatelessWidget {
           borderRadius: BorderRadius.circular(2),
           border: isToday
               ? Border.all(
-                  color: KAppColors.primary,
+                  color: KAppColors.getPrimary(context),
                   width: 1.5,
                 )
               : null,
@@ -269,6 +270,6 @@ class _HeatmapCell extends StatelessWidget {
     if (intensity == 0.0) {
       return KAppColors.getOnBackground(context).withValues(alpha: 0.1);
     }
-    return KAppColors.primary.withValues(alpha: 0.2 + (intensity * 0.8));
+    return KAppColors.getPrimary(context).withValues(alpha: 0.2 + (intensity * 0.8));
   }
 }

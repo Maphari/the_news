@@ -1,5 +1,6 @@
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/service/stats_sharing_service.dart';
 
 class ShareStatsButton extends StatelessWidget {
@@ -11,31 +12,26 @@ class ShareStatsButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _showShareOptions(context),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [
-                KAppColors.primary,
-                KAppColors.secondary,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
+            color: KAppColors.getPrimary(context),
+            borderRadius: KBorderRadius.md,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.share,
-                color: KAppColors.getOnBackground(context),
+                color: KAppColors.onImage,
                 size: 20,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: KDesignConstants.spacing8),
               Text(
                 'Share Stats',
                 style: KAppTextStyles.labelLarge.copyWith(
-                  color: KAppColors.getOnBackground(context),
+                  color: KAppColors.onImage,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -49,7 +45,7 @@ class ShareStatsButton extends StatelessWidget {
   void _showShareOptions(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A1A2E),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -66,7 +62,7 @@ class ShareOptionsSheet extends StatelessWidget {
     final sharingService = StatsSharingService.instance;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: KDesignConstants.paddingLg,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,14 +74,14 @@ class ShareOptionsSheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             'Inspire others with your mindful reading journey',
             style: KAppTextStyles.bodyMedium.copyWith(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           // Today's Stats
           _ShareOption(
@@ -94,10 +90,10 @@ class ShareOptionsSheet extends StatelessWidget {
             description: 'Share your reading progress for today',
             onTap: () {
               Navigator.pop(context);
-              sharingService.shareTodayStats();
+              sharingService.shareTodayStats(context);
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
 
           // All Time Stats
           _ShareOption(
@@ -106,11 +102,11 @@ class ShareOptionsSheet extends StatelessWidget {
             description: 'Share your complete reading journey',
             onTap: () {
               Navigator.pop(context);
-              sharingService.shareTodayStats(); // Will enhance this later
+              sharingService.shareTodayStats(context); // Will enhance this later
             },
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
       ),
     );
@@ -136,12 +132,12 @@ class _ShareOption extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: KDesignConstants.paddingMd,
           decoration: BoxDecoration(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
             border: Border.all(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
               width: 1,
@@ -152,16 +148,16 @@ class _ShareOption extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: KAppColors.primary.withValues(alpha: 0.2),
+                  color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   icon,
-                  color: KAppColors.primary,
+                  color: KAppColors.getPrimary(context),
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: KDesignConstants.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

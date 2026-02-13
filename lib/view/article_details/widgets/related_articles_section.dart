@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/routes/app_routes.dart';
 import 'package:the_news/service/related_articles_service.dart';
 import 'package:the_news/utils/reading_time_calculator.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class RelatedArticlesSection extends StatelessWidget {
   const RelatedArticlesSection({super.key, required this.currentArticle});
@@ -34,7 +36,7 @@ class RelatedArticlesSection extends StatelessWidget {
               color: KAppColors.getPrimary(context),
               size: 22,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             Text(
               'You might also like',
               style: KAppTextStyles.titleMedium.copyWith(
@@ -44,7 +46,7 @@ class RelatedArticlesSection extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: KDesignConstants.spacing16),
         ...relatedArticles.map((article) => Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: _RelatedArticleCard(
@@ -77,10 +79,10 @@ class _RelatedArticleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           ),
@@ -89,8 +91,8 @@ class _RelatedArticleCard extends StatelessWidget {
           children: [
             if (article.imageUrl != null)
               ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
+                borderRadius: KBorderRadius.md,
+                child: SafeNetworkImage(
                   article.imageUrl!,
                   width: 80,
                   height: 80,
@@ -101,7 +103,7 @@ class _RelatedArticleCard extends StatelessWidget {
                       height: 80,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: KBorderRadius.md,
                       ),
                       child: Icon(
                         Icons.image_not_supported_outlined,
@@ -112,7 +114,7 @@ class _RelatedArticleCard extends StatelessWidget {
                   },
                 ),
               ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,14 +128,14 @@ class _RelatedArticleCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Text(
                     article.sourceName,
                     style: KAppTextStyles.bodySmall.copyWith(
                       color: KAppColors.getOnBackground(context).withValues(alpha: 0.54),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Row(
                     children: [
                       Icon(
@@ -141,7 +143,7 @@ class _RelatedArticleCard extends StatelessWidget {
                         size: 12,
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: KDesignConstants.spacing4),
                       Text(
                         ReadingTimeCalculator.calculateReadingTime(article.content),
                         style: KAppTextStyles.bodySmall.copyWith(

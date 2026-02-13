@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/model/analytics_summary_model.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 class MonthComparisonCard extends StatelessWidget {
   final MonthComparisonModel comparison;
@@ -13,7 +14,7 @@ class MonthComparisonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -21,7 +22,7 @@ class MonthComparisonCard extends StatelessWidget {
               'Month-over-Month Comparison',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
             Row(
               children: [
                 Expanded(
@@ -33,7 +34,7 @@ class MonthComparisonCard extends StatelessWidget {
                     comparison.articlesIncreased,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: _buildComparisonStat(
                     context,
@@ -46,12 +47,12 @@ class MonthComparisonCard extends StatelessWidget {
               ],
             ),
             if (comparison.topCategoryChange != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: KDesignConstants.spacing16),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.cardPaddingCompact,
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: KBorderRadius.sm,
                 ),
                 child: Row(
                   children: [
@@ -59,7 +60,7 @@ class MonthComparisonCard extends StatelessWidget {
                       Icons.category,
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: KDesignConstants.spacing12),
                     Expanded(
                       child: Text(
                         comparison.topCategoryChange!,
@@ -86,10 +87,10 @@ class MonthComparisonCard extends StatelessWidget {
     bool increased,
   ) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: KDesignConstants.cardPaddingCompact,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: KBorderRadius.sm,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +99,7 @@ class MonthComparisonCard extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             currentValue,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -106,7 +107,7 @@ class MonthComparisonCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: KDesignConstants.spacing4),
           Row(
             children: [
               Icon(
@@ -114,7 +115,7 @@ class MonthComparisonCard extends StatelessWidget {
                 size: 16,
                 color: increased ? Colors.green : Colors.red,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: KDesignConstants.spacing4),
               Expanded(
                 child: Text(
                   comparison,

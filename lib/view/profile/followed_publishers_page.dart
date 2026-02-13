@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/followed_publishers_service.dart';
 import 'package:the_news/service/auth_service.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 /// Page showing all followed publishers
 class FollowedPublishersPage extends StatefulWidget {
@@ -27,7 +30,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
     final userData = await _authService.getCurrentUser();
     if (userData != null && mounted) {
       setState(() {
-        _userId = userData['userId'] as String?;
+        _userId = userData['id'] as String? ?? userData['userId'] as String?;
       });
     }
   }
@@ -67,13 +70,13 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
+                const Icon(Icons.check_circle, color: KAppColors.darkOnBackground),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: Text(
                     'Unfollowed $publisherName',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: KAppColors.darkOnBackground,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -84,7 +87,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
             ),
           ),
         );
@@ -93,13 +96,13 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 12),
+                const Icon(Icons.error_outline, color: KAppColors.darkOnBackground),
+                const SizedBox(width: KDesignConstants.spacing12),
                 const Expanded(
                   child: Text(
                     'Failed to unfollow publisher',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: KAppColors.darkOnBackground,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -110,7 +113,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
             ),
           ),
         );
@@ -124,16 +127,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
       backgroundColor: KAppColors.getBackground(context),
       child: Scaffold(
         backgroundColor: KAppColors.getBackground(context),
-        appBar: AppBar(
-          backgroundColor: KAppColors.getBackground(context),
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: KAppColors.getOnBackground(context),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+        appBar: KAppBar(
           title: Text(
             'Followed Publishers',
             style: KAppTextStyles.titleLarge.copyWith(
@@ -141,7 +135,11 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-        ),
+          backgroundColor: KAppColors.getBackground(context),
+          elevation: 0,
+          leading: AppBackButton(onPressed: () => Navigator.pop(context),),
+            ),
+          
         body: ListenableBuilder(
           listenable: _followedService,
           builder: (context, child) {
@@ -155,7 +153,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                         KAppColors.getPrimary(context),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KDesignConstants.spacing16),
                     Text(
                       'Loading publishers...',
                       style: KAppTextStyles.bodyMedium.copyWith(
@@ -170,7 +168,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
             if (_followedService.followedPublisherNames.isEmpty) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: KDesignConstants.paddingXl,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -187,7 +185,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                           color: KAppColors.getPrimary(context).withValues(alpha: 0.5),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: KDesignConstants.spacing24),
                       Text(
                         'No Followed Publishers',
                         style: KAppTextStyles.headlineSmall.copyWith(
@@ -195,7 +193,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: KDesignConstants.spacing12),
                       Text(
                         'Follow publishers from article cards\nto see their news prioritized in your feed',
                         style: KAppTextStyles.bodyMedium.copyWith(
@@ -204,20 +202,20 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: KDesignConstants.spacing32),
                       ElevatedButton.icon(
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.arrow_back),
                         label: const Text('Back to Profile'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: KAppColors.getPrimary(context),
-                          foregroundColor: Colors.white,
+                          foregroundColor: KAppColors.darkOnBackground,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24,
                             vertical: 12,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: KBorderRadius.md,
                           ),
                         ),
                       ),
@@ -233,8 +231,8 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
               children: [
                 // Summary Card
                 Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
+                  margin: KDesignConstants.paddingMd,
+                  padding: KDesignConstants.paddingMd,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -244,7 +242,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                         KAppColors.getPrimary(context).withValues(alpha: 0.05),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     border: Border.all(
                       color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
                     ),
@@ -256,7 +254,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                         height: 48,
                         decoration: BoxDecoration(
                           color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: KBorderRadius.md,
                         ),
                         child: Icon(
                           Icons.bookmarks,
@@ -264,7 +262,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                           size: 24,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: KDesignConstants.spacing16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +274,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: KDesignConstants.spacing4),
                             Text(
                               'Articles from these publishers appear first',
                               style: KAppTextStyles.bodySmall.copyWith(
@@ -302,7 +300,7 @@ class _FollowedPublishersPageState extends State<FollowedPublishersPage> {
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                         decoration: BoxDecoration(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: KBorderRadius.md,
                           border: Border.all(
                             color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                           ),

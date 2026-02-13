@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 class EmptySavedState extends StatelessWidget {
@@ -17,7 +18,7 @@ class EmptySavedState extends StatelessWidget {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: KAppColors.primary.withValues(alpha: 0.1),
+                color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -25,18 +26,18 @@ class EmptySavedState extends StatelessWidget {
                   width: 90,
                   height: 90,
                   decoration: BoxDecoration(
-                    color: KAppColors.primary.withValues(alpha: 0.15),
+                    color: KAppColors.getPrimary(context).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.bookmark_border_rounded,
                     size: 48,
-                    color: KAppColors.primary,
+                    color: KAppColors.getPrimary(context),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: KDesignConstants.spacing32),
             
             // Title
             Text(
@@ -46,7 +47,7 @@ class EmptySavedState extends StatelessWidget {
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             
             // Description
             Text(
@@ -57,7 +58,7 @@ class EmptySavedState extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: KDesignConstants.spacing32),
             
             // CTA Button
             ElevatedButton.icon(
@@ -65,14 +66,14 @@ class EmptySavedState extends StatelessWidget {
                 // Navigate to explore or home
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: KAppColors.primary,
-                foregroundColor: KAppColors.onPrimary,
+                backgroundColor: KAppColors.getPrimary(context),
+                foregroundColor: KAppColors.getOnPrimary(context),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
                   vertical: 16,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: KBorderRadius.lg,
                 ),
               ),
               icon: const Icon(Icons.explore_outlined),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 /// Empty state widget for digest page
@@ -19,7 +20,7 @@ class DigestEmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: KDesignConstants.paddingLg,
               decoration: BoxDecoration(
                 color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -30,7 +31,7 @@ class DigestEmptyState extends StatelessWidget {
                 color: KAppColors.getPrimary(context),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
             Text(
               'No Digests Yet',
               style: KAppTextStyles.headlineSmall.copyWith(
@@ -38,7 +39,7 @@ class DigestEmptyState extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             Text(
               'Get your personalized AI-powered news digest in just a few minutes.',
               textAlign: TextAlign.center,
@@ -46,17 +47,17 @@ class DigestEmptyState extends StatelessWidget {
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: KDesignConstants.spacing32),
             _buildFeatureList(context),
-            const SizedBox(height: 32),
+            const SizedBox(height: KDesignConstants.spacing32),
             ElevatedButton.icon(
               onPressed: onGenerate,
               style: ElevatedButton.styleFrom(
                 backgroundColor: KAppColors.getPrimary(context),
-                foregroundColor: Colors.white,
+                foregroundColor: KAppColors.darkOnBackground,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                 ),
               ),
               icon: const Icon(Icons.auto_awesome),
@@ -90,7 +91,7 @@ class DigestEmptyState extends StatelessWidget {
                 color: KAppColors.getPrimary(context),
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: Text(
                   feature['text'] as String,

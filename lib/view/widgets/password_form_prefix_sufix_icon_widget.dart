@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 class PasswordFormPrefixSufixIconWidget extends StatefulWidget {
   const PasswordFormPrefixSufixIconWidget({
@@ -28,9 +29,10 @@ class _PasswordFormPrefixSufixIconWidgetState extends State<PasswordFormPrefixSu
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextFormField(
       controller: widget.controller,
-      style: TextStyle(color: Color.fromARGB(255, 168, 167, 167)),
+      style: TextStyle(color: colorScheme.onSurface),
       obscureText: !isPasswordVisible,
       focusNode: widget.focusNode,
       decoration: InputDecoration(
@@ -38,14 +40,14 @@ class _PasswordFormPrefixSufixIconWidgetState extends State<PasswordFormPrefixSu
         hintText: widget.hintText,
         prefixIcon: Icon(
           widget.prefixIcon,
-          color: Color.fromARGB(255, 168, 167, 167),
+          color: colorScheme.onSurfaceVariant,
         ),
         suffixIcon: IconButton(
           icon: Icon(
             isPasswordVisible
                 ? Icons.visibility_outlined
                 : Icons.visibility_off_outlined,
-            color: Color.fromARGB(255, 168, 167, 167),
+            color: colorScheme.onSurfaceVariant,
           ),
           onPressed: () {
             setState(() {
@@ -53,10 +55,10 @@ class _PasswordFormPrefixSufixIconWidgetState extends State<PasswordFormPrefixSu
             });
           },
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(borderRadius: KBorderRadius.md),
         filled: true,
-        fillColor: const Color.fromARGB(255, 25, 24, 24),
-        labelStyle: TextStyle(color: Color.fromARGB(255, 168, 167, 167)),
+        fillColor: colorScheme.surfaceContainerHighest,
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
       ),
       validator: widget.valiadate,
     );

@@ -66,5 +66,9 @@
 	<string>We need your location to provide localized news content from your region and preferred countries.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We need your location to provide localized news content from your region and preferred countries.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow access to your photo library to set a profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Allow access to save your selected profile picture.</string>
 </dict>
 </plist>

@@ -33,7 +33,9 @@ class FeaturedNewsCard extends StatefulWidget {
     this.isBackground = false,
     this.user,
     this.cardIndex = 0,
-    this.showActionButtons = true, // New parameter to control action buttons visibility
+    this.showActionButtons = false, // New parameter to control action buttons visibility
+    this.height,
+    this.width,
   });
 
   final ArticleModel article;
@@ -41,6 +43,8 @@ class FeaturedNewsCard extends StatefulWidget {
   final RegisterLoginUserSuccessModel? user;
   final int cardIndex;
   final bool showActionButtons;
+  final double? height;
+  final double? width;
 
   @override
   State<FeaturedNewsCard> createState() => _FeaturedNewsCardState();
@@ -147,20 +151,20 @@ class _FeaturedNewsCardState extends State<FeaturedNewsCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate dynamic height based on screen size
-    // Set to 0.60 (60% of screen height) to prevent overflow with QuickActionsBar
-    final double cardHeight = MediaQuery.of(context).size.height * 0.65;
+    final double defaultHeight = MediaQuery.of(context).size.height * 0.65;
+    final double cardHeight = widget.height ?? defaultHeight;
+    final double cardWidth = widget.width ?? double.infinity;
     final wellnessScore = CalmModeService.instance.getArticleWellnessScore(widget.article);
 
     return GestureDetector(
       onTap: widget.isBackground ? null : () => _navigateToArticleDetail(context),
       child: Container(
-        // Dynamic height that adjusts to screen size
         height: cardHeight,
-        padding: const EdgeInsets.all(24),
+        width: cardWidth,
+        padding: EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: widget.isBackground ? KAppColors.secondary : _getTheme(context).backgroundColor,
-          borderRadius: BorderRadius.circular(40),
+          borderRadius: BorderRadius.circular(30),
         ),
         child: widget.isBackground
             ? const SizedBox.expand()
@@ -270,19 +274,15 @@ class _FeaturedNewsCardState extends State<FeaturedNewsCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
 
-                  // --- Flexible Space 2 ---
-                  // const Spacer(),
+                  const Spacer(),
 
                   // --- Bottom Action Buttons ---
-                  // Only show if showActionButtons is true (hidden in swipe mode)
                   if (widget.showActionButtons && widget.user != null)
                     ActionButtons(
                       article: widget.article,
                       user: widget.user!,
                       buttonColor: _getTheme(context).buttonColor,
-                    )
-                  else if (!widget.showActionButtons)
-                    const SizedBox(height: 16), // Add spacing when buttons are hidden
+                    ),
                 ],
               ),
       ),
@@ -293,7 +293,7 @@ class _FeaturedNewsCardState extends State<FeaturedNewsCard> {
 class WellnessScoreBadge extends StatelessWidget {
   final int score;
 
-  const WellnessScoreBadge({Key? key, required this.score}) : super(key: key);
+  const WellnessScoreBadge({super.key, required this.score});
 
   Color _getScoreColor(int score) {
     if (score > 70) return const Color(0xFF10B981); // Green
@@ -312,9 +312,9 @@ class WellnessScoreBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _getScoreColor(score).withOpacity(0.1),
+        color: _getScoreColor(score).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getScoreColor(score).withOpacity(0.5), width: 1),
+        border: Border.all(color: _getScoreColor(score).withValues(alpha: 0.5), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

@@ -41,12 +41,12 @@ class _OfflineDownloadButtonState extends State<OfflineDownloadButton> {
               height: widget.size,
               decoration: BoxDecoration(
                 color: isCached
-                    ? const Color(0xFF4CAF50).withValues(alpha: 0.2)
+                    ? KAppColors.success.withValues(alpha: 0.2)
                     : KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isCached
-                      ? const Color(0xFF4CAF50)
+                      ? KAppColors.success
                       : KAppColors.getOnBackground(context).withValues(alpha: 0.2),
                   width: 1.5,
                 ),
@@ -58,14 +58,14 @@ class _OfflineDownloadButtonState extends State<OfflineDownloadButton> {
                         height: widget.iconSize,
                         child: const CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Color(0xFF4CAF50),
+                          color: KAppColors.success,
                         ),
                       )
                     : Icon(
                         isCached ? Icons.offline_pin : Icons.download_outlined,
                         size: widget.iconSize,
                         color: isCached
-                            ? const Color(0xFF4CAF50)
+                            ? KAppColors.success
                             : KAppColors.getOnBackground(context).withValues(alpha: 0.6),
                       ),
               ),
@@ -125,7 +125,7 @@ class _OfflineDownloadButtonState extends State<OfflineDownloadButton> {
                   : 'Failed to download. Storage limit reached.',
             ),
             duration: const Duration(seconds: 2),
-            backgroundColor: success ? const Color(0xFF4CAF50) : Colors.red,
+            backgroundColor: success ? KAppColors.success : KAppColors.error,
           ),
         );
       }

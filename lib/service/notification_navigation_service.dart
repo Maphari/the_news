@@ -1,8 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:the_news/core/network/api_client.dart';
+import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/routes/app_routes.dart';
 import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/service/saved_articles_service.dart';
+import 'package:the_news/service/social_sharing_service.dart';
+import 'package:the_news/service/text_to_speech_service.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 
 /// Service for handling notification navigation
@@ -11,6 +16,10 @@ class NotificationNavigationService {
   NotificationNavigationService._init();
 
   final AuthService _authService = AuthService();
+  final ApiClient _api = ApiClient.instance;
+  final SavedArticlesService _savedArticlesService = SavedArticlesService.instance;
+  final SocialSharingService _socialSharingService = SocialSharingService.instance;
+  final TextToSpeechService _ttsService = TextToSpeechService.instance;
   GlobalKey<NavigatorState>? _navigatorKey;
 
   /// Set the navigator key (should be called in main.dart)
@@ -37,7 +46,7 @@ class NotificationNavigationService {
 
       final user = RegisterLoginUserSuccessModel(
         token: '',
-        userId: userData['id'] ?? '',
+        userId: userData['id'] ?? userData['userId'] ?? '',
         name: userData['name'] ?? '',
         email: userData['email'] ?? '',
         message: '',
@@ -61,15 +70,15 @@ class NotificationNavigationService {
           break;
 
         case 'breaking_news':
-          _navigateToArticle(context, data);
+          await _navigateToArticle(context, data);
           break;
 
         case 'publisher_update':
-          _navigateToArticle(context, data);
+          await _navigateToArticle(context, data);
           break;
 
         case 'comment_reply':
-          _navigateToArticleComments(context, data);
+          await _navigateToArticleComments(context, data);
           break;
 
         case 'grouped_breaking_news':
@@ -104,7 +113,7 @@ class NotificationNavigationService {
   }
 
   /// Navigate to article detail
-  void _navigateToArticle(BuildContext context, Map<String, dynamic> data) {
+  Future<void> _navigateToArticle(BuildContext context, Map<String, dynamic> data) async {
     final articleId = data['articleId'] as String?;
     if (articleId == null) {
       log('⚠️ No article ID in notification data');
@@ -113,19 +122,22 @@ class NotificationNavigationService {
 
     log('📍 Navigating to article: $articleId');
 
-    // Note: We need to fetch the article first before navigating
-    // For now, navigate to home and show a message
-    // TODO: Implement article fetching and navigation
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening article...'),
-        duration: const Duration(seconds: 2),
-      ),
+    final article = await _fetchArticleById(articleId);
+    if (article == null) {
+      _showSnackBar('Unable to open article right now');
+      return;
+    }
+    if (!context.mounted) return;
+
+    Navigator.pushNamed(
+      context,
+      AppRoutes.articleDetail,
+      arguments: article,
     );
   }
 
   /// Navigate to article comments section
-  void _navigateToArticleComments(BuildContext context, Map<String, dynamic> data) {
+  Future<void> _navigateToArticleComments(BuildContext context, Map<String, dynamic> data) async {
     final articleId = data['articleId'] as String?;
     final commentId = data['commentId'] as String?;
 
@@ -136,15 +148,9 @@ class NotificationNavigationService {
 
     log('📍 Navigating to article comments: article=$articleId, comment=$commentId');
 
-    // Note: We need to fetch the article first before navigating
-    // For now, navigate to home and show a message
-    // TODO: Implement article fetching and navigation to comments
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening comment...'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    _showSnackBar('Opening comments...');
+
+    await _navigateToArticle(context, data);
   }
 
   /// Navigate to home page
@@ -180,20 +186,20 @@ class NotificationNavigationService {
 
         case 'listen':
           log('🔊 Listen action triggered');
-          // TODO: Implement audio playback
+          await _handleListenAction(data);
           break;
 
         case 'save_later':
           final articleId = data['articleId'] as String?;
           if (articleId != null) {
             log('💾 Save for later: $articleId');
-            // TODO: Implement save article
+            await _handleSaveAction(articleId);
           }
           break;
 
         case 'share':
           log('📤 Share action triggered');
-          // TODO: Implement share functionality
+          await _handleShareAction(data);
           break;
 
         case 'reply':
@@ -218,5 +224,107 @@ class NotificationNavigationService {
     } catch (e) {
       log('⚠️ Error handling notification action: $e');
     }
+  }
+
+  Future<ArticleModel?> _fetchArticleById(String articleId) async {
+    try {
+      final response = await _api.get(
+        'articles/$articleId',
+        timeout: const Duration(seconds: 15),
+      );
+
+      if (_api.isSuccess(response)) {
+        final data = _api.parseJson(response);
+        final articleJson = data['article'] as Map<String, dynamic>?;
+        if (articleJson != null) {
+          return ArticleModel.fromJson(articleJson);
+        }
+      } else {
+        log('⚠️ Failed to fetch article: ${_api.getErrorMessage(response)}');
+      }
+    } catch (e) {
+      log('⚠️ Error fetching article: $e');
+    }
+    return null;
+  }
+
+  Future<void> _handleSaveAction(String articleId) async {
+    final userData = await _authService.getCurrentUser();
+    final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
+    if (userId == null) {
+      _showSnackBar('Please sign in to save articles');
+      return;
+    }
+
+    final success = await _savedArticlesService.saveArticle(userId, articleId);
+    if (success) {
+      _showSnackBar('Saved for later');
+    } else {
+      _showSnackBar('Could not save article');
+    }
+  }
+
+  Future<void> _handleShareAction(Map<String, dynamic> data) async {
+    final articleId = data['articleId'] as String?;
+    if (articleId == null) return;
+
+    final article = await _fetchArticleById(articleId);
+    if (article == null) {
+      _showSnackBar('Unable to share article right now');
+      return;
+    }
+
+    try {
+      final context = _navigatorKey?.currentContext;
+      if (context == null || !context.mounted) return;
+      final canShare = await _socialSharingService.recordShareActivity(
+        article,
+        platform: 'system',
+        shareToFeed: true,
+        context: context,
+      );
+      if (!canShare) return;
+      if (!context.mounted) return;
+      await _socialSharingService.shareArticle(
+        article,
+        context: context,
+      );
+      if (context.mounted) {
+        _showSnackBar('Article shared');
+      }
+    } catch (e) {
+      _showSnackBar('Share failed');
+    }
+  }
+
+  Future<void> _handleListenAction(Map<String, dynamic> data) async {
+    final articleId = data['articleId'] as String?;
+    if (articleId == null) return;
+
+    final article = await _fetchArticleById(articleId);
+    if (article == null) {
+      _showSnackBar('Unable to play audio right now');
+      return;
+    }
+
+    await _ttsService.initialize();
+    final text = [
+      article.title,
+      article.description,
+      article.content,
+    ].where((part) => part.trim().isNotEmpty).join('\n\n');
+    await _ttsService.speak(text);
+  }
+
+  void _showSnackBar(String message) {
+    final context = _navigatorKey?.currentContext;
+    if (context == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 }

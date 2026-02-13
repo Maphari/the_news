@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/model/reading_goal_model.dart';
 import 'package:the_news/service/advanced_analytics_service.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 class GoalsSection extends StatelessWidget {
   final List<ReadingGoalModel> goals;
@@ -34,11 +35,11 @@ class GoalsSection extends StatelessWidget {
               ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: KDesignConstants.spacing12),
         if (goals.isEmpty)
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: KDesignConstants.paddingLg,
               child: Center(
                 child: Column(
                   children: [
@@ -47,12 +48,12 @@ class GoalsSection extends StatelessWidget {
                       size: 48,
                       color: Theme.of(context).colorScheme.primary,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: KDesignConstants.spacing12),
                     Text(
                       'No active goals',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
                     Text(
                       'Create a goal to track your reading progress',
                       style: Theme.of(context).textTheme.bodyMedium,
@@ -85,9 +86,9 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: KDesignConstants.spacing12),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -99,7 +100,7 @@ class _GoalCard extends StatelessWidget {
                       : Icons.schedule,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +111,7 @@ class _GoalCard extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: KDesignConstants.spacing4),
                       Text(
                         goal.statusMessage,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -134,7 +135,7 @@ class _GoalCard extends StatelessWidget {
                       child: Row(
                         children: [
                           Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 8),
+                          SizedBox(width: KDesignConstants.spacing8),
                           Text('Delete'),
                         ],
                       ),
@@ -148,7 +149,7 @@ class _GoalCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -170,7 +171,7 @@ class _GoalCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: KDesignConstants.spacing8),
                 LinearProgressIndicator(
                   value: goal.progressPercentage,
                   backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -180,7 +181,7 @@ class _GoalCard extends StatelessWidget {
               ],
             ),
             if (goal.isActive && !goal.isPeriodEnded) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: KDesignConstants.spacing8),
               Text(
                 '${goal.daysRemaining} days remaining',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(

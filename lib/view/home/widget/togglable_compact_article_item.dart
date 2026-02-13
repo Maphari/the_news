@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/clickbait_detector_service.dart';
-import 'package:the_news/service/solution_detector_service.dart';
 import 'package:the_news/routes/app_routes.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class TogglableCompactArticleItem extends StatefulWidget {
   const TogglableCompactArticleItem({
@@ -19,8 +20,6 @@ class TogglableCompactArticleItem extends StatefulWidget {
 }
 
 class _TogglableCompactArticleItemState extends State<TogglableCompactArticleItem> {
-  bool _isExpanded = false;
-
   void _navigateToArticleDetail(BuildContext context) {
     AppRoutes.navigateTo(
       context,
@@ -50,226 +49,46 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
     }
   }
 
-  int _estimateReadTime(String content) {
-    final wordCount = content.split(' ').length;
-    final minutes = (wordCount / 225).ceil();
-    return minutes < 1 ? 1 : minutes;
-  }
-
-  Color _getCredibilityColor(int sourcePriority) {
-    if (sourcePriority >= 800000) {
-      return const Color(0xFF4CAF50);
-    } else if (sourcePriority >= 500000) {
-      return const Color(0xFFFFA726);
-    } else {
-      return const Color(0xFFEF5350);
-    }
-  }
-
-  String _getCredibilityLabel(int sourcePriority) {
-    if (sourcePriority >= 800000) {
-      return 'High';
-    } else if (sourcePriority >= 500000) {
-      return 'Med';
-    } else {
-      return 'Low';
-    }
-  }
-
   Color _getCategoryColor() {
     final category = widget.article.category.toString().toLowerCase();
     switch (category) {
       case 'technology':
-        return KAppColors.tertiary;
+        return KAppColors.getTertiary(context);
       case 'business':
-        return KAppColors.secondary;
+        return KAppColors.getSecondary(context);
       case 'sports':
-        return const Color(0xFFFFC5C9);
+        return KAppColors.red;
       case 'entertainment':
-        return const Color(0xFFFFD4A3);
+        return KAppColors.orange;
       case 'science':
-        return const Color(0xFFC5D9FF);
+        return KAppColors.blue;
       case 'health':
-        return const Color(0xFFFFB8B8);
+        return KAppColors.pink;
       default:
-        return KAppColors.primary;
+        return KAppColors.getPrimary(context);
     }
   }
 
-  Widget _buildCredibilityIndicator() {
-    final color = _getCredibilityColor(widget.article.sourcePriority);
-    final label = _getCredibilityLabel(widget.article.sourcePriority);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withAlpha(15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withAlpha(30),
-          width: 0.5,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 5,
-            height: 5,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: KAppTextStyles.labelSmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 9,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSentimentBadge() {
-    if (widget.article.sentiment.toLowerCase() == 'positive' &&
-        widget.article.sentimentStats.positive >= 0.6) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-        decoration: BoxDecoration(
-          color: const Color(0xFF4CAF50).withAlpha(15),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: const Color(0xFF4CAF50).withAlpha(30),
-            width: 0.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.wb_sunny_outlined,
-              size: 9,
-              color: Color(0xFF4CAF50),
-            ),
-            const SizedBox(width: 3),
-            Text(
-              'GOOD',
-              style: KAppTextStyles.labelSmall.copyWith(
-                color: const Color(0xFF4CAF50),
-                fontWeight: FontWeight.w700,
-                fontSize: 8,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildSolutionBadge() {
-    final solutionDetector = SolutionDetectorService.instance;
-    final badgeType = solutionDetector.getSolutionBadgeType(widget.article);
-
-    if (badgeType == null) {
+  Widget _buildCategoryPill(Color categoryColor) {
+    if (widget.article.category.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final label = solutionDetector.getBadgeLabel(badgeType);
-    final icon = solutionDetector.getBadgeIcon(badgeType);
-    const color = Color(0xFF4CAF50); // Green for solution-focused
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withAlpha(20),
-            color.withAlpha(15),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withAlpha(40),
-          width: 0.5,
-        ),
+        color: categoryColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: KShadows.low(context),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            icon,
-            style: const TextStyle(fontSize: 9),
-          ),
-          const SizedBox(width: 3),
-          Text(
-            label.toUpperCase(),
-            style: KAppTextStyles.labelSmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 8,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildClickbaitWarning() {
-    final detector = ClickbaitDetectorService.instance;
-    if (!detector.isClickbait(widget.article.title)) {
-      return const SizedBox.shrink();
-    }
-
-    final score = detector.getClickbaitScore(widget.article.title);
-    String label;
-    Color color;
-
-    if (score >= 70) {
-      label = 'CLICK';
-      color = const Color(0xFFEF5350);
-    } else {
-      label = 'SENS';
-      color = const Color(0xFFFFA726);
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withAlpha(15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withAlpha(30),
-          width: 0.5,
+      child: Text(
+        widget.article.category.first.toUpperCase(),
+        style: KAppTextStyles.labelSmall.copyWith(
+          color: KAppColors.onBackground,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.warning_amber_outlined,
-            size: 9,
-            color: color,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            label,
-            style: KAppTextStyles.labelSmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 8,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -282,29 +101,22 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
   @override
   Widget build(BuildContext context) {
     final timeAgo = _getTimeAgo(widget.article.pubDate);
-    final readTime = _estimateReadTime(widget.article.content);
     final categoryColor = _getCategoryColor();
 
     return InkWell(
       onTap: () => _navigateToArticleDetail(context),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: KBorderRadius.lg,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              categoryColor.withAlpha(8),
-              categoryColor.withAlpha(3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
-            color: categoryColor.withAlpha(15),
+            color: KAppColors.getOnBackground(context).withAlpha(15),
             width: 1,
           ),
+          boxShadow: KShadows.low(context),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -313,24 +125,47 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Article thumbnail
-                if (widget.article.imageUrl != null)
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: categoryColor.withAlpha(20),
-                        width: 1,
-                      ),
+                Container(
+                  width: 92,
+                  height: 92,
+                  decoration: BoxDecoration(
+                    borderRadius: KBorderRadius.md,
+                    border: Border.all(
+                      color: categoryColor.withAlpha(25),
+                      width: 1,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
-                        widget.article.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
+                  ),
+                  child: ClipRRect(
+                    borderRadius: KBorderRadius.md,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (widget.article.imageUrl != null)
+                          SafeNetworkImage(
+                            widget.article.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      categoryColor.withAlpha(10),
+                                      categoryColor.withAlpha(5),
+                                    ],
+                                  ),
+                                ),
+                                child: Icon(
+                                  Icons.article_outlined,
+                                  color: categoryColor.withAlpha(40),
+                                  size: 28,
+                                ),
+                              );
+                            },
+                          )
+                        else
+                          Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
@@ -346,11 +181,16 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
                               color: categoryColor.withAlpha(40),
                               size: 28,
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        Positioned(
+                          left: 6,
+                          top: 6,
+                          child: _buildCategoryPill(categoryColor),
+                        ),
+                      ],
                     ),
                   ),
+                ),
                 const SizedBox(width: 12),
 
                 // Article content
@@ -365,12 +205,12 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
                           color: KAppColors.getOnBackground(context),
                           fontWeight: FontWeight.w700,
                           height: 1.3,
-                          fontSize: 14,
+                          fontSize: 14.5,
                         ),
-                        maxLines: 2,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: KDesignConstants.spacing4),
                       // Bottom metadata row
                       Row(
                         children: [
@@ -381,7 +221,7 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
                               style: KAppTextStyles.labelSmall.copyWith(
                                 color:
                                     KAppColors.getOnBackground(context).withAlpha(128),
-                                fontSize: 10,
+                                fontSize: 10.5,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -394,32 +234,7 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
                             style: KAppTextStyles.labelSmall.copyWith(
                               color:
                                   KAppColors.getOnBackground(context).withAlpha(102),
-                              fontSize: 10,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            '•',
-                            style: KAppTextStyles.labelSmall.copyWith(
-                              color:
-                                  KAppColors.getOnBackground(context).withAlpha(77),
-                              fontSize: 10,
-                            ),
-                          ),
-                          const SizedBox(width: 3),
-                          // Read time
-                          Icon(
-                            Icons.schedule_outlined,
-                            size: 10,
-                            color: KAppColors.getOnBackground(context).withAlpha(102),
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            '${readTime}m',
-                            style: KAppTextStyles.labelSmall.copyWith(
-                              color:
-                                  KAppColors.getOnBackground(context).withAlpha(102),
-                              fontSize: 10,
+                              fontSize: 10.5,
                             ),
                           ),
                         ],
@@ -427,76 +242,13 @@ class _TogglableCompactArticleItemState extends State<TogglableCompactArticleIte
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    _isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: KAppColors.getOnBackground(context).withAlpha(128),
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isExpanded = !_isExpanded;
-                    });
-                  },
-                )
+                Icon(
+                  Icons.more_vert,
+                  color: KAppColors.getOnBackground(context).withAlpha(110),
+                  size: 20,
+                ),
               ],
             ),
-            if (_isExpanded)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Badges row with Wrap to prevent overflow
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        // Category badge
-                        if (widget.article.category.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: categoryColor.withAlpha(20),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: categoryColor.withAlpha(30),
-                                width: 0.5,
-                              ),
-                            ),
-                            child: Text(
-                              widget.article.category.first.toUpperCase(),
-                              style: KAppTextStyles.labelSmall.copyWith(
-                                color: categoryColor,
-                                fontSize: 8,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        _buildCredibilityIndicator(),
-                        _buildSentimentBadge(),
-                        _buildSolutionBadge(),
-                        _buildClickbaitWarning(),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-
-                    // Description
-                    Text(
-                      widget.article.description,
-                      style: KAppTextStyles.bodySmall.copyWith(
-                        color: KAppColors.getOnBackground(context).withAlpha(153),
-                        height: 1.3,
-                        fontSize: 11,
-                      ),
-                      maxLines: 5,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              )
           ],
         ),
       ),

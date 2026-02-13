@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:flutter/services.dart';
-import 'package:the_news/constant/theme/enhanced_typography.dart';
+import 'package:the_news/constant/enhanced_typography.dart';
 import 'package:the_news/service/auth_service.dart';
 import 'package:the_news/core/network/api_client.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 /// Payment Methods Page - Displays user's saved payment methods
 /// Uses ApiClient for all network requests following clean architecture
@@ -20,6 +22,8 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
   List<Map<String, dynamic>> _paymentMethods = [];
   bool _isLoading = true;
   String? _error;
+  String? _addPaymentMethodUrl;
+  bool _endpointAvailable = true;
 
   @override
   void initState() {
@@ -35,7 +39,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
 
     try {
       final userData = await _authService.getCurrentUser();
-      final userId = userData?['id'] as String?;
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
 
       if (userId == null) {
         setState(() {
@@ -48,6 +52,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
       // Fetch payment methods from backend
       final response = await _api.get(
         'subscriptions/payment-methods/$userId',
+        requiresAuth: true,
         timeout: const Duration(seconds: 30),
       );
 
@@ -58,6 +63,9 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
             _paymentMethods = List<Map<String, dynamic>>.from(
               data['paymentMethods'] ?? [],
             );
+            _addPaymentMethodUrl =
+                data['addPaymentMethodUrl'] ?? data['addCardUrl'];
+            _endpointAvailable = true;
             _isLoading = false;
           });
         } else {
@@ -67,9 +75,10 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
           });
         }
       } else if (response.statusCode == 404) {
-        // Endpoint not implemented yet
         setState(() {
           _paymentMethods = [];
+          _addPaymentMethodUrl = null;
+          _endpointAvailable = false;
           _isLoading = false;
         });
       } else {
@@ -91,7 +100,7 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: KAppBar(
         title: const Text('Payment Methods'),
         actions: [
           IconButton(
@@ -150,18 +159,60 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
 
     return RefreshIndicator(
       onRefresh: _loadPaymentMethods,
-      child: ListView.builder(
+      child: ListView(
         padding: const EdgeInsets.all(Spacing.md),
-        itemCount: _paymentMethods.length,
-        itemBuilder: (context, index) {
-          final method = _paymentMethods[index];
-          return _buildPaymentMethodCard(method, colorScheme);
-        },
+        children: [
+          _buildHeader(colorScheme),
+          if (_addPaymentMethodUrl != null) ...[
+            const SizedBox(height: Spacing.md),
+            _buildAddCardCTA(colorScheme),
+          ],
+          const SizedBox(height: Spacing.md),
+          ..._paymentMethods.map(
+            (method) => _buildPaymentMethodCard(method, colorScheme),
+          ),
+          const SizedBox(height: Spacing.lg),
+          _buildSecurityNote(colorScheme),
+        ],
       ),
     );
   }
 
   Widget _buildEmptyState(ColorScheme colorScheme) {
+    if (!_endpointAvailable) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.lg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.credit_card_off_outlined,
+                size: 64,
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(height: Spacing.md),
+              Text(
+                'Payment methods are unavailable',
+                style: EnhancedTypography.bodyLarge.copyWith(
+                  color: colorScheme.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: Spacing.sm),
+              Text(
+                'Please try again later.',
+                style: EnhancedTypography.bodyMedium.copyWith(
+                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(Spacing.lg),
@@ -169,21 +220,24 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 120,
-              height: 120,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withValues(alpha: 0.3),
+                color: colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: colorScheme.outline.withValues(alpha: 0.2),
+                ),
               ),
               child: Icon(
                 Icons.credit_card_outlined,
-                size: 60,
-                color: colorScheme.primary,
+                size: 48,
+                color: colorScheme.primary.withValues(alpha: 0.7),
               ),
             ),
-            const SizedBox(height: Spacing.xl),
+            const SizedBox(height: Spacing.lg),
             Text(
-              'No Payment Methods',
+              'No saved payment methods',
               style: EnhancedTypography.headlineSmall.copyWith(
                 color: colorScheme.onSurface,
                 fontWeight: FontWeight.bold,
@@ -191,55 +245,18 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
             ),
             const SizedBox(height: Spacing.sm),
             Text(
-              'Your payment methods will be saved when you\nsubscribe to a premium plan',
+              'Your card is saved securely after your first subscription payment.',
               style: EnhancedTypography.bodyMedium.copyWith(
                 color: colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: Spacing.xl),
-            Container(
-              padding: const EdgeInsets.all(Spacing.md),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: AppRadius.radiusMd,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 20,
-                        color: colorScheme.primary,
-                      ),
-                      const SizedBox(width: Spacing.xs),
-                      Text(
-                        'How It Works',
-                        style: EnhancedTypography.titleSmall.copyWith(
-                          color: colorScheme.onSurface,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: Spacing.sm),
-                  _buildInfoRow(
-                    '1. Subscribe to a premium plan',
-                    colorScheme,
-                  ),
-                  _buildInfoRow(
-                    '2. Your payment details are securely saved',
-                    colorScheme,
-                  ),
-                  _buildInfoRow(
-                    '3. Manage or remove them anytime here',
-                    colorScheme,
-                  ),
-                ],
-              ),
-            ),
+            if (_addPaymentMethodUrl != null) ...[
+              const SizedBox(height: Spacing.lg),
+              _buildAddCardCTA(colorScheme),
+            ],
+            const SizedBox(height: Spacing.lg),
+            _buildSecurityNote(colorScheme),
           ],
         ),
       ),
@@ -281,35 +298,48 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
     final expiryMonth = method['expiryMonth'] as String?;
     final expiryYear = method['expiryYear'] as String?;
     final bank = method['bank'] as String?;
-    final authorizationCode = method['authorizationCode'] as String?;
+    final lastUsed = method['lastUsed'] ??
+        method['lastUsedAt'] ??
+        method['last_used'] ??
+        method['last_used_at'];
 
     // Get card icon and color
     final cardIcon = _getCardIcon(cardType);
     final cardColor = _getCardColor(cardType, colorScheme);
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: Spacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: AppRadius.radiusLg,
+        border: Border.all(
+          color: isDefault
+              ? colorScheme.primary
+              : colorScheme.outline.withValues(alpha: 0.2),
+          width: isDefault ? 1.6 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: () => _showPaymentMethodOptions(method),
         borderRadius: AppRadius.radiusLg,
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.all(Spacing.md),
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.radiusLg,
-            border: isDefault
-                ? Border.all(color: colorScheme.primary, width: 2)
-                : null,
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Card type and default badge
               Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(Spacing.sm),
                     decoration: BoxDecoration(
-                      color: cardColor.withValues(alpha: 0.2),
+                      color: cardColor.withValues(alpha: 0.15),
                       borderRadius: AppRadius.radiusSm,
                     ),
                     child: Icon(
@@ -320,25 +350,13 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                   ),
                   const SizedBox(width: Spacing.sm),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          cardType.toUpperCase(),
-                          style: EnhancedTypography.labelSmall.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        Text(
-                          '•••• $last4',
-                          style: EnhancedTypography.titleMedium.copyWith(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      '•••• $last4',
+                      style: EnhancedTypography.titleMedium.copyWith(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 2,
+                      ),
                     ),
                   ),
                   if (isDefault)
@@ -348,58 +366,66 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: colorScheme.primary.withValues(alpha: 0.2),
+                        color: colorScheme.primary.withValues(alpha: 0.15),
                         borderRadius: AppRadius.radiusSm,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 14,
-                            color: colorScheme.primary,
+                      child: Text(
+                        'DEFAULT',
+                        style: EnhancedTypography.labelSmall.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  if (!isDefault)
+                    TextButton(
+                      onPressed: () => _setAsDefault(method),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Spacing.sm,
+                          vertical: 4,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        foregroundColor: colorScheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.radiusSm,
+                          side: BorderSide(
+                            color: colorScheme.primary.withValues(alpha: 0.4),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'DEFAULT',
-                            style: EnhancedTypography.labelSmall.copyWith(
-                              color: colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ),
+                      child: Text(
+                        'Set default',
+                        style: EnhancedTypography.labelSmall.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                 ],
               ),
               const SizedBox(height: Spacing.sm),
-
-              // Card details
               Row(
                 children: [
-                  if (expiryMonth != null && expiryYear != null) ...[
-                    Icon(
-                      Icons.calendar_today,
-                      size: 14,
+                  Text(
+                    cardType.toUpperCase(),
+                    style: EnhancedTypography.labelSmall.copyWith(
                       color: colorScheme.onSurfaceVariant,
+                      letterSpacing: 1.2,
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Expires $expiryMonth/$expiryYear',
-                      style: EnhancedTypography.bodySmall.copyWith(
-                        color: colorScheme.onSurfaceVariant,
+                  ),
+                  if (bank != null) ...[
+                    const SizedBox(width: Spacing.sm),
+                    Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
                       ),
                     ),
-                  ],
-                  if (bank != null) ...[
-                    if (expiryMonth != null && expiryYear != null)
-                      const SizedBox(width: Spacing.md),
-                    Icon(
-                      Icons.account_balance,
-                      size: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: Spacing.sm),
                     Expanded(
                       child: Text(
                         bank,
@@ -412,32 +438,158 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
                   ],
                 ],
               ),
-
-              // Authorization code (for debugging)
-              if (authorizationCode != null) ...[
+              if (expiryMonth != null && expiryYear != null) ...[
                 const SizedBox(height: Spacing.xs),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.verified_user,
-                      size: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        authorizationCode,
-                        style: EnhancedTypography.bodySmall.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                          fontFamily: 'monospace',
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Expires $expiryMonth/$expiryYear',
+                  style: EnhancedTypography.bodySmall.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              if (lastUsed != null) ...[
+                const SizedBox(height: Spacing.xs),
+                Text(
+                  'Last used ${_formatLastUsed(lastUsed)}',
+                  style: EnhancedTypography.bodySmall.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: AppRadius.radiusLg,
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: AppRadius.radiusMd,
+            ),
+            child: Icon(
+              Icons.credit_card,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: Spacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your saved payment methods',
+                  style: EnhancedTypography.titleSmall.copyWith(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Manage defaults or remove cards anytime.',
+                  style: EnhancedTypography.bodySmall.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecurityNote(ColorScheme colorScheme) {
+    return Container(
+      padding: const EdgeInsets.all(Spacing.md),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: AppRadius.radiusLg,
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.lock,
+            color: colorScheme.primary,
+          ),
+          const SizedBox(width: Spacing.sm),
+          Expanded(
+            child: Text(
+              'Your payment info is encrypted and stored securely by our processor.',
+              style: EnhancedTypography.bodySmall.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddCardCTA(ColorScheme colorScheme) {
+    return SizedBox(
+      height: 48,
+      child: OutlinedButton.icon(
+        onPressed: _openAddCardFlow,
+        icon: const Icon(Icons.add),
+        label: Text(
+          'Add new card',
+          style: EnhancedTypography.labelLarge.copyWith(
+            color: colorScheme.primary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: BorderSide(color: colorScheme.primary.withValues(alpha: 0.4)),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.radiusMd),
+        ),
+      ),
+    );
+  }
+
+  String _formatLastUsed(dynamic value) {
+    DateTime? parsed;
+    if (value is String) {
+      parsed = DateTime.tryParse(value);
+    } else if (value is int) {
+      parsed = DateTime.fromMillisecondsSinceEpoch(value);
+    }
+    if (parsed == null) return value.toString();
+
+    final now = DateTime.now();
+    final diff = now.difference(parsed);
+    if (diff.inDays == 0) return 'today';
+    if (diff.inDays == 1) return 'yesterday';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    return '${parsed.day}/${parsed.month}/${parsed.year}';
+  }
+
+  void _openAddCardFlow() {
+    final url = _addPaymentMethodUrl;
+    if (url == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: KAppBar(title: const Text('Add Payment Method')),
+          body: WebViewWidget(
+            controller: WebViewController()..loadRequest(Uri.parse(url)),
           ),
         ),
       ),
@@ -534,14 +686,60 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
   }
 
   Future<void> _setAsDefault(Map<String, dynamic> method) async {
-    // TODO: Implement set as default API call
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Set as default - Feature coming soon'),
-          behavior: SnackBarBehavior.floating,
-        ),
+    try {
+      final userData = await _authService.getCurrentUser();
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please sign in to update payment methods'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      final authorizationCode = method['authorizationCode'] as String?;
+      if (authorizationCode == null) return;
+
+      final response = await _api.put(
+        'subscriptions/payment-methods/$userId/default',
+        body: {'authorizationCode': authorizationCode},
+        requiresAuth: true,
+        timeout: const Duration(seconds: 20),
       );
+
+      if (_api.isSuccess(response)) {
+        await _loadPaymentMethods();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Default payment method updated'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_api.getErrorMessage(response)),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update default: ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -587,14 +785,60 @@ class _PaymentMethodsPageState extends State<PaymentMethodsPage> {
   }
 
   Future<void> _removePaymentMethod(Map<String, dynamic> method) async {
-    // TODO: Implement remove payment method API call
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Remove payment method - Feature coming soon'),
-          behavior: SnackBarBehavior.floating,
-        ),
+    try {
+      final userData = await _authService.getCurrentUser();
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please sign in to update payment methods'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      final authorizationCode = method['authorizationCode'] as String?;
+      if (authorizationCode == null) return;
+
+      final response = await _api.delete(
+        'subscriptions/payment-methods/$userId',
+        body: {'authorizationCode': authorizationCode},
+        requiresAuth: true,
+        timeout: const Duration(seconds: 20),
       );
+
+      if (_api.isSuccess(response)) {
+        await _loadPaymentMethods();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment method removed'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_api.getErrorMessage(response)),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to remove method: ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 }

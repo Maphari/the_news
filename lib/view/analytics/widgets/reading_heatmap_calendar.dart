@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 class ReadingHeatmapCalendar extends StatelessWidget {
   final Map<DateTime, int> heatmapData;
@@ -24,7 +25,7 @@ class ReadingHeatmapCalendar extends StatelessWidget {
                 size: 64,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: KDesignConstants.spacing16),
               Text(
                 'No reading activity yet',
                 style: Theme.of(context).textTheme.titleMedium,
@@ -44,7 +45,7 @@ class ReadingHeatmapCalendar extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.cardPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -56,24 +57,24 @@ class ReadingHeatmapCalendar extends StatelessWidget {
                   'Less',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: KDesignConstants.spacing4),
                 _buildColorBox(context, 0.0),
-                const SizedBox(width: 2),
+                const SizedBox(width: KDesignConstants.spacing4),
                 _buildColorBox(context, 0.25),
-                const SizedBox(width: 2),
+                const SizedBox(width: KDesignConstants.spacing4),
                 _buildColorBox(context, 0.5),
-                const SizedBox(width: 2),
+                const SizedBox(width: KDesignConstants.spacing4),
                 _buildColorBox(context, 0.75),
-                const SizedBox(width: 2),
+                const SizedBox(width: KDesignConstants.spacing4),
                 _buildColorBox(context, 1.0),
-                const SizedBox(width: 4),
+                const SizedBox(width: KDesignConstants.spacing4),
                 Text(
                   'More',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
             // Heatmap grid
             SizedBox(
               height: 200,

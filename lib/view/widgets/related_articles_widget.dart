@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/related_articles_service.dart';
 import 'package:the_news/service/article_access_service.dart';
 import 'package:the_news/utils/reading_time_calculator.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 /// Widget that displays related articles in a horizontal scrollable list
 class RelatedArticlesWidget extends StatelessWidget {
@@ -43,7 +45,7 @@ class RelatedArticlesWidget extends StatelessWidget {
                   size: 24,
                   color: KAppColors.getPrimary(context),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Text(
                   'You might also like',
                   style: KAppTextStyles.titleLarge.copyWith(
@@ -74,7 +76,7 @@ class RelatedArticlesWidget extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: KDesignConstants.spacing20),
         ],
       ),
     );
@@ -100,7 +102,7 @@ class RelatedArticleCard extends StatelessWidget {
         width: 260,
         decoration: BoxDecoration(
           color: KAppColors.getSurface(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           ),
@@ -114,7 +116,7 @@ class RelatedArticleCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
-                child: Image.network(
+                child: SafeNetworkImage(
                   article.imageUrl!,
                   height: 140,
                   width: double.infinity,
@@ -165,7 +167,7 @@ class RelatedArticleCard extends StatelessWidget {
             // Content
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.paddingSm,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -189,7 +191,7 @@ class RelatedArticleCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
 
                     // Title
                     Expanded(
@@ -205,7 +207,7 @@ class RelatedArticleCard extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
 
                     // Meta info (source + reading time)
                     Row(
@@ -222,7 +224,7 @@ class RelatedArticleCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: KDesignConstants.spacing8),
                         // Reading time
                         Row(
                           mainAxisSize: MainAxisSize.min,
@@ -232,7 +234,7 @@ class RelatedArticleCard extends StatelessWidget {
                               size: 12,
                               color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: KDesignConstants.spacing4),
                             Text(
                               ReadingTimeCalculator.calculateReadingTime(article.content),
                               style: KAppTextStyles.bodySmall.copyWith(
@@ -292,7 +294,7 @@ class RelatedArticlesListWidget extends StatelessWidget {
                 size: 20,
                 color: KAppColors.getPrimary(context),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: KDesignConstants.spacing8),
               Text(
                 'Related Articles',
                 style: KAppTextStyles.titleMedium.copyWith(
@@ -302,7 +304,7 @@ class RelatedArticlesListWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
 
           // List items
           ...relatedArticles.map((article) => Padding(
@@ -327,10 +329,10 @@ class _CompactArticleItem extends StatelessWidget {
         await ArticleAccessService.instance.navigateToArticle(context, article);
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
           color: KAppColors.getSurface(context),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: KBorderRadius.md,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           ),
@@ -341,7 +343,7 @@ class _CompactArticleItem extends StatelessWidget {
             if (article.imageUrl != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(
+                child: SafeNetworkImage(
                   article.imageUrl!,
                   width: 60,
                   height: 60,
@@ -363,7 +365,7 @@ class _CompactArticleItem extends StatelessWidget {
                   },
                 ),
               ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
 
             // Content
             Expanded(
@@ -379,7 +381,7 @@ class _CompactArticleItem extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Row(
                     children: [
                       Text(
@@ -389,14 +391,14 @@ class _CompactArticleItem extends StatelessWidget {
                           fontSize: 11,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: KDesignConstants.spacing8),
                       Text(
                         '•',
                         style: TextStyle(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: KDesignConstants.spacing8),
                       Text(
                         ReadingTimeCalculator.calculateReadingTime(article.content),
                         style: KAppTextStyles.bodySmall.copyWith(

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/view/widgets/pill_tab.dart';
 
 class SavedFilterChips extends StatelessWidget {
   const SavedFilterChips({
@@ -16,10 +18,10 @@ class SavedFilterChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 46,
+      height: KDesignConstants.tabHeight,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: KDesignConstants.paddingHorizontalLg,
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
@@ -52,31 +54,18 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PillTabContainer(
+      selected: isSelected,
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        decoration: BoxDecoration(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      borderRadius: KBorderRadius.xxl,
+      child: Text(
+        label,
+        style: KAppTextStyles.labelLarge.copyWith(
           color: isSelected
-              ? KAppColors.primary
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isSelected
-                ? KAppColors.primary
-                : Colors.white.withValues(alpha: 0.1),
-            width: 1.5,
-          ),
-        ),
-        child: Text(
-          label,
-          style: KAppTextStyles.labelLarge.copyWith(
-            color: isSelected
-                ? KAppColors.onPrimary
-                : Colors.white,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-          ),
+              ? KAppColors.getOnPrimary(context)
+              : KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
         ),
       ),
     );

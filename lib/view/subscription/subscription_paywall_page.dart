@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:the_news/constant/theme/enhanced_typography.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/constant/enhanced_typography.dart';
+import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/subscription_model.dart';
 import 'package:the_news/service/subscription_service.dart';
 import 'package:the_news/service/auth_service.dart';
 import 'package:the_news/service/payment_service.dart';
 import 'package:the_news/utils/haptic_service.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class SubscriptionPaywallPage extends StatefulWidget {
@@ -31,12 +34,17 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
   late Animation<Offset> _slideAnimation;
 
   SubscriptionPlan? _selectedPlan;
+  String _selectedPlanKey = 'annual';
+  late final PageController _tierController;
+  int _tierIndex = 1;
+  final bool _showAllFeatures = false;
   bool _isLoading = false;
   bool _hasUsedTrial = false;
 
   @override
   void initState() {
     super.initState();
+    _tierController = PageController(viewportFraction: 0.9, initialPage: 1);
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 800),
@@ -80,6 +88,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
             (p) => p.billingPeriod == 'yearly',
             orElse: () => paidPlans.first,
           );
+          _selectedPlanKey = _selectedPlan?.billingPeriod == 'yearly' ? 'annual' : 'monthly';
         }
       });
     }
@@ -88,6 +97,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
   @override
   void dispose() {
     _animationController.dispose();
+    _tierController.dispose();
     super.dispose();
   }
 
@@ -95,104 +105,42 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final background = KAppColors.getBackground(context);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: background,
       body: SafeArea(
-        child: Stack(
-          children: [
-            // Premium gradient background
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [
-                          const Color(0xFF1A237E).withValues(alpha: 0.3),
-                          const Color(0xFF4A148C).withValues(alpha: 0.2),
-                          colorScheme.surface,
-                        ]
-                      : [
-                          const Color(0xFF6366F1).withValues(alpha: 0.08),
-                          const Color(0xFF8B5CF6).withValues(alpha: 0.05),
-                          colorScheme.surface,
+        child: ColoredBox(
+          color: background,
+          child: Stack(
+            children: [
+              // Premium background
+              Container(
+                decoration: BoxDecoration(
+                  color: background,
+                ),
+              ),
+
+              // Animated content
+              FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildPricingHeader(context),
+                          const SizedBox(height: KDesignConstants.spacing16),
+                          _buildPricingCarousel(context),
+                          const SizedBox(height: KDesignConstants.spacing16),
+                          _buildFooter(context),
                         ],
-                  stops: const [0.0, 0.3, 0.7],
-                ),
-              ),
-            ),
-
-            // Animated content
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
-                    // Hero Header
-                    SliverToBoxAdapter(
-                      child: _buildHeroHeader(context),
+                      ),
                     ),
-
-                    // Trust Indicators
-                    SliverToBoxAdapter(
-                      child: _buildTrustIndicators(context),
-                    ),
-
-                    // Plan Selection
-                    SliverToBoxAdapter(
-                      child: _buildPlanSelection(context),
-                    ),
-
-                    // Premium Features
-                    SliverToBoxAdapter(
-                      child: _buildPremiumFeatures(context),
-                    ),
-
-                    // Social Proof
-                    SliverToBoxAdapter(
-                      child: _buildSocialProof(context),
-                    ),
-
-                    // FAQ Section
-                    SliverToBoxAdapter(
-                      child: _buildFAQ(context),
-                    ),
-
-                    // CTA Section
-                    SliverToBoxAdapter(
-                      child: _buildCTASection(context),
-                    ),
-
-                    // Footer
-                    SliverToBoxAdapter(
-                      child: _buildFooter(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Close Button
-            if (widget.showCloseButton)
-              Positioned(
-                top: 8,
-                right: 8,
-                child: Material(
-                  color: colorScheme.surface.withValues(alpha: 0.9),
-                  shape: const CircleBorder(),
-                  elevation: 4,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: colorScheme.onSurface,
-                    ),
-                    onPressed: () {
-                      HapticService.light();
-                      Navigator.pop(context);
-                    },
                   ),
                 ),
               ),
@@ -200,15 +148,15 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
             // Loading Overlay
             if (_isLoading)
               Container(
-                color: Colors.black.withValues(alpha: 0.7),
+                color: KAppColors.darkBackground.withValues(alpha: 0.7),
                 child: Center(
                   child: Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: KBorderRadius.xl,
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(32),
+                      padding: KDesignConstants.paddingXl,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -220,14 +168,14 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
                               strokeWidth: 3,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: KDesignConstants.spacing20),
                           Text(
                             'Processing your subscription...',
                             style: EnhancedTypography.titleMedium.copyWith(
                               color: colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: KDesignConstants.spacing8),
                           Text(
                             'Please wait',
                             style: EnhancedTypography.bodySmall.copyWith(
@@ -243,445 +191,546 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
           ],
         ),
       ),
+    ),
     );
   }
 
-  Widget _buildHeroHeader(BuildContext context) {
+  Widget _buildPricingHeader(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
-      child: Column(
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
         children: [
-          // Premium badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF6366F1),
-                  const Color(0xFF8B5CF6),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.workspace_premium, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'PREMIUM',
-                  style: EnhancedTypography.labelMedium.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ],
-            ),
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: KAppColors.getOnBackground(context)),
+            onPressed: () {
+              HapticService.light();
+              Navigator.pop(context);
+            },
           ),
-          const SizedBox(height: 24),
-
-          // Main headline
-          Text(
-            'Unlock Your\nBest Reading Experience',
-            textAlign: TextAlign.center,
-            style: EnhancedTypography.displayMedium.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-              height: 1.2,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Subheadline
-          Text(
-            'Join thousands of readers who stay informed\nwithout the overwhelm',
-            textAlign: TextAlign.center,
-            style: EnhancedTypography.bodyLarge.copyWith(
-              color: colorScheme.onSurfaceVariant,
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Hero image/illustration placeholder
-          Container(
-            height: 180,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  const Color(0xFF6366F1).withValues(alpha: 0.1),
-                  const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.auto_stories_outlined,
-                size: 80,
-                color: colorScheme.primary.withValues(alpha: 0.5),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Pricing',
+              style: EnhancedTypography.headlineSmall.copyWith(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w700,
+                fontSize: 22,
               ),
             ),
+          ),
+          _buildBillingToggle(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBillingToggle(BuildContext context) {
+    final isAnnual = _selectedPlanKey == 'annual';
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
+        borderRadius: KBorderRadius.full,
+      ),
+      child: Row(
+        children: [
+          _buildToggleChip(
+            context,
+            label: 'Annual',
+            selected: isAnnual,
+            onTap: () {
+              final yearlyPlan = _subscriptionService.paidPlans.firstWhere(
+                (plan) => plan.billingPeriod == 'yearly',
+                orElse: () => _subscriptionService.paidPlans.first,
+              );
+              setState(() {
+                _selectedPlan = yearlyPlan;
+                _selectedPlanKey = 'annual';
+              });
+              if (_tierController.hasClients) {
+                _tierController.animateToPage(
+                  2,
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOut,
+                );
+              }
+            },
+          ),
+          _buildToggleChip(
+            context,
+            label: 'Monthly',
+            selected: !isAnnual,
+            onTap: () {
+              final monthlyPlan = _subscriptionService.paidPlans.firstWhere(
+                (plan) => plan.billingPeriod == 'monthly',
+                orElse: () => _subscriptionService.paidPlans.first,
+              );
+              setState(() {
+                _selectedPlan = monthlyPlan;
+                _selectedPlanKey = 'monthly';
+              });
+              if (_tierController.hasClients) {
+                _tierController.animateToPage(
+                  1,
+                  duration: const Duration(milliseconds: 280),
+                  curve: Curves.easeOut,
+                );
+              }
+            },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildToggleChip(
+    BuildContext context, {
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? KAppColors.getPrimary(context) : Colors.transparent,
+          borderRadius: KBorderRadius.full,
+        ),
+        child: Text(
+          label,
+          style: EnhancedTypography.labelSmall.copyWith(
+            color: selected
+                ? KAppColors.getOnPrimary(context)
+                : KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildTrustIndicators(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildTrustPill(BuildContext context, IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+        borderRadius: KBorderRadius.full,
+        border: Border.all(color: KAppColors.getOnBackground(context).withValues(alpha: 0.12)),
+      ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildTrustItem(
-            context,
-            Icons.verified_user,
-            '10K+',
-            'Active Users',
-          ),
-          _buildTrustItem(
-            context,
-            Icons.star_rounded,
-            '4.8',
-            'App Rating',
-          ),
-          _buildTrustItem(
-            context,
-            Icons.security,
-            '100%',
-            'Secure',
+          Icon(icon, color: colorScheme.primary, size: 18),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: EnhancedTypography.labelMedium.copyWith(
+              color: colorScheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTrustItem(BuildContext context, IconData icon, String value, String label) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget _buildPricingCarousel(BuildContext context) {
+    final features = _getAllFeatures();
+    final freeIncluded = SubscriptionPlan.free.features;
+    final premiumIncluded = features.take(8).toList();
+    final freeExcluded = features.where((item) => !freeIncluded.contains(item)).toList();
+    final premiumExcluded = features.where((item) => !premiumIncluded.contains(item)).toList();
+
+    final paidPlans = _subscriptionService.paidPlans.isNotEmpty
+        ? _subscriptionService.paidPlans
+        : SubscriptionPlan.paidPlans;
+    if (paidPlans.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          padding: KDesignConstants.paddingMd,
+          decoration: BoxDecoration(
+            color: KAppColors.getOnBackground(context).withValues(alpha: 0.04),
+            borderRadius: KBorderRadius.lg,
+            border: Border.all(
+              color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
+            ),
+          ),
+          child: Text(
+            'Plans are loading. Please try again in a moment.',
+            style: EnhancedTypography.bodySmall.copyWith(
+              color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final fallbackPlan = paidPlans.first;
+    final monthlyPlan = paidPlans.firstWhere(
+      (plan) => plan.billingPeriod == 'monthly',
+      orElse: () => fallbackPlan,
+    );
+    final yearlyPlan = paidPlans.firstWhere(
+      (plan) => plan.billingPeriod == 'yearly',
+      orElse: () => fallbackPlan,
+    );
+
+    final monthlyPrice = (PaymentService.monthlyPriceKobo / 100);
+    final yearlyPrice = (PaymentService.yearlyPriceKobo / 100);
+
+    final cardHeight = (MediaQuery.of(context).size.height * 0.64).clamp(520.0, 640.0);
+
+    Widget buildCard(int index) {
+      if (index == 0) {
+        return _buildPricingCard(
+          context,
+          title: 'The News Basic',
+          badge: 'Free',
+          priceText: 'Free',
+          billedText: 'Basic access',
+          description: 'Get started with the essentials.',
+          included: freeIncluded,
+          excluded: freeExcluded,
+          highlighted: index == _tierIndex,
+          onSelect: () {
+            if (_tierController.hasClients) {
+              _tierController.animateToPage(
+                0,
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOut,
+              );
+            }
+          },
+          ctaLabel: 'Current Plan',
+          ctaEnabled: false,
+        );
+      }
+
+      if (index == 1) {
+        return _buildPricingCard(
+          context,
+          title: 'The News Pro',
+          badge: null,
+          priceText: 'R${monthlyPrice.toStringAsFixed(0)}',
+          billedText: '/month (ZAR)\nR${monthlyPrice.toStringAsFixed(0)} billed monthly',
+          description: 'A premium reading experience with advanced tools.',
+          included: premiumIncluded,
+          excluded: premiumExcluded,
+          highlighted: index == _tierIndex,
+          onSelect: () {
+            setState(() {
+              _selectedPlanKey = 'monthly';
+              _selectedPlan = monthlyPlan;
+            });
+            if (_tierController.hasClients) {
+              _tierController.animateToPage(
+                1,
+                duration: const Duration(milliseconds: 280),
+                curve: Curves.easeOut,
+              );
+            }
+          },
+          ctaLabel: _hasUsedTrial || monthlyPlan.trialDays == null
+              ? 'Start Monthly'
+              : 'Start ${monthlyPlan.trialDays}-days Free Trial',
+          ctaEnabled: true,
+        );
+      }
+
+      return _buildPricingCard(
+        context,
+        title: 'The News Ultimate',
+        badge: 'Best value',
+        priceText: 'R${(yearlyPrice / 12).toStringAsFixed(0)}',
+        billedText: '/month (ZAR)\nR${yearlyPrice.toStringAsFixed(0)} billed yearly',
+        description: 'Everything in The News — unlocked.',
+        included: features,
+        excluded: const [],
+        highlighted: index == _tierIndex,
+        onSelect: () {
+          setState(() {
+            _selectedPlanKey = 'annual';
+            _selectedPlan = yearlyPlan;
+          });
+          if (_tierController.hasClients) {
+            _tierController.animateToPage(
+              2,
+              duration: const Duration(milliseconds: 280),
+              curve: Curves.easeOut,
+            );
+          }
+        },
+        ctaLabel: _hasUsedTrial || yearlyPlan.trialDays == null
+            ? 'Start Annual'
+            : 'Start ${yearlyPlan.trialDays}-days Free Trial',
+        ctaEnabled: true,
+      );
+    }
 
     return Column(
       children: [
-        Icon(icon, color: colorScheme.primary, size: 28),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: EnhancedTypography.titleLarge.copyWith(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
+        SizedBox(
+          height: cardHeight,
+          child: PageView.builder(
+            controller: _tierController,
+            itemCount: 3,
+            onPageChanged: (index) {
+              setState(() {
+                _tierIndex = index;
+                if (index == 1) {
+                  _selectedPlanKey = 'monthly';
+                  _selectedPlan = monthlyPlan;
+                } else if (index == 2) {
+                  _selectedPlanKey = 'annual';
+                  _selectedPlan = yearlyPlan;
+                }
+              });
+            },
+            itemBuilder: (context, index) {
+              return AnimatedBuilder(
+                animation: _tierController,
+                builder: (context, child) {
+                  double scale = 1.0;
+                  double opacity = 1.0;
+                  if (_tierController.position.hasContentDimensions) {
+                    final page = _tierController.page ?? _tierController.initialPage.toDouble();
+                    final diff = (page - index).abs();
+                    scale = (1 - (diff * 0.08)).clamp(0.9, 1.0);
+                    opacity = (1 - (diff * 0.2)).clamp(0.7, 1.0);
+                  }
+                  return Center(
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Opacity(
+                        opacity: opacity,
+                        child: child,
+                      ),
+                    ),
+                  );
+                },
+                child: buildCard(index),
+              );
+            },
           ),
         ),
-        Text(
-          label,
-          style: EnhancedTypography.bodySmall.copyWith(
-            color: colorScheme.onSurfaceVariant,
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            3,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              height: 6,
+              width: _tierIndex == index ? 18 : 6,
+              decoration: BoxDecoration(
+                color: _tierIndex == index
+                    ? KAppColors.getPrimary(context)
+                    : KAppColors.getOnBackground(context).withValues(alpha: 0.25),
+                borderRadius: KBorderRadius.full,
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPlanSelection(BuildContext context) {
+  Widget _buildPricingCard(
+    BuildContext context, {
+    required String title,
+    required String? badge,
+    required String priceText,
+    required String billedText,
+    required String description,
+    required List<String> included,
+    required List<String> excluded,
+    required bool highlighted,
+    required VoidCallback onSelect,
+    required String ctaLabel,
+    required bool ctaEnabled,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Choose Your Plan',
-            style: EnhancedTypography.headlineMedium.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Cancel anytime. No hidden fees.',
-            style: EnhancedTypography.bodyMedium.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Display plans from service
-          ...(_subscriptionService.paidPlans.asMap().entries.map((entry) {
-            final index = entry.key;
-            final plan = entry.value;
-            final isYearly = plan.billingPeriod == 'yearly';
-            return Padding(
-              padding: EdgeInsets.only(bottom: index < _subscriptionService.paidPlans.length - 1 ? 16 : 0),
-              child: _buildEnhancedPlanCard(
-                context,
-                plan,
-                isRecommended: isYearly,
-              ),
-            );
-          })),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEnhancedPlanCard(BuildContext context, SubscriptionPlan plan, {required bool isRecommended}) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isSelected = _selectedPlan?.id == plan.id;
-    final isYearly = plan.billingPeriod == 'yearly';
-
-    final monthlyPrice = isYearly
-        ? (PaymentService.yearlyPriceKobo / 100) / 12
-        : (PaymentService.monthlyPriceKobo / 100);
-    final totalPrice = isYearly
-        ? (PaymentService.yearlyPriceKobo / 100)
-        : (PaymentService.monthlyPriceKobo / 100);
+    final borderColor = highlighted
+        ? KAppColors.getPrimary(context)
+        : KAppColors.getOnBackground(context).withValues(alpha: 0.12);
 
     return GestureDetector(
-      onTap: () {
-        HapticService.selection();
-        setState(() => _selectedPlan = plan);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  colors: [
-                    const Color(0xFF6366F1).withValues(alpha: 0.15),
-                    const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-                  ],
-                )
-              : null,
-          color: isSelected ? null : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.outline.withValues(alpha: 0.2),
-            width: isSelected ? 2.5 : 1,
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: colorScheme.primary.withValues(alpha: 0.2),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
-        child: Stack(
-          children: [
-            // Recommended badge
-            if (isRecommended)
-              Positioned(
-                top: -1,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF10B981), Color(0xFF059669)],
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(19),
-                      topRight: Radius.circular(19),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.star, color: Colors.white, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        'BEST VALUE - SAVE ${_paymentService.getYearlySavingsDisplay()}',
-                        style: EnhancedTypography.labelSmall.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      onTap: onSelect,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Container(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+            decoration: BoxDecoration(
+              color: KAppColors.getOnBackground(context).withValues(alpha: 0.04),
+              borderRadius: KBorderRadius.xl,
+              border: Border.all(
+                color: borderColor,
+                width: highlighted ? 2 : 1,
               ),
-
-            Padding(
-              padding: EdgeInsets.fromLTRB(20, isRecommended ? 36 : 20, 20, 20),
-              child: Row(
+            ),
+            child: SizedBox(
+              height: constraints.maxHeight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Radio indicator
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? colorScheme.primary : colorScheme.outline,
-                        width: 2,
-                      ),
-                      color: isSelected ? colorScheme.primary : Colors.transparent,
-                    ),
-                    child: isSelected
-                        ? const Icon(Icons.check, color: Colors.white, size: 16)
-                        : null,
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Plan details
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          plan.billingPeriod,
-                          style: EnhancedTypography.titleLarge.copyWith(
-                            color: colorScheme.onSurface,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: EnhancedTypography.titleLarge.copyWith(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
                         ),
-                        const SizedBox(height: 4),
-                        if (isYearly)
-                          Text(
-                            'Billed annually at R${totalPrice.toStringAsFixed(2)}',
-                            style: EnhancedTypography.bodySmall.copyWith(
-                              color: colorScheme.onSurfaceVariant,
+                      ),
+                      const Spacer(),
+                      if (badge != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: KAppColors.warning.withValues(alpha: 0.15),
+                            borderRadius: KBorderRadius.full,
+                            border: Border.all(
+                              color: KAppColors.warning.withValues(alpha: 0.5),
                             ),
                           ),
+                          child: Text(
+                            badge,
+                            style: EnhancedTypography.labelSmall.copyWith(
+                              color: KAppColors.warning,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: priceText,
+                          style: EnhancedTypography.displaySmall.copyWith(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 28,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' $billedText',
+                          style: EnhancedTypography.bodySmall.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-
-                  // Price
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: 'R',
-                              style: EnhancedTypography.titleMedium.copyWith(
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            TextSpan(
-                              text: monthlyPrice.toStringAsFixed(0),
-                              style: EnhancedTypography.displaySmall.copyWith(
-                                color: colorScheme.onSurface,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                  const SizedBox(height: 12),
+                  Text(
+                    description,
+                    style: EnhancedTypography.bodySmall.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                      height: 1.45,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...included.map(
+                            (feature) => _featureRow(context, feature, true),
+                          ),
+                          if (excluded.isNotEmpty) const SizedBox(height: 8),
+                          ...excluded.map(
+                            (feature) => _featureRow(context, feature, false),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: ctaEnabled ? _handleSubscribe : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: KAppColors.getPrimary(context),
+                        foregroundColor: KAppColors.getOnPrimary(context),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: KBorderRadius.full,
                         ),
                       ),
-                      Text(
-                        '/month',
-                        style: EnhancedTypography.bodySmall.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                      child: Text(
+                        ctaLabel,
+                        style: EnhancedTypography.labelLarge.copyWith(
+                          color: KAppColors.getOnPrimary(context),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                         ),
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _featureRow(BuildContext context, String label, bool included) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(
+            included ? Icons.check_circle : Icons.close,
+            size: 18,
+            color: included
+                ? KAppColors.success
+                : KAppColors.getOnBackground(context).withValues(alpha: 0.4),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              label,
+              style: EnhancedTypography.bodySmall.copyWith(
+                color: included
+                    ? KAppColors.getOnBackground(context)
+                    : KAppColors.getOnBackground(context).withValues(alpha: 0.5),
+                fontSize: 12.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildPremiumFeatures(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Everything Premium Includes',
-            style: EnhancedTypography.headlineSmall.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          _buildFeatureItem(
-            context,
-            Icons.auto_awesome,
-            'Unlimited Articles',
-            'Read as much as you want with no daily limits',
-            const Color(0xFF6366F1),
-          ),
-          _buildFeatureItem(
-            context,
-            Icons.favorite,
-            'Mental Wellness Tools',
-            'Mood tracking, break reminders & wellness insights',
-            const Color(0xFFEC4899),
-          ),
-          _buildFeatureItem(
-            context,
-            Icons.psychology,
-            'AI-Powered Features',
-            'Smart summaries, bias detection & fact-checking',
-            const Color(0xFF8B5CF6),
-          ),
-          _buildFeatureItem(
-            context,
-            Icons.bookmark,
-            'Unlimited Bookmarks',
-            'Save and organize articles without restrictions',
-            const Color(0xFF10B981),
-          ),
-          _buildFeatureItem(
-            context,
-            Icons.bar_chart,
-            'Advanced Analytics',
-            'Deep insights into your reading habits',
-            const Color(0xFFF59E0B),
-          ),
-          _buildFeatureItem(
-            context,
-            Icons.cloud_download,
-            'Offline Reading',
-            'Download articles to read anywhere, anytime',
-            const Color(0xFF06B6D4),
-          ),
-          _buildFeatureItem(
-            context,
-            Icons.people,
-            'Social Features',
-            'Share lists and follow other readers',
-            const Color(0xFFEF4444),
-          ),
-          _buildFeatureItem(
-            context,
-            Icons.notifications_off,
-            'Ad-Free Experience',
-            'Enjoy distraction-free reading',
-            const Color(0xFF6366F1),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String description, Color color) {
@@ -697,11 +746,11 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
             height: 44,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
             ),
             child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: KDesignConstants.spacing16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -713,7 +762,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: KDesignConstants.spacing4),
                 Text(
                   description,
                   style: EnhancedTypography.bodyMedium.copyWith(
@@ -737,7 +786,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.primaryContainer.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,13 +797,13 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
                 5,
                 (index) => Icon(
                   Icons.star_rounded,
-                  color: const Color(0xFFFBBF24),
+                  color: KAppColors.yellow,
                   size: 24,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Text(
             '"This app completely changed how I consume news. The wellness features help me stay informed without feeling overwhelmed."',
             style: EnhancedTypography.bodyLarge.copyWith(
@@ -763,7 +812,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
               height: 1.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Text(
             '- Sarah M., Premium Member',
             style: EnhancedTypography.bodyMedium.copyWith(
@@ -791,7 +840,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
 
           _buildFAQItem(
             context,
@@ -825,7 +874,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.help_outline, color: colorScheme.primary, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: KDesignConstants.spacing8),
               Expanded(
                 child: Text(
                   question,
@@ -854,119 +903,40 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
   }
 
   Widget _buildCTASection(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // Primary CTA Button
-          Container(
-            width: double.infinity,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF6366F1).withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _handleSubscribe,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                foregroundColor: Colors.white,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _hasUsedTrial || _selectedPlan?.trialDays == null
-                        ? 'Subscribe Now'
-                        : 'Start ${_selectedPlan?.trialDays}-Day Free Trial',
-                    style: EnhancedTypography.titleLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward, color: Colors.white),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Trial info
-          if (!_hasUsedTrial && _selectedPlan?.trialDays != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.celebration, color: Color(0xFF10B981), size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'First ${_selectedPlan?.trialDays} days are FREE',
-                    style: EnhancedTypography.bodyMedium.copyWith(
-                      color: const Color(0xFF10B981),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 12),
-
-          // Money-back guarantee
-          Text(
-            '💳 Secure Payment • 🔒 Cancel Anytime',
-            textAlign: TextAlign.center,
-            style: EnhancedTypography.bodySmall.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildFooter(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Text(
-            'By subscribing, you agree to our Terms of Service and Privacy Policy',
-            textAlign: TextAlign.center,
-            style: EnhancedTypography.bodySmall.copyWith(
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-              height: 1.4,
-            ),
+    return Column(
+      children: [
+        Text(
+          _hasUsedTrial || _selectedPlan?.trialDays == null
+              ? 'Cancel anytime. Manage in Settings.'
+              : 'First ${_selectedPlan?.trialDays} days are free. Cancel anytime.',
+          textAlign: TextAlign.center,
+          style: EnhancedTypography.bodySmall.copyWith(
+            color: colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(height: 40),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+
+  List<String> _getAllFeatures() {
+    final premiumFeatures = <String>{
+      ...SubscriptionPlan.premium.features,
+      ...SubscriptionPlan.premiumYearly.features,
+    };
+
+    return premiumFeatures
+        .where((item) => item.trim().isNotEmpty)
+        .where((item) => !item.toLowerCase().contains('trial'))
+        .where((item) => !item.toLowerCase().contains('save'))
+        .where((item) => !item.toLowerCase().contains('year'))
+        .where((item) => !item.toLowerCase().contains('off'))
+        .toList();
   }
 
   Future<void> _handleSubscribe() async {
@@ -978,7 +948,7 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
     try {
       // Get current user ID and email from auth service
       final userData = await _authService.getCurrentUser();
-      final userId = userData?['id'] as String?;
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
       final email = userData?['email'] as String?;
 
       if (userId == null || email == null) {
@@ -1066,17 +1036,15 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: KBorderRadius.xl),
         icon: Container(
           width: 64,
           height: 64,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF10B981), Color(0xFF059669)],
-            ),
+            color: KAppColors.success,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.check, color: Colors.white, size: 36),
+          child: const Icon(Icons.check, color: KAppColors.onImage, size: 36),
         ),
         title: const Text('Welcome to Premium!'),
         content: const Text(
@@ -1094,10 +1062,10 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                foregroundColor: KAppColors.darkOnBackground,
+                padding: KDesignConstants.paddingVerticalMd,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                 ),
               ),
               child: const Text('Start Reading'),
@@ -1112,8 +1080,8 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        icon: const Icon(Icons.error_outline, color: Colors.red, size: 48),
+        shape: RoundedRectangleBorder(borderRadius: KBorderRadius.xl),
+        icon: const Icon(Icons.error_outline, color: KAppColors.error, size: 48),
         title: const Text('Oops!'),
         content: Text(message, textAlign: TextAlign.center),
         actions: [
@@ -1122,9 +1090,9 @@ class _SubscriptionPaywallPageState extends State<SubscriptionPaywallPage>
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: KDesignConstants.paddingVerticalMd,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                 ),
               ),
               child: const Text('OK'),
@@ -1187,7 +1155,7 @@ class _PaystackPaymentPageState extends State<PaystackPaymentPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error loading payment page: ${error.description}'),
-                backgroundColor: Colors.red,
+                backgroundColor: KAppColors.error,
               ),
             );
           },
@@ -1201,7 +1169,7 @@ class _PaystackPaymentPageState extends State<PaystackPaymentPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: KAppBar(
         title: const Text('Complete Payment'),
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -1228,7 +1196,7 @@ class _PaystackPaymentPageState extends State<PaystackPaymentPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: KBorderRadius.xl),
         title: const Text('Cancel Payment?'),
         content: const Text(
           'Are you sure you want to cancel this payment? Your subscription will not be activated.',
@@ -1244,7 +1212,7 @@ class _PaystackPaymentPageState extends State<PaystackPaymentPage> {
               Navigator.pop(context, false); // Close payment page
             },
             style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
+              foregroundColor: KAppColors.error,
             ),
             child: const Text('Cancel Payment'),
           ),
@@ -1252,4 +1220,5 @@ class _PaystackPaymentPageState extends State<PaystackPaymentPage> {
       ),
     );
   }
+
 }

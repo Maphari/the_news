@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/story_cluster_model.dart';
 import 'package:the_news/service/story_clustering_service.dart';
 import 'package:the_news/view/perspectives/widgets/story_cluster_card.dart';
 import 'package:the_news/view/perspectives/widgets/perspective_filter_chips.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 /// Page showing stories with multiple perspectives
 class MultiPerspectivePage extends StatefulWidget {
@@ -82,27 +84,21 @@ class _MultiPerspectivePageState extends State<MultiPerspectivePage> {
         children: [
           Row(
             children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Icon(
-                  Icons.arrow_back_ios_new,
-                  color: KAppColors.getOnBackground(context),
-                ),
-              ),
+              const AppBackButton(),
               const SizedBox(width: 5),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Multi-Perspective View',
+                      'Perspectives',
                       style: KAppTextStyles.headlineMedium.copyWith(
                         color: KAppColors.getOnBackground(context),
                         fontWeight: FontWeight.bold,
                         fontSize: 22
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: KDesignConstants.spacing4),
                     Text(
                       'Compare how different sources cover the same story',
                       style: KAppTextStyles.bodySmall.copyWith(
@@ -156,7 +152,7 @@ class _MultiPerspectivePageState extends State<MultiPerspectivePage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
 
           // Category filters
           PerspectiveFilterChips(
@@ -184,7 +180,7 @@ class _MultiPerspectivePageState extends State<MultiPerspectivePage> {
                 CircularProgressIndicator(
                   color: KAppColors.getPrimary(context),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: KDesignConstants.spacing16),
                 Text(
                   'Analyzing articles...',
                   style: KAppTextStyles.bodyMedium.copyWith(
@@ -208,7 +204,7 @@ class _MultiPerspectivePageState extends State<MultiPerspectivePage> {
                   size: 64,
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: KDesignConstants.spacing16),
                 Text(
                   _showOnlyMultiPerspective
                       ? 'No multi-perspective stories found'
@@ -217,7 +213,7 @@ class _MultiPerspectivePageState extends State<MultiPerspectivePage> {
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: KDesignConstants.spacing8),
                 Text(
                   'Try adjusting your filters or refresh',
                   style: KAppTextStyles.bodySmall.copyWith(

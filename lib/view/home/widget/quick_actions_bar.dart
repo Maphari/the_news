@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/view/perspectives/multi_perspective_page.dart';
@@ -33,7 +34,7 @@ class QuickActionsBar extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: KDesignConstants.spacing12),
           Expanded(
             child: _QuickActionButton(
               icon: Icons.summarize_outlined,
@@ -71,11 +72,11 @@ class _QuickActionButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         child: Container(
           decoration: BoxDecoration(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.06),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
             ),
@@ -88,7 +89,7 @@ class _QuickActionButton extends StatelessWidget {
                 size: 20,
                 color: KAppColors.getPrimary(context),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: KDesignConstants.spacing8),
               Text(
                 label,
                 style: KAppTextStyles.labelLarge.copyWith(

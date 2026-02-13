@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/text_to_speech_service.dart';
@@ -53,7 +54,10 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     } else {
       // Prepare article text for narration
       final articleText = _prepareArticleText();
-      await _ttsService.speak(articleText);
+      await _ttsService.speak(
+        articleText,
+        articleId: widget.article.articleId,
+      );
     }
   }
 
@@ -104,7 +108,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
         ),
@@ -113,12 +117,12 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
         children: [
           // Play/Pause button
           _buildPlayPauseButton(),
-          const SizedBox(width: 12),
+          const SizedBox(width: KDesignConstants.spacing12),
 
           // Stop button (only show when playing/paused)
           if (!_ttsService.isStopped) ...[
             _buildStopButton(),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
           ],
 
           // Info text
@@ -170,7 +174,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           _ttsService.isPlaying
               ? Icons.pause_rounded
               : Icons.play_arrow_rounded,
-          color: Colors.white,
+          color: KAppColors.darkOnBackground,
           size: 28,
         ),
         padding: EdgeInsets.zero,
@@ -203,7 +207,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
       ),
       child: InkWell(
         onTap: _showSpeedDialog,
@@ -215,7 +219,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
               size: 16,
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: KDesignConstants.spacing4),
             Text(
               _getSpeedText(),
               style: KAppTextStyles.labelSmall.copyWith(
@@ -262,7 +266,7 @@ class _SpeedControlSheetState extends State<_SpeedControlSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: KDesignConstants.paddingLg,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -275,7 +279,7 @@ class _SpeedControlSheetState extends State<_SpeedControlSheet> {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           // Title
           Text(
@@ -285,7 +289,7 @@ class _SpeedControlSheetState extends State<_SpeedControlSheet> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
 
           // Current speed display
           Text(
@@ -295,7 +299,7 @@ class _SpeedControlSheetState extends State<_SpeedControlSheet> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           // Speed slider
           Row(
@@ -328,7 +332,7 @@ class _SpeedControlSheetState extends State<_SpeedControlSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
 
           // Preset speed buttons
           Wrap(
@@ -344,7 +348,7 @@ class _SpeedControlSheetState extends State<_SpeedControlSheet> {
               _buildPresetButton(context, '2.0x', 1.0),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
       ),
     );
@@ -364,13 +368,13 @@ class _SpeedControlSheetState extends State<_SpeedControlSheet> {
           color: isSelected
               ? KAppColors.getPrimary(context)
               : KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: KBorderRadius.xl,
         ),
         child: Text(
           label,
           style: KAppTextStyles.labelMedium.copyWith(
             color: isSelected
-                ? Colors.white
+                ? KAppColors.darkOnBackground
                 : KAppColors.getOnBackground(context).withValues(alpha: 0.7),
             fontWeight: FontWeight.w600,
           ),
@@ -406,7 +410,7 @@ class CompactAudioPlayer extends StatelessWidget {
             color: KAppColors.getPrimary(context),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: KAppColors.darkBackground.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, -2),
               ),
@@ -416,15 +420,15 @@ class CompactAudioPlayer extends StatelessWidget {
             children: [
               Icon(
                 Icons.headphones_rounded,
-                color: Colors.white.withValues(alpha: 0.9),
+                color: KAppColors.darkOnBackground.withValues(alpha: 0.9),
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: Text(
                   ttsService.isPlaying ? 'Playing article...' : 'Paused',
                   style: KAppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white,
+                    color: KAppColors.darkOnBackground,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -441,7 +445,7 @@ class CompactAudioPlayer extends StatelessWidget {
                   ttsService.isPlaying
                       ? Icons.pause_rounded
                       : Icons.play_arrow_rounded,
-                  color: Colors.white,
+                  color: KAppColors.darkOnBackground,
                 ),
               ),
               IconButton(
@@ -450,7 +454,7 @@ class CompactAudioPlayer extends StatelessWidget {
                 },
                 icon: const Icon(
                   Icons.close_rounded,
-                  color: Colors.white,
+                  color: KAppColors.darkOnBackground,
                 ),
               ),
             ],

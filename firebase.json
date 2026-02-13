@@ -1,1 +1,34 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"the-news-5fe12","appId":"1:561796194986:android:304298ea958d0c4b3c66d3","fileOutput":"android/app/google-services.json"}},"ios":{"default":{"projectId":"the-news-5fe12","appId":"1:561796194986:ios:f1c8e861a7cc92fd3c66d3","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"the-news-5fe12","configurations":{"android":"1:561796194986:android:304298ea958d0c4b3c66d3","ios":"1:561796194986:ios:f1c8e861a7cc92fd3c66d3"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "the-news-5fe12",
+          "appId": "1:561796194986:android:304298ea958d0c4b3c66d3",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "the-news-5fe12",
+          "appId": "1:561796194986:ios:f1c8e861a7cc92fd3c66d3",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "the-news-5fe12",
+          "configurations": {
+            "android": "1:561796194986:android:304298ea958d0c4b3c66d3",
+            "ios": "1:561796194986:ios:f1c8e861a7cc92fd3c66d3"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

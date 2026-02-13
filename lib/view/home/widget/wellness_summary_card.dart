@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/database_service.dart';
 
@@ -63,11 +64,11 @@ class _WellnessSummaryCardState extends State<WellnessSummaryCard> {
 
   Color _getWellnessColor() {
     if (_articlesReadToday >= 10) {
-      return const Color(0xFFFFB8B8); // Soft red - warning
+      return KAppColors.error;
     } else if (_articlesReadToday >= 5) {
-      return KAppColors.secondary; // Yellow - moderate
+      return KAppColors.warning;
     } else {
-      return const Color(0xFF4CAF50); // Green - good
+      return KAppColors.success;
     }
   }
 
@@ -81,17 +82,10 @@ class _WellnessSummaryCardState extends State<WellnessSummaryCard> {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            wellnessColor.withValues(alpha: 0.12),
-            wellnessColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: wellnessColor.withValues(alpha: 0.1),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
           color: wellnessColor.withValues(alpha: 0.25),
           width: 1,
@@ -103,10 +97,10 @@ class _WellnessSummaryCardState extends State<WellnessSummaryCard> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: KDesignConstants.paddingSm,
                 decoration: BoxDecoration(
                   color: wellnessColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                 ),
                 child: Icon(
                   Icons.favorite_outline,
@@ -114,7 +108,7 @@ class _WellnessSummaryCardState extends State<WellnessSummaryCard> {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +134,7 @@ class _WellnessSummaryCardState extends State<WellnessSummaryCard> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Row(
             children: [
               Expanded(
@@ -148,25 +142,25 @@ class _WellnessSummaryCardState extends State<WellnessSummaryCard> {
                   icon: Icons.article_outlined,
                   value: '$_articlesReadToday',
                   label: 'Read Today',
-                  color: KAppColors.primary,
+                  color: KAppColors.getPrimary(context),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: _buildStat(
                   icon: Icons.schedule_outlined,
                   value: '${_readingTimeToday}m',
                   label: 'Time Spent',
-                  color: KAppColors.tertiary,
+                  color: KAppColors.getTertiary(context),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: _buildStat(
                   icon: Icons.local_fire_department_outlined,
                   value: '$_currentStreak',
                   label: 'Day Streak',
-                  color: const Color(0xFFFFD4A3),
+                  color: KAppColors.warning,
                 ),
               ),
             ],
@@ -183,7 +177,7 @@ class _WellnessSummaryCardState extends State<WellnessSummaryCard> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: KDesignConstants.paddingSm,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(14),

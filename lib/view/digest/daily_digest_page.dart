@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/daily_digest_service.dart';
 import 'package:the_news/view/digest/widgets/digest_card.dart';
 import 'package:the_news/view/digest/widgets/digest_empty_state.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 import 'package:the_news/view/digest/digest_reader_page.dart';
 import 'package:the_news/view/digest/digest_settings_page.dart';
 
@@ -30,7 +32,10 @@ class _DailyDigestPageState extends State<DailyDigestPage> {
 
   Future<void> _initialize() async {
     if (_digestService.digests.isEmpty) {
-      await _digestService.initialize();
+      await _digestService.initializeForUser(widget.userId);
+      if (mounted) {
+        setState(() {});
+      }
     }
   }
 
@@ -77,13 +82,7 @@ class _DailyDigestPageState extends State<DailyDigestPage> {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: KAppColors.getOnBackground(context),
-            ),
-          ),
+          const AppBackButton(),
           const SizedBox(width: 5),
           Expanded(
             child: Column(
@@ -97,7 +96,7 @@ class _DailyDigestPageState extends State<DailyDigestPage> {
                     fontSize: 22
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: KDesignConstants.spacing4),
                 Text(
                   'AI-powered personalized news summaries',
                   style: KAppTextStyles.bodySmall.copyWith(
@@ -138,7 +137,7 @@ class _DailyDigestPageState extends State<DailyDigestPage> {
                 CircularProgressIndicator(
                   color: KAppColors.getPrimary(context),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: KDesignConstants.spacing16),
                 Text(
                   'Generating your digest...',
                   style: KAppTextStyles.bodyMedium.copyWith(
@@ -159,7 +158,7 @@ class _DailyDigestPageState extends State<DailyDigestPage> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => _digestService.generateDigest(widget.userId),
+          onRefresh: () => _digestService.syncFromBackend(widget.userId),
           color: KAppColors.getPrimary(context),
           child: ListView.builder(
             padding: const EdgeInsets.all(20),
@@ -198,7 +197,10 @@ class _DailyDigestPageState extends State<DailyDigestPage> {
                     );
 
                     if (confirm == true) {
-                      await _digestService.deleteDigest(digest.digestId);
+                      await _digestService.deleteDigest(
+                        digest.digestId,
+                        userId: widget.userId,
+                      );
                     }
                   },
                 ),
@@ -219,10 +221,10 @@ class _DailyDigestPageState extends State<DailyDigestPage> {
         return FloatingActionButton.extended(
           onPressed: _generateDigest,
           backgroundColor: KAppColors.getPrimary(context),
-          icon: const Icon(Icons.auto_awesome, color: Colors.white),
+          icon: const Icon(Icons.auto_awesome, color: KAppColors.darkOnBackground),
           label: Text(
             _digestService.hasTodayDigest ? 'Regenerate' : 'Generate Today',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(color: KAppColors.darkOnBackground, fontWeight: FontWeight.bold),
           ),
         );
       },

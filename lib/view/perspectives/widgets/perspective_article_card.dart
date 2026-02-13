@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/model/story_cluster_model.dart';
 import 'package:the_news/view/perspectives/widgets/source_credibility_sheet.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 /// Card displaying an article in perspective comparison view
 class PerspectiveArticleCard extends StatelessWidget {
@@ -25,7 +27,7 @@ class PerspectiveArticleCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: KAppColors.getBackground(context),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: KBorderRadius.md,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           ),
@@ -40,7 +42,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
                 ),
-                child: Image.network(
+                child: SafeNetworkImage(
                   article.imageUrl!,
                   height: 160,
                   width: double.infinity,
@@ -52,7 +54,7 @@ class PerspectiveArticleCard extends StatelessWidget {
 
             // Content
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -62,7 +64,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                       if (article.sourceIcon.isNotEmpty) ...[
                         ClipRRect(
                           borderRadius: BorderRadius.circular(4),
-                          child: Image.network(
+                          child: SafeNetworkImage(
                             article.sourceIcon,
                             width: 20,
                             height: 20,
@@ -71,7 +73,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                               const SizedBox.shrink(),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: KDesignConstants.spacing8),
                       ],
                       Expanded(
                         child: Text(
@@ -85,7 +87,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                       _buildCredibilityBadge(context, credibility),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: KDesignConstants.spacing12),
 
                   // Title
                   Text(
@@ -97,7 +99,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: KDesignConstants.spacing8),
 
                   // Description
                   Text(
@@ -108,7 +110,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: KDesignConstants.spacing12),
 
                   // Metadata
                   Row(
@@ -118,7 +120,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                         size: 14,
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: KDesignConstants.spacing4),
                       Text(
                         timeago.format(article.pubDate),
                         style: KAppTextStyles.bodySmall.copyWith(
@@ -126,7 +128,7 @@ class PerspectiveArticleCard extends StatelessWidget {
                           fontSize: 11,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: KDesignConstants.spacing12),
                       _buildSentimentIndicator(context, article.sentiment),
                     ],
                   ),
@@ -163,7 +165,7 @@ class PerspectiveArticleCard extends StatelessWidget {
               size: 12,
               color: color,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: KDesignConstants.spacing4),
             Text(
               credibility.credibilityRating,
               style: KAppTextStyles.labelSmall.copyWith(
@@ -179,10 +181,10 @@ class PerspectiveArticleCard extends StatelessWidget {
   }
 
   Color _getCredibilityColor(double score) {
-    if (score >= 0.8) return const Color(0xFF4CAF50); // Green
-    if (score >= 0.6) return const Color(0xFF2196F3); // Blue
-    if (score >= 0.4) return const Color(0xFFFF9800); // Orange
-    return const Color(0xFFF44336); // Red
+    if (score >= 0.8) return KAppColors.success;
+    if (score >= 0.6) return KAppColors.info;
+    if (score >= 0.4) return KAppColors.warning;
+    return KAppColors.error;
   }
 
   IconData _getCredibilityIcon(double score) {
@@ -199,15 +201,15 @@ class PerspectiveArticleCard extends StatelessWidget {
     switch (sentiment.toLowerCase()) {
       case 'positive':
         icon = Icons.sentiment_satisfied;
-        color = const Color(0xFF4CAF50);
+        color = KAppColors.success;
         break;
       case 'negative':
         icon = Icons.sentiment_dissatisfied;
-        color = const Color(0xFFF44336);
+        color = KAppColors.error;
         break;
       default:
         icon = Icons.sentiment_neutral;
-        color = const Color(0xFF9E9E9E);
+        color = KAppColors.getOnBackground(context).withValues(alpha: 0.5);
     }
 
     return Tooltip(

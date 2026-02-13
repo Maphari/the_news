@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/service/social_sharing_service.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/service/engagement_service.dart';
 import 'package:the_news/service/saved_articles_service.dart';
-import 'package:the_news/view/comments/comments_page.dart';
 
 class ActionButtons extends StatefulWidget {
   const ActionButtons({
@@ -32,7 +32,6 @@ class _ActionButtonsState extends State<ActionButtons> {
   @override
   void initState() {
     super.initState();
-    // Listen to service changes to update UI reactively
     _engagementService.addListener(_onEngagementChanged);
     _savedArticlesService.addListener(_onSavedArticlesChanged);
   }
@@ -100,6 +99,7 @@ class _ActionButtonsState extends State<ActionButtons> {
       await _savedArticlesService.saveArticle(
         widget.user.userId,
         widget.article.articleId,
+        article: widget.article,
       );
     }
 
@@ -109,14 +109,7 @@ class _ActionButtonsState extends State<ActionButtons> {
   }
 
   Future<void> _handleShare() async {
-    try {
-      await Share.share(
-        '${widget.article.title}\n\n${widget.article.description}\n\nRead more: ${widget.article.link}',
-        subject: widget.article.title,
-      );
-    } catch (e) {
-      // Handle share error silently
-    }
+    await SocialSharingService.instance.showShareDialog(context, widget.article);
   }
 
   @override
@@ -124,55 +117,34 @@ class _ActionButtonsState extends State<ActionButtons> {
     final isLiked = _engagementService.isArticleLiked(widget.article.articleId);
     final isSaved = _savedArticlesService.isArticleSaved(widget.article.articleId);
 
-    // Get engagement counts
-    final likeCount = _engagementService.getLikeCount(widget.article.articleId);
-    final commentCount = _engagementService.getCommentCount(widget.article.articleId);
-    final shareCount = _engagementService.getShareCount(widget.article.articleId);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        _ActionButton(
-          icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-          isActive: isLiked,
-          isLoading: _isLiking,
-          onTap: _handleLike,
-          buttonColor: widget.buttonColor,
-          count: likeCount,
-        ),
-        const SizedBox(width: 8),
-        _ActionButton(
-          icon: Icons.comment_outlined,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CommentsPage(
-                  article: widget.article,
-                  user: widget.user,
-                ),
-              ),
-            );
-          },
-          buttonColor: widget.buttonColor,
-          count: commentCount,
-        ),
-        const SizedBox(width: 8),
-        _ActionButton(
-          icon: Icons.share_outlined,
-          onTap: _handleShare,
-          buttonColor: widget.buttonColor,
-          count: shareCount,
-        ),
-        const SizedBox(width: 8),
-        _ActionButton(
-          icon: isSaved ? Icons.bookmark : Icons.bookmark_outline,
-          isActive: isSaved,
-          isLoading: _isSaving,
-          onTap: _handleSave,
-          buttonColor: widget.buttonColor,
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4, top: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _ActionButton(
+            icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+            isActive: isLiked,
+            isLoading: _isLiking,
+            onTap: _handleLike,
+            buttonColor: widget.buttonColor,
+          ),
+          const SizedBox(width: KDesignConstants.spacing8),
+          _ActionButton(
+            icon: isSaved ? Icons.bookmark : Icons.bookmark_outline,
+            isActive: isSaved,
+            isLoading: _isSaving,
+            onTap: _handleSave,
+            buttonColor: widget.buttonColor,
+          ),
+          const SizedBox(width: KDesignConstants.spacing8),
+          _ActionButton(
+            icon: Icons.share_outlined,
+            onTap: _handleShare,
+            buttonColor: widget.buttonColor,
+          ),
+        ],
+      ),
     );
   }
 }
@@ -184,7 +156,6 @@ class _ActionButton extends StatelessWidget {
     this.isLoading = false,
     required this.onTap,
     this.buttonColor,
-    this.count,
   });
 
   final IconData icon;
@@ -192,17 +163,6 @@ class _ActionButton extends StatelessWidget {
   final bool isLoading;
   final VoidCallback onTap;
   final Color? buttonColor;
-  final int? count;
-
-  String _formatCount(int count) {
-    if (count >= 1000000) {
-      return '${(count / 1000000).toStringAsFixed(1)}M';
-    } else if (count >= 1000) {
-      return '${(count / 1000).toStringAsFixed(1)}K';
-    } else {
-      return count.toString();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -210,47 +170,42 @@ class _ActionButton extends StatelessWidget {
 
     return GestureDetector(
       onTap: isLoading ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
-          color: isActive
-            ? baseColor.withValues(alpha: 0.3)
-            : baseColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          color: baseColor.withValues(alpha: 0.08),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.black.withOpacity(0.08),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            isLoading
+        child: Center(
+          child: isLoading
               ? SizedBox(
-                  width: 20,
-                  height: 20,
+                  width: 18,
+                  height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(baseColor.withValues(alpha: 0.6)),
+                    valueColor: AlwaysStoppedAnimation(
+                      Colors.black.withOpacity(0.5),
+                    ),
                   ),
                 )
               : Icon(
                   icon,
-                  color: isActive
-                    ? baseColor.withValues(alpha: 0.9)
-                    : baseColor.withValues(alpha: 0.6),
-                  size: 20,
+                  color: const Color(0xFF764C14),
+                  size: 22,
                 ),
-            if (count != null && count! > 0) ...[
-              const SizedBox(width: 4),
-              Text(
-                _formatCount(count!),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isActive
-                    ? baseColor.withValues(alpha: 0.9)
-                    : baseColor.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ],
         ),
       ),
     );

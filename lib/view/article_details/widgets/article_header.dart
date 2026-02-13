@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 class ArticleHeader extends StatelessWidget {
   const ArticleHeader({
@@ -18,36 +20,19 @@ class ArticleHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       child: Row(
         children: [
-          GestureDetector(
-            onTap: onBackPressed,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
-                ),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new,
-                color: KAppColors.getOnBackground(context),
-                size: 20,
-              ),
-            ),
-          ),
+          AppBackButton(onTap: onBackPressed),
           const Spacer(),
           if (onLibraryPressed != null) ...[
             GestureDetector(
               onTap: onLibraryPressed,
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.paddingSm,
                 decoration: BoxDecoration(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   border: Border.all(
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
                   ),
@@ -59,16 +44,16 @@ class ArticleHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
           ],
           if (onPreferencesPressed != null) ...[
             GestureDetector(
               onTap: onPreferencesPressed,
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.paddingSm,
                 decoration: BoxDecoration(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   border: Border.all(
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
                   ),
@@ -80,15 +65,15 @@ class ArticleHeader extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
           ],
           GestureDetector(
             onTap: onSharePressed,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: KDesignConstants.paddingSm,
               decoration: BoxDecoration(
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
                 border: Border.all(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
                 ),

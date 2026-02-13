@@ -60,6 +60,8 @@ export interface ShareArticleRequest {
   userId: string;
   articleId: string;
   platform?: string;
+  shareToFeed?: boolean;
+  forceReshare?: boolean;
 }
 
 /**

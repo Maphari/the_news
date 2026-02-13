@@ -1,8 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide MeasuredPinnedHeaderSliver;
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 import 'package:the_news/view/home/widget/home_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/service/experience_service.dart';
 
 class BreakReminderSettingsPage extends StatefulWidget {
   const BreakReminderSettingsPage({super.key});
@@ -12,6 +16,8 @@ class BreakReminderSettingsPage extends StatefulWidget {
 }
 
 class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
+  final ExperienceService _experienceService = ExperienceService.instance;
+  final AuthService _authService = AuthService.instance;
   bool _breakRemindersEnabled = true;
   double _firstReminderMinutes = 15;
   double _secondReminderMinutes = 20;
@@ -27,6 +33,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final user = await _authService.getCurrentUser();
     setState(() {
       _breakRemindersEnabled = prefs.getBool('breakRemindersEnabled') ?? true;
       _firstReminderMinutes = prefs.getDouble('firstReminderMinutes') ?? 15;
@@ -35,16 +42,42 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
       _vibrationEnabled = prefs.getBool('breakVibrationEnabled') ?? true;
       _soundEnabled = prefs.getBool('breakSoundEnabled') ?? false;
     });
+
+    final userId = (user?['id'] ?? user?['userId'])?.toString();
+    if (userId == null || userId.isEmpty) return;
+
+    final remote = await _experienceService.fetchWellnessSettings(userId);
+    if (remote == null || !mounted) return;
+
+    final breakEnabled = remote['breakReminderEnabled'] == true;
+    final breakMinutes = (remote['breakIntervalMinutes'] as num?)?.toDouble();
+    setState(() {
+      _breakRemindersEnabled = breakEnabled;
+      if (breakMinutes != null && breakMinutes >= 5) {
+        _firstReminderMinutes = breakMinutes.clamp(5, 30);
+        _secondReminderMinutes = (_firstReminderMinutes + 5).clamp(6, 45);
+        _urgentReminderMinutes = (_secondReminderMinutes + 5).clamp(10, 60);
+      }
+    });
   }
 
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
+    final user = await _authService.getCurrentUser();
     await prefs.setBool('breakRemindersEnabled', _breakRemindersEnabled);
     await prefs.setDouble('firstReminderMinutes', _firstReminderMinutes);
     await prefs.setDouble('secondReminderMinutes', _secondReminderMinutes);
     await prefs.setDouble('urgentReminderMinutes', _urgentReminderMinutes);
     await prefs.setBool('breakVibrationEnabled', _vibrationEnabled);
     await prefs.setBool('breakSoundEnabled', _soundEnabled);
+
+    final userId = (user?['id'] ?? user?['userId'])?.toString();
+    if (userId != null && userId.isNotEmpty) {
+      await _experienceService.updateWellnessSettings(userId, {
+        'breakReminderEnabled': _breakRemindersEnabled,
+        'breakIntervalMinutes': _firstReminderMinutes.round(),
+      });
+    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -67,38 +100,22 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
         body: SafeArea(
           child: CustomScrollView(
             slivers: [
-              // Header with back button
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: KAppColors.getOnBackground(context),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Break Reminders',
-                        style: KAppTextStyles.headlineMedium.copyWith(
-                          color: KAppColors.getOnBackground(context),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
+              MeasuredPinnedHeaderSliver(
+                height: HomeHeader.estimatedHeight(
+                  title: 'Break Reminders',
+                  subtitle:
+                      'Configure break reminder intervals for mindful reading',
+                  bottom: 20,
+                  subtitleMaxLines: 1,
                 ),
-              ),
-
-              SliverToBoxAdapter(
                 child: HomeHeader(
-                  title: '',
+                  title: 'Break Reminders',
                   subtitle: 'Configure break reminder intervals for mindful reading',
                   showActions: false,
                   bottom: 20,
+                  subtitleMaxLines: 1,
+                  leading: const AppBackButton(),
+                  useSafeArea: false,
                 ),
               ),
 
@@ -107,10 +124,10 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: KDesignConstants.paddingMd,
                     decoration: BoxDecoration(
                       color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: KBorderRadius.lg,
                       border: Border.all(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                       ),
@@ -122,7 +139,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                           height: 48,
                           decoration: BoxDecoration(
                             color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: KBorderRadius.md,
                           ),
                           child: Icon(
                             Icons.notifications_active,
@@ -130,7 +147,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                             size: 24,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: KDesignConstants.spacing16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,10 +209,10 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4CAF50).withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
+                        color: KAppColors.success.withValues(alpha: 0.05),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
-                          color: const Color(0xFF4CAF50).withValues(alpha: 0.1),
+                          color: KAppColors.success.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Column(
@@ -204,18 +221,18 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: KDesignConstants.paddingSm,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                                  color: KAppColors.success.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(
                                   Icons.self_improvement_outlined,
-                                  color: Color(0xFF4CAF50),
+                                  color: KAppColors.success,
                                   size: 20,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: KDesignConstants.spacing12),
                               Text(
                                 'Gentle Reminder',
                                 style: KAppTextStyles.titleMedium.copyWith(
@@ -225,7 +242,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: KDesignConstants.spacing16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -238,7 +255,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                               Text(
                                 '${_firstReminderMinutes.round()} minutes',
                                 style: KAppTextStyles.titleMedium.copyWith(
-                                  color: const Color(0xFF4CAF50),
+                                  color: KAppColors.success,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -249,7 +266,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                             min: 5,
                             max: 30,
                             divisions: 25,
-                            activeColor: const Color(0xFF4CAF50),
+                            activeColor: KAppColors.success,
                             onChanged: (value) {
                               setState(() {
                                 _firstReminderMinutes = value;
@@ -277,10 +294,10 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFC107).withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
+                        color: KAppColors.warning.withValues(alpha: 0.05),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
-                          color: const Color(0xFFFFC107).withValues(alpha: 0.1),
+                          color: KAppColors.warning.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Column(
@@ -289,18 +306,18 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: KDesignConstants.paddingSm,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFC107).withValues(alpha: 0.15),
+                                  color: KAppColors.warning.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(
                                   Icons.schedule_outlined,
-                                  color: Color(0xFFFFC107),
+                                  color: KAppColors.warning,
                                   size: 20,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: KDesignConstants.spacing12),
                               Text(
                                 'Strong Reminder',
                                 style: KAppTextStyles.titleMedium.copyWith(
@@ -310,7 +327,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: KDesignConstants.spacing16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -323,7 +340,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                               Text(
                                 '${_secondReminderMinutes.round()} minutes',
                                 style: KAppTextStyles.titleMedium.copyWith(
-                                  color: const Color(0xFFFFC107),
+                                  color: KAppColors.warning,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -334,7 +351,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                             min: _firstReminderMinutes + 1,
                             max: 45,
                             divisions: (45 - (_firstReminderMinutes + 1)).round(),
-                            activeColor: const Color(0xFFFFC107),
+                            activeColor: KAppColors.warning,
                             onChanged: (value) {
                               setState(() {
                                 _secondReminderMinutes = value;
@@ -359,10 +376,10 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6B6B).withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
+                        color: KAppColors.error.withValues(alpha: 0.05),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
-                          color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
+                          color: KAppColors.error.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Column(
@@ -371,18 +388,18 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                padding: KDesignConstants.paddingSm,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFF6B6B).withValues(alpha: 0.15),
+                                  color: KAppColors.error.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Icon(
                                   Icons.warning_amber_rounded,
-                                  color: Color(0xFFFF6B6B),
+                                  color: KAppColors.error,
                                   size: 20,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: KDesignConstants.spacing12),
                               Text(
                                 'Urgent Reminder',
                                 style: KAppTextStyles.titleMedium.copyWith(
@@ -392,7 +409,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: KDesignConstants.spacing16),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -405,7 +422,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                               Text(
                                 '${_urgentReminderMinutes.round()} minutes',
                                 style: KAppTextStyles.titleMedium.copyWith(
-                                  color: const Color(0xFFFF6B6B),
+                                  color: KAppColors.error,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -416,7 +433,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                             min: _secondReminderMinutes + 1,
                             max: 60,
                             divisions: (60 - (_secondReminderMinutes + 1)).round(),
-                            activeColor: const Color(0xFFFF6B6B),
+                            activeColor: KAppColors.error,
                             onChanged: (value) {
                               setState(() {
                                 _urgentReminderMinutes = value;
@@ -451,10 +468,10 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: KBorderRadius.md,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -466,7 +483,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                             color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                             size: 24,
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Text(
                               'Vibration',
@@ -497,10 +514,10 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: KBorderRadius.md,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -512,7 +529,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                             color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                             size: 24,
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Text(
                               'Sound',
@@ -543,10 +560,10 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getPrimary(context).withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
                         ),
@@ -559,7 +576,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
                             color: KAppColors.getPrimary(context),
                             size: 24,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: KDesignConstants.spacing12),
                           Expanded(
                             child: Text(
                               'Break reminders help you maintain a healthy reading habit by encouraging regular pauses. Taking short breaks improves focus and reduces mental fatigue.',
@@ -578,7 +595,7 @@ class _BreakReminderSettingsPageState extends State<BreakReminderSettingsPage> {
 
               // Bottom spacing
               const SliverToBoxAdapter(
-                child: SizedBox(height: 40),
+                child: SizedBox(height: KDesignConstants.spacing40),
               ),
             ],
           ),

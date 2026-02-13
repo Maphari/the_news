@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/location_service.dart';
+import 'package:the_news/service/news_api_service.dart';
+import 'package:the_news/service/news_provider_service.dart';
+import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/service/user_preferences_sync_service.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
+import 'package:the_news/view/widgets/app_search_bar.dart';
 
 /// Page for selecting preferred countries for news
 class CountrySelectionPage extends StatefulWidget {
@@ -13,8 +21,30 @@ class CountrySelectionPage extends StatefulWidget {
 
 class _CountrySelectionPageState extends State<CountrySelectionPage> {
   final LocationService _locationService = LocationService.instance;
+  final AuthService _authService = AuthService();
+  final UserPreferencesSyncService _preferencesSync = UserPreferencesSyncService.instance;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String? _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserAndSync();
+  }
+
+  Future<void> _loadUserAndSync() async {
+    final userData = await _authService.getCurrentUser();
+    final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
+    if (userId == null) return;
+
+    _userId = userId;
+    await _preferencesSync.forceSyncFromRemote(userId);
+    await _locationService.reloadPreferences();
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   // Comprehensive list of countries
   static const List<Map<String, String>> _countries = [
@@ -84,28 +114,29 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
     if (!mounted) return;
 
     if (success) {
+      await _syncPreferences();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.location_on, color: Colors.white),
-              const SizedBox(width: 12),
+              Icon(Icons.location_on, color: KAppColors.getOnPrimary(context)),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: Text(
                   'Location detected: ${_locationService.currentCountry}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: KAppColors.getOnPrimary(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          backgroundColor: const Color(0xFF10B981),
+          backgroundColor: KAppColors.success,
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
           ),
         ),
       );
@@ -114,28 +145,28 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 12),
+              Icon(Icons.error_outline, color: KAppColors.getOnPrimary(context)),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: Text(
                   _locationService.error ?? 'Failed to detect location',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: KAppColors.getOnPrimary(context),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          backgroundColor: const Color(0xFFEF4444),
+          backgroundColor: KAppColors.error,
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
           ),
           action: SnackBarAction(
             label: 'Settings',
-            textColor: Colors.white,
+            textColor: KAppColors.getOnPrimary(context),
             onPressed: () => _locationService.openAppSettings(),
           ),
         ),
@@ -143,11 +174,57 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
     }
   }
 
-  void _toggleCountry(String countryName) {
+  Future<void> _toggleCountry(String countryName) async {
     if (_locationService.isCountryPreferred(countryName)) {
-      _locationService.removePreferredCountry(countryName);
+      await _locationService.removePreferredCountry(countryName);
     } else {
-      _locationService.addPreferredCountry(countryName);
+      await _locationService.addPreferredCountry(countryName);
+    }
+    await _syncPreferences();
+    // Refresh feeds with new country filter and avoid stale cache.
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Updating news feed...'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+    await NewsApiService.instance.clearCache();
+    await NewsProviderService.instance.refresh();
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('News feed updated'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _syncPreferences() async {
+    if (_userId == null) return;
+    await _preferencesSync.updatePreference(
+      _userId!,
+      'preferredCountries',
+      _locationService.preferredCountries,
+    );
+    if (_locationService.currentCountry != null) {
+      await _preferencesSync.updatePreference(
+        _userId!,
+        'currentCountry',
+        _locationService.currentCountry!,
+      );
+    }
+    if (_locationService.currentCountryCode != null) {
+      await _preferencesSync.updatePreference(
+        _userId!,
+        'currentCountryCode',
+        _locationService.currentCountryCode!,
+      );
     }
   }
 
@@ -157,16 +234,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
       backgroundColor: KAppColors.getBackground(context),
       child: Scaffold(
         backgroundColor: KAppColors.getBackground(context),
-        appBar: AppBar(
-          backgroundColor: KAppColors.getBackground(context),
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(
-              Icons.arrow_back,
-              color: KAppColors.getOnBackground(context),
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
+        appBar: KAppBar(
           title: Text(
             'Country Preferences',
             style: KAppTextStyles.titleLarge.copyWith(
@@ -174,23 +242,20 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-        ),
+          backgroundColor: KAppColors.getBackground(context),
+          elevation: 0,
+          leading: AppBackButton(onPressed: () => Navigator.pop(context),),
+            ),
+          
         body: Column(
           children: [
             // Location Detection Card
             Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(16),
+              margin: KDesignConstants.paddingMd,
+              padding: KDesignConstants.paddingMd,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    KAppColors.getPrimary(context).withValues(alpha: 0.1),
-                    KAppColors.getPrimary(context).withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
+                color: KAppColors.getPrimary(context).withValues(alpha: 0.08),
+                borderRadius: KBorderRadius.lg,
                 border: Border.all(
                   color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
                 ),
@@ -213,7 +278,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                           size: 20,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: KDesignConstants.spacing12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +304,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: KDesignConstants.spacing12),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -250,7 +315,9 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  KAppColors.getOnPrimary(context),
+                                ),
                               ),
                             )
                           : const Icon(Icons.location_searching),
@@ -259,10 +326,10 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: KAppColors.getPrimary(context),
-                        foregroundColor: Colors.white,
+                        foregroundColor: KAppColors.getOnPrimary(context),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: KBorderRadius.md,
                         ),
                       ),
                     ),
@@ -273,41 +340,14 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
 
             // Search Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
+              padding: KDesignConstants.paddingHorizontalMd,
+              child: AppSearchBar(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
-                decoration: InputDecoration(
-                  hintText: 'Search countries...',
-                  hintStyle: TextStyle(
-                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-                  ),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: Icon(
-                            Icons.clear,
-                            color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-                          ),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                      : null,
-                  filled: true,
-                  fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+                hintText: 'Search countries...',
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
 
             // Selected Countries Count
             Padding(
@@ -328,7 +368,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: KBorderRadius.md,
                     ),
                     child: Text(
                       '${_locationService.preferredCountries.length}',
@@ -341,7 +381,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
 
             // Countries List
             Expanded(
@@ -360,7 +400,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                             size: 64,
                             color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: KDesignConstants.spacing16),
                           Text(
                             'No countries found',
                             style: KAppTextStyles.titleMedium.copyWith(
@@ -389,7 +429,7 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                           color: isSelected
                               ? KAppColors.getPrimary(context).withValues(alpha: 0.1)
                               : KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: KBorderRadius.md,
                           border: Border.all(
                             color: isSelected
                                 ? KAppColors.getPrimary(context).withValues(alpha: 0.3)
@@ -411,11 +451,11 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                                 ),
                               ),
                               if (isCurrentLocation) ...[
-                                const SizedBox(width: 8),
+                                const SizedBox(width: KDesignConstants.spacing8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                    color: KAppColors.success.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Row(
@@ -424,13 +464,13 @@ class _CountrySelectionPageState extends State<CountrySelectionPage> {
                                       const Icon(
                                         Icons.location_on,
                                         size: 10,
-                                        color: Color(0xFF10B981),
+                                        color: KAppColors.success,
                                       ),
                                       const SizedBox(width: 2),
                                       Text(
                                         'Current',
                                         style: KAppTextStyles.labelSmall.copyWith(
-                                          color: const Color(0xFF10B981),
+                                          color: KAppColors.success,
                                           fontSize: 9,
                                           fontWeight: FontWeight.w600,
                                         ),

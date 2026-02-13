@@ -5,7 +5,10 @@ import 'package:the_news/config/env_config.dart';
 import 'package:the_news/model/login_user_model.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/service/disliked_articles_service.dart';
+import 'package:the_news/service/followed_publishers_service.dart';
 import 'package:the_news/service/rememberme_service.dart';
+import 'package:the_news/service/saved_articles_service.dart';
 import 'dart:convert' as convert;
 import 'package:the_news/state/form_state.dart';
 import 'package:the_news/routes/app_routes.dart';
@@ -13,6 +16,9 @@ import 'package:the_news/view/widgets/show_message_widget.dart';
 
 final _authService = AuthService();
 final _rememberMeService = RememberMeService();
+final _followedPublishersService = FollowedPublishersService.instance;
+final _savedArticlesService = SavedArticlesService.instance;
+final _dislikedArticlesService = DislikedArticlesService.instance;
 final env = EnvConfig();
 final String? baseUrl = env.get('API_BASE_URL');
 
@@ -54,6 +60,10 @@ Future<bool> handleLogin({
               'lastLogin': data.lastLogin,
             },
           );
+
+          await _followedPublishersService.loadFollowedPublishers(data.userId);
+          await _savedArticlesService.loadSavedArticles(data.userId);
+          await _dislikedArticlesService.loadDislikedArticles(data.userId);
 
           if (!context.mounted) return false;
           successMessage(context: context, message: data.message);

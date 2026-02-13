@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class CategoryPieChart extends StatelessWidget {
@@ -24,12 +26,12 @@ class CategoryPieChart extends StatelessWidget {
                 size: 64,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: KDesignConstants.spacing16),
               Text(
                 'No reading data yet',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: KDesignConstants.spacing8),
               Text(
                 'Start reading articles to see your category distribution',
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -50,17 +52,17 @@ class CategoryPieChart extends StatelessWidget {
 
     // Colors for pie chart
     final colors = [
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.red,
-      Colors.teal,
+      Theme.of(context).colorScheme.primary,
+      Theme.of(context).colorScheme.secondary,
+      Theme.of(context).colorScheme.tertiary,
+      KAppColors.blue,
+      KAppColors.green,
+      KAppColors.orange,
     ];
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.cardPadding,
         child: Column(
           children: [
             SizedBox(
@@ -77,10 +79,10 @@ class CategoryPieChart extends StatelessWidget {
                       value: category.value.toDouble(),
                       title: '${percentage.toStringAsFixed(0)}%',
                       radius: 100,
-                      titleStyle: const TextStyle(
+                      titleStyle: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onPrimary,
                       ),
                     );
                   }).toList(),
@@ -89,10 +91,10 @@ class CategoryPieChart extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
             Wrap(
-              spacing: 12,
-              runSpacing: 8,
+              spacing: KDesignConstants.spacing12,
+              runSpacing: KDesignConstants.spacing8,
               alignment: WrapAlignment.center,
               children: topCategories.asMap().entries.map((entry) {
                 final index = entry.key;
@@ -124,7 +126,7 @@ class CategoryPieChart extends StatelessWidget {
             shape: BoxShape.circle,
           ),
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: KDesignConstants.spacing4),
         Text(
           '$label ($count)',
           style: Theme.of(context).textTheme.bodySmall,

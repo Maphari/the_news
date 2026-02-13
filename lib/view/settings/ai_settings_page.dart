@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/ai_service.dart';
+import 'package:the_news/core/network/api_client.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 /// Page for configuring AI integration settings
 class AISettingsPage extends StatefulWidget {
@@ -13,6 +17,7 @@ class AISettingsPage extends StatefulWidget {
 
 class _AISettingsPageState extends State<AISettingsPage> {
   final AIService _aiService = AIService.instance;
+  final ApiClient _api = ApiClient.instance;
   final TextEditingController _githubController = TextEditingController();
   final TextEditingController _openaiController = TextEditingController();
   final TextEditingController _geminiController = TextEditingController();
@@ -20,6 +25,11 @@ class _AISettingsPageState extends State<AISettingsPage> {
 
   AIProvider _selectedProvider = AIProvider.none;
   bool _isLoading = true;
+  bool _proxyEnabled = false;
+  Map<String, dynamic>? _aiMetadata;
+  bool _proxyHealthy = false;
+  List<String> _proxyProviders = [];
+  String? _proxyHealthMessage;
 
   @override
   void initState() {
@@ -47,16 +57,71 @@ class _AISettingsPageState extends State<AISettingsPage> {
       _geminiController.text = prefs.getString('ai_gemini_key') ?? '';
       _claudeController.text = prefs.getString('ai_claude_key') ?? '';
 
-      final providerIndex = prefs.getInt('ai_provider') ?? 0;
-      _selectedProvider = AIProvider.values[providerIndex];
+      _proxyEnabled = prefs.getBool('ai_proxy_enabled') ?? false;
+
+      final providerName = prefs.getString('ai_provider_name');
+      if (providerName != null) {
+        _selectedProvider = AIProvider.values.firstWhere(
+          (p) => p.toString().split('.').last == providerName,
+          orElse: () => AIProvider.none,
+        );
+      } else {
+        final providerIndex = prefs.getInt('ai_provider') ?? 0;
+        _selectedProvider = providerIndex < AIProvider.values.length
+            ? AIProvider.values[providerIndex]
+            : AIProvider.none;
+      }
+
+      await _loadHealth();
+      if (_proxyEnabled && !_proxyHealthy) {
+        _proxyEnabled = false;
+        if (_selectedProvider == AIProvider.proxy) {
+          _selectedProvider = AIProvider.none;
+        }
+      }
+      await _loadMetadata();
 
       // Set the selected provider
+      _aiService.setProxyEnabled(_proxyEnabled);
       _aiService.setProvider(_selectedProvider);
     } catch (e) {
       debugPrint('Error loading AI settings: $e');
     }
 
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadMetadata() async {
+    try {
+      final response = await _api.get('ai/metadata');
+      if (_api.isSuccess(response)) {
+        final data = _api.parseJson(response);
+        if (data['success'] == true) {
+          _aiMetadata = Map<String, dynamic>.from(data);
+        }
+      }
+    } catch (_) {
+      _aiMetadata = null;
+    }
+  }
+
+  Future<void> _loadHealth() async {
+    try {
+      final response = await _api.get('ai/health');
+      if (_api.isSuccess(response)) {
+        final data = _api.parseJson(response);
+        _proxyHealthy = data['success'] == true;
+        _proxyProviders =
+            (data['providers'] as List?)?.map((e) => e.toString()).toList() ?? [];
+        _proxyHealthMessage = null;
+        return;
+      }
+      _proxyHealthy = false;
+      _proxyHealthMessage = _api.getErrorMessage(response);
+    } catch (e) {
+      _proxyHealthy = false;
+      _proxyHealthMessage = e.toString();
+    }
   }
 
   Future<void> _saveSettings() async {
@@ -68,8 +133,33 @@ class _AISettingsPageState extends State<AISettingsPage> {
       await prefs.setString('ai_gemini_key', _geminiController.text);
       await prefs.setString('ai_claude_key', _claudeController.text);
       await prefs.setInt('ai_provider', _selectedProvider.index);
+      await prefs.setString(
+        'ai_provider_name',
+        _selectedProvider.toString().split('.').last,
+      );
+      await prefs.setBool('ai_proxy_enabled', _proxyEnabled);
+
+      if (_proxyEnabled && _selectedProvider == AIProvider.proxy) {
+        final healthy = await _aiService.checkProxyHealth();
+        if (!healthy) {
+          _proxyEnabled = false;
+          _selectedProvider = AIProvider.none;
+          _aiService.setProxyEnabled(false);
+          _aiService.setProvider(AIProvider.none);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('The News AI unavailable. Check backend configuration.'),
+                backgroundColor: KAppColors.error,
+              ),
+            );
+          }
+          return;
+        }
+      }
 
       // Set the selected provider
+      _aiService.setProxyEnabled(_proxyEnabled);
       _aiService.setProvider(_selectedProvider);
 
       if (mounted) {
@@ -85,7 +175,7 @@ class _AISettingsPageState extends State<AISettingsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Error saving settings'),
-            backgroundColor: Colors.red,
+            backgroundColor: KAppColors.error,
           ),
         );
       }
@@ -96,16 +186,10 @@ class _AISettingsPageState extends State<AISettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: KAppColors.getOnBackground(context),
-          ),
-        ),
+        leading: const AppBackButton(),
         title: Text(
           'AI Integration',
           style: KAppTextStyles.titleLarge.copyWith(
@@ -134,63 +218,23 @@ class _AISettingsPageState extends State<AISettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildInfoCard(),
-                  const SizedBox(height: 24),
-                  _buildProviderSelector(),
-                  const SizedBox(height: 24),
-                  // GitHub Models Section
-                  Text(
-                    'Free AI Models (GitHub)',
-                    style: KAppTextStyles.titleMedium.copyWith(
-                      color: KAppColors.getOnBackground(context),
-                      fontWeight: FontWeight.bold,
-                    ),
+                  const SizedBox(height: KDesignConstants.spacing20),
+                  _buildSectionHeader(
+                    'Connect',
+                    'Choose the simplest way to use AI.',
+                    icon: Icons.cable_rounded,
                   ),
-                  const SizedBox(height: 12),
-                  _buildApiKeySection(
-                    'GitHub Personal Access Token',
-                    _githubController,
-                    AIProvider.githubGpt4o,
-                    'Cost: FREE - Access to GPT-4o-mini, DeepSeek, Llama, Grok',
-                    'Get your PAT from github.com/settings/tokens',
+                  const SizedBox(height: KDesignConstants.spacing12),
+                  _buildProxyCard(),
+                  const SizedBox(height: KDesignConstants.spacing20),
+                  _buildSectionHeader(
+                    'Manage',
+                    'Costs, cache, and health.',
+                    icon: Icons.settings_suggest_rounded,
                   ),
-                  const SizedBox(height: 24),
-                  // Paid AI Models Section
-                  Text(
-                    'Paid AI Models',
-                    style: KAppTextStyles.titleMedium.copyWith(
-                      color: KAppColors.getOnBackground(context),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildApiKeySection(
-                    'OpenAI (GPT-4)',
-                    _openaiController,
-                    AIProvider.openai,
-                    'Cost: ~\$0.0003 per article',
-                    'Get your API key from platform.openai.com',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildApiKeySection(
-                    'Google Gemini',
-                    _geminiController,
-                    AIProvider.gemini,
-                    'Cost: ~\$0.0001 per article',
-                    'Get your API key from makersuite.google.com',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildApiKeySection(
-                    'Anthropic Claude',
-                    _claudeController,
-                    AIProvider.claude,
-                    'Cost: ~\$0.0004 per article',
-                    'Get your API key from console.anthropic.com',
-                  ),
-                  const SizedBox(height: 24),
-                  _buildCostEstimator(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: KDesignConstants.spacing12),
                   _buildCacheManager(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: KDesignConstants.spacing16),
                   _buildProviderHealthSection(),
                 ],
               ),
@@ -198,17 +242,58 @@ class _AISettingsPageState extends State<AISettingsPage> {
     );
   }
 
+  Widget _buildSectionHeader(
+    String title,
+    String subtitle, {
+    required IconData icon,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: KDesignConstants.paddingSm,
+          decoration: BoxDecoration(
+            color: KAppColors.getPrimary(context).withValues(alpha: 0.12),
+            borderRadius: KBorderRadius.md,
+          ),
+          child: Icon(
+            icon,
+            color: KAppColors.getPrimary(context),
+            size: 18,
+          ),
+        ),
+        const SizedBox(width: KDesignConstants.spacing12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: KAppTextStyles.titleMedium.copyWith(
+                  color: KAppColors.getOnBackground(context),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: KDesignConstants.spacing4),
+              Text(
+                subtitle,
+                style: KAppTextStyles.bodySmall.copyWith(
+                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildInfoCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            KAppColors.getPrimary(context).withValues(alpha: 0.1),
-            KAppColors.getPrimary(context).withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
+        color: KAppColors.getPrimary(context).withValues(alpha: 0.08),
+        borderRadius: KBorderRadius.md,
       ),
       child: Row(
         children: [
@@ -217,7 +302,7 @@ class _AISettingsPageState extends State<AISettingsPage> {
             color: KAppColors.getPrimary(context),
             size: 32,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: KDesignConstants.spacing16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +314,7 @@ class _AISettingsPageState extends State<AISettingsPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: KDesignConstants.spacing4),
                 Text(
                   'Get better summaries, key points, and insights using AI. Configure your preferred provider below.',
                   style: KAppTextStyles.bodySmall.copyWith(
@@ -244,183 +329,15 @@ class _AISettingsPageState extends State<AISettingsPage> {
     );
   }
 
-  Widget _buildProviderSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Active Provider',
-          style: KAppTextStyles.titleMedium.copyWith(
-            color: KAppColors.getOnBackground(context),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: KAppColors.getBackground(context),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-            ),
-          ),
-          child: Column(
-            children: [
-              _buildProviderOption(AIProvider.none, 'None (Algorithm Only)', 'Free'),
-              _buildDivider(),
-              _buildProviderOption(AIProvider.githubGpt4o, 'GitHub GPT-4o-mini', 'Free - Recommended'),
-              _buildDivider(),
-              _buildProviderOption(AIProvider.githubDeepseek, 'GitHub DeepSeek', 'Free'),
-              _buildDivider(),
-              _buildProviderOption(AIProvider.githubLlama, 'GitHub Llama 3.1', 'Free'),
-              _buildDivider(),
-              _buildProviderOption(AIProvider.githubGrok, 'GitHub Grok', 'Free'),
-              _buildDivider(),
-              _buildProviderOption(AIProvider.openai, 'OpenAI GPT-4', 'Paid'),
-              _buildDivider(),
-              _buildProviderOption(AIProvider.gemini, 'Google Gemini', 'Paid'),
-              _buildDivider(),
-              _buildProviderOption(AIProvider.claude, 'Anthropic Claude', 'Paid'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 
-  Widget _buildProviderOption(AIProvider provider, String name, String badge) {
-    final isSelected = _selectedProvider == provider;
-    return InkWell(
-      onTap: () => setState(() => _selectedProvider = provider),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-              color: isSelected
-                  ? KAppColors.getPrimary(context)
-                  : KAppColors.getOnBackground(context).withValues(alpha: 0.3),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                name,
-                style: KAppTextStyles.bodyMedium.copyWith(
-                  color: KAppColors.getOnBackground(context),
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? KAppColors.getPrimary(context).withValues(alpha: 0.2)
-                    : KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                badge,
-                style: KAppTextStyles.labelSmall.copyWith(
-                  color: isSelected
-                      ? KAppColors.getPrimary(context)
-                      : KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-    );
-  }
-
-  Widget _buildApiKeySection(
-    String title,
-    TextEditingController controller,
-    AIProvider provider,
-    String costInfo,
-    String helpText,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: KAppTextStyles.titleSmall.copyWith(
-            color: KAppColors.getOnBackground(context),
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: true,
-          style: KAppTextStyles.bodyMedium.copyWith(
-            color: KAppColors.getOnBackground(context),
-          ),
-          decoration: InputDecoration(
-            hintText: 'Enter API key',
-            hintStyle: KAppTextStyles.bodyMedium.copyWith(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.4),
-            ),
-            filled: true,
-            fillColor: KAppColors.getBackground(context),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: KAppColors.getPrimary(context),
-                width: 2,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          costInfo,
-          style: KAppTextStyles.labelSmall.copyWith(
-            color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          helpText,
-          style: KAppTextStyles.labelSmall.copyWith(
-            color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCostEstimator() {
+  Widget _buildProxyCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
-        color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        color: KAppColors.getPrimary(context).withValues(alpha: 0.08),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
-          color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
+          color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -429,55 +346,116 @@ class _AISettingsPageState extends State<AISettingsPage> {
           Row(
             children: [
               Icon(
-                Icons.calculate_outlined,
+                Icons.cloud_queue_rounded,
                 color: KAppColors.getPrimary(context),
-                size: 20,
+                size: 24,
               ),
-              const SizedBox(width: 8),
-              Text(
-                'Cost Estimator',
-                style: KAppTextStyles.titleSmall.copyWith(
-                  color: KAppColors.getOnBackground(context),
-                  fontWeight: FontWeight.bold,
+              const SizedBox(width: KDesignConstants.spacing12),
+              Expanded(
+                child: Text(
+                  'The News AI',
+                  style: KAppTextStyles.titleMedium.copyWith(
+                    color: KAppColors.getOnBackground(context),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _proxyEnabled
+                      ? KAppColors.success.withValues(alpha: 0.15)
+                      : KAppColors.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  _proxyEnabled ? 'Connected' : 'Not connected',
+                  style: KAppTextStyles.labelSmall.copyWith(
+                    color: _proxyEnabled ? KAppColors.success : KAppColors.warning,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _buildCostRow('Daily digest (5 stories)', '\$0.0015 - \$0.0020'),
-          _buildCostRow('Daily digest (10 stories)', '\$0.0030 - \$0.0040'),
-          _buildCostRow('Monthly (30 digests, 5 stories each)', '\$0.045 - \$0.060'),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
-            'Note: Costs are estimates. Without AI, the app uses algorithm-based summaries for free.',
-            style: KAppTextStyles.labelSmall.copyWith(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-              fontStyle: FontStyle.italic,
+                  'Connect to use AI summaries and insights powered by The News.',
+            style: KAppTextStyles.bodySmall.copyWith(
+              color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
             ),
           ),
-        ],
-      ),
-    );
-  }
+          const SizedBox(height: KDesignConstants.spacing12),
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  if (_proxyEnabled) {
+                    setState(() {
+                      _proxyEnabled = false;
+                      if (_selectedProvider == AIProvider.proxy) {
+                        _selectedProvider = AIProvider.none;
+                      }
+                    });
+                    _aiService.setProxyEnabled(false);
+                    _aiService.setProvider(_selectedProvider);
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('ai_proxy_enabled', false);
+                    await prefs.setInt('ai_provider', _selectedProvider.index);
+                    await prefs.setString(
+                      'ai_provider_name',
+                      _selectedProvider.toString().split('.').last,
+                    );
+                    return;
+                  }
 
-  Widget _buildCostRow(String description, String cost) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            description,
-            style: KAppTextStyles.bodySmall.copyWith(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.8),
-            ),
-          ),
-          Text(
-            cost,
-            style: KAppTextStyles.bodySmall.copyWith(
-              color: KAppColors.getOnBackground(context),
-              fontWeight: FontWeight.bold,
-            ),
+                  final ok = await _aiService.checkProxyHealth();
+                  if (!ok) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('The News AI unavailable. Check backend configuration.'),
+                          backgroundColor: KAppColors.error,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+
+                  setState(() {
+                    _proxyEnabled = true;
+                    _selectedProvider = AIProvider.proxy;
+                  });
+                  _aiService.setProxyEnabled(true);
+                  _aiService.setProvider(AIProvider.proxy);
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool('ai_proxy_enabled', true);
+                  await prefs.setInt('ai_provider', AIProvider.proxy.index);
+                  await prefs.setString('ai_provider_name', 'proxy');
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _proxyEnabled
+                      ? KAppColors.getOnBackground(context).withValues(alpha: 0.08)
+                      : KAppColors.getPrimary(context),
+                  foregroundColor: _proxyEnabled
+                      ? KAppColors.getOnBackground(context)
+                      : KAppColors.getOnPrimary(context),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: KBorderRadius.md,
+                  ),
+                ),
+                child: Text(_proxyEnabled ? 'Disconnect' : 'Connect'),
+              ),
+              const SizedBox(width: KDesignConstants.spacing12),
+              Text(
+                    _proxyEnabled ? 'Using The News AI' : 'Tap connect to enable',
+                style: KAppTextStyles.bodySmall.copyWith(
+                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -485,11 +463,12 @@ class _AISettingsPageState extends State<AISettingsPage> {
   }
 
   Widget _buildCacheManager() {
+    final cacheTtlDays = _aiMetadata?['cacheTtlDays'] as int? ?? 7;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
@@ -504,7 +483,7 @@ class _AISettingsPageState extends State<AISettingsPage> {
                 color: KAppColors.getPrimary(context),
                 size: 20,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: KDesignConstants.spacing8),
               Text(
                 'AI Response Cache',
                 style: KAppTextStyles.titleSmall.copyWith(
@@ -514,14 +493,14 @@ class _AISettingsPageState extends State<AISettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Text(
-            'Cached responses are stored for 7 days to reduce costs and improve speed.',
+            'Cached responses are stored for $cacheTtlDays days to reduce costs and improve speed.',
             style: KAppTextStyles.bodySmall.copyWith(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -534,7 +513,7 @@ class _AISettingsPageState extends State<AISettingsPage> {
                       color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Text(
                     '${_aiService.getCacheSize()}',
                     style: KAppTextStyles.titleLarge.copyWith(
@@ -582,16 +561,16 @@ class _AISettingsPageState extends State<AISettingsPage> {
                 icon: const Icon(Icons.delete_sweep, size: 18),
                 label: const Text('Clear Cache'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.withValues(alpha: 0.1),
-                  foregroundColor: Colors.red,
+                  backgroundColor: KAppColors.error.withValues(alpha: 0.1),
+                  foregroundColor: KAppColors.error,
                   elevation: 0,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: KDesignConstants.paddingSm,
             decoration: BoxDecoration(
               color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
@@ -603,10 +582,10 @@ class _AISettingsPageState extends State<AISettingsPage> {
                   size: 16,
                   color: KAppColors.getPrimary(context),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: KDesignConstants.spacing8),
                 Expanded(
                   child: Text(
-                    'Cache helps reduce API costs by up to 80% for repeated queries',
+                    'Cache reduces costs and improves speed for repeated queries',
                     style: KAppTextStyles.labelSmall.copyWith(
                       color: KAppColors.getPrimary(context),
                     ),
@@ -621,11 +600,12 @@ class _AISettingsPageState extends State<AISettingsPage> {
   }
 
   Widget _buildProviderHealthSection() {
+    final proxyAvailable = _proxyEnabled && (_proxyHealthy || _proxyProviders.isNotEmpty);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
@@ -643,7 +623,7 @@ class _AISettingsPageState extends State<AISettingsPage> {
                     color: KAppColors.getPrimary(context),
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Text(
                     'Provider Health & Auto-Selection',
                     style: KAppTextStyles.titleSmall.copyWith(
@@ -663,18 +643,21 @@ class _AISettingsPageState extends State<AISettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             'Automatically switch to the best performing provider based on success rate and response time.',
             style: KAppTextStyles.bodySmall.copyWith(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
+          if (_proxyEnabled)
+            _buildProxyHealthCard(proxyAvailable),
+          _buildBackendHealthCard(),
           ...AIProvider.values
               .where((p) => p != AIProvider.none)
               .map((provider) => _buildProviderHealthCard(provider)),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -700,6 +683,78 @@ class _AISettingsPageState extends State<AISettingsPage> {
     );
   }
 
+  Widget _buildBackendHealthCard() {
+    final available = _proxyHealthy;
+    final providers = _proxyProviders.join(', ');
+    final message = _proxyHealthMessage;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: KDesignConstants.paddingSm,
+      decoration: BoxDecoration(
+        color: available
+            ? KAppColors.success.withValues(alpha: 0.1)
+            : KAppColors.warning.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: available
+              ? KAppColors.success.withValues(alpha: 0.3)
+              : KAppColors.warning.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    available ? Icons.check_circle : Icons.warning,
+                    color: available ? KAppColors.success : KAppColors.warning,
+                    size: 20,
+                  ),
+                  const SizedBox(width: KDesignConstants.spacing8),
+                  Text(
+                    'Backend Health',
+                    style: KAppTextStyles.titleSmall.copyWith(
+                      color: KAppColors.getOnBackground(context),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                available ? 'Available' : 'Unavailable',
+                style: KAppTextStyles.labelSmall.copyWith(
+                  color: available ? KAppColors.success : KAppColors.warning,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: KDesignConstants.spacing8),
+          if (providers.isNotEmpty)
+            Text(
+              'Providers: $providers',
+              style: KAppTextStyles.bodySmall.copyWith(
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+              ),
+            ),
+          if (message != null && message.isNotEmpty) ...[
+            const SizedBox(height: KDesignConstants.spacing6),
+            Text(
+              message,
+              style: KAppTextStyles.labelSmall.copyWith(
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildProviderHealthCard(AIProvider provider) {
     final health = _aiService.providerHealth[provider];
     if (health == null) return const SizedBox.shrink();
@@ -715,16 +770,16 @@ class _AISettingsPageState extends State<AISettingsPage> {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      padding: KDesignConstants.paddingSm,
       decoration: BoxDecoration(
         color: isHealthy
-            ? Colors.green.withValues(alpha: 0.1)
-            : Colors.orange.withValues(alpha: 0.1),
+            ? KAppColors.success.withValues(alpha: 0.1)
+            : KAppColors.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
           color: isHealthy
-              ? Colors.green.withValues(alpha: 0.3)
-              : Colors.orange.withValues(alpha: 0.3),
+              ? KAppColors.success.withValues(alpha: 0.3)
+              : KAppColors.warning.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -737,10 +792,10 @@ class _AISettingsPageState extends State<AISettingsPage> {
                 children: [
                   Icon(
                     isHealthy ? Icons.check_circle : Icons.warning,
-                    color: isHealthy ? Colors.green : Colors.orange,
+                    color: isHealthy ? KAppColors.success : KAppColors.warning,
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Text(
                     providerName,
                     style: KAppTextStyles.titleSmall.copyWith(
@@ -766,7 +821,7 @@ class _AISettingsPageState extends State<AISettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -776,22 +831,22 @@ class _AISettingsPageState extends State<AISettingsPage> {
             ],
           ),
           if (health.lastError != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: KDesignConstants.paddingSm,
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: KAppColors.error.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, size: 16, color: Colors.red),
-                  const SizedBox(width: 8),
+                  const Icon(Icons.error_outline, size: 16, color: KAppColors.error),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Expanded(
                     child: Text(
                       'Last error: ${_formatTimeSince(health.lastError!)}',
                       style: KAppTextStyles.labelSmall.copyWith(
-                        color: Colors.red,
+                        color: KAppColors.error,
                       ),
                     ),
                   ),
@@ -799,6 +854,53 @@ class _AISettingsPageState extends State<AISettingsPage> {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProxyHealthCard(bool available) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: KDesignConstants.paddingSm,
+      decoration: BoxDecoration(
+        color: available
+            ? KAppColors.success.withValues(alpha: 0.1)
+            : KAppColors.warning.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: available
+              ? KAppColors.success.withValues(alpha: 0.3)
+              : KAppColors.warning.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Icon(
+                available ? Icons.check_circle : Icons.warning,
+                color: available ? KAppColors.success : KAppColors.warning,
+                size: 20,
+              ),
+              const SizedBox(width: KDesignConstants.spacing8),
+              Text(
+                'SERVER AI',
+                style: KAppTextStyles.titleSmall.copyWith(
+                  color: KAppColors.getOnBackground(context),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            available ? 'Available' : 'Unavailable',
+            style: KAppTextStyles.labelSmall.copyWith(
+              color: available ? KAppColors.success : KAppColors.warning,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );

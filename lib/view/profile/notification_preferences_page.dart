@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/notification_service.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
+import 'package:the_news/service/auth_service.dart';
 
 class NotificationPreferencesPage extends StatefulWidget {
   const NotificationPreferencesPage({super.key});
@@ -14,6 +17,9 @@ class NotificationPreferencesPage extends StatefulWidget {
 class _NotificationPreferencesPageState
     extends State<NotificationPreferencesPage> {
   final NotificationService _notificationService = NotificationService.instance;
+  final AuthService _authService = AuthService();
+
+  String? _userId;
 
   bool _breakingNews = true;
   bool _dailyDigest = true;
@@ -23,11 +29,23 @@ class _NotificationPreferencesPageState
   @override
   void initState() {
     super.initState();
+    _initializePreferences();
+  }
+
+  Future<void> _initializePreferences() async {
+    final userData = await _authService.getCurrentUser();
+    _userId = userData?['id'] as String? ?? userData?['userId'] as String?;
+
+    if (_userId != null) {
+      await _notificationService.fetchPreferencesFromBackend(_userId!);
+    }
+
     _loadPreferences();
   }
 
   void _loadPreferences() {
     final prefs = _notificationService.getPreferences();
+    if (!mounted) return;
     setState(() {
       _breakingNews = prefs['breakingNews'] ?? true;
       _dailyDigest = prefs['dailyDigest'] ?? true;
@@ -60,6 +78,7 @@ class _NotificationPreferencesPageState
       dailyDigest: key == 'dailyDigest' ? value : null,
       publisherUpdates: key == 'publisherUpdates' ? value : null,
       commentReplies: key == 'commentReplies' ? value : null,
+      userId: _userId,
     );
   }
 
@@ -83,13 +102,7 @@ class _NotificationPreferencesPageState
                       padding: const EdgeInsets.fromLTRB(6, 16, 16, 0),
                       child: Row(
                         children: [
-                          IconButton(
-                            icon: Icon(
-                              Icons.arrow_back,
-                              color: KAppColors.getOnBackground(context),
-                            ),
-                            onPressed: () => Navigator.pop(context),
-                          ),
+                          const AppBackButton(),
                           Text(
                             'Notifications',
                             style: KAppTextStyles.headlineMedium.copyWith(
@@ -100,7 +113,7 @@ class _NotificationPreferencesPageState
                         ],
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
                   ],
                 ),
               ),
@@ -122,7 +135,7 @@ class _NotificationPreferencesPageState
                           letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: KDesignConstants.spacing12),
                     ],
                   ),
                 ),
@@ -132,7 +145,7 @@ class _NotificationPreferencesPageState
               SliverToBoxAdapter(
                 child: _buildNotificationToggle(
                   icon: Icons.bolt,
-                  iconColor: const Color(0xFFFF5722),
+                  iconColor: KAppColors.orange,
                   title: 'Breaking News',
                   subtitle: 'Get notified about important news updates',
                   value: _breakingNews,
@@ -144,7 +157,7 @@ class _NotificationPreferencesPageState
               SliverToBoxAdapter(
                 child: _buildNotificationToggle(
                   icon: Icons.auto_awesome,
-                  iconColor: const Color(0xFF4CAF50),
+                  iconColor: KAppColors.success,
                   title: 'Daily Digest',
                   subtitle: 'Receive your personalized daily summary',
                   value: _dailyDigest,
@@ -156,7 +169,7 @@ class _NotificationPreferencesPageState
               SliverToBoxAdapter(
                 child: _buildNotificationToggle(
                   icon: Icons.source,
-                  iconColor: const Color(0xFF2196F3),
+                  iconColor: KAppColors.info,
                   title: 'Publisher Updates',
                   subtitle: 'New articles from publishers you follow',
                   value: _publisherUpdates,
@@ -169,11 +182,11 @@ class _NotificationPreferencesPageState
               SliverToBoxAdapter(
                 child: _buildNotificationToggle(
                   icon: Icons.reply,
-                  iconColor: const Color(0xFF9C27B0),
+                  iconColor: KAppColors.purple,
                   title: 'Replies & Mentions',
                   subtitle: 'When someone replies to your comments',
                   value: _replies,
-                  onChanged: (value) => _updatePreference('replies', value),
+                  onChanged: (value) => _updatePreference('commentReplies', value),
                 ),
               ),
 
@@ -182,11 +195,11 @@ class _NotificationPreferencesPageState
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: KDesignConstants.paddingMd,
                     decoration: BoxDecoration(
                       color: KAppColors.getPrimary(context)
                           .withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: KBorderRadius.lg,
                       border: Border.all(
                         color: KAppColors.getPrimary(context)
                             .withValues(alpha: 0.1),
@@ -199,7 +212,7 @@ class _NotificationPreferencesPageState
                           color: KAppColors.getPrimary(context),
                           size: 24,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: KDesignConstants.spacing12),
                         Expanded(
                           child: Text(
                             'You can change these preferences anytime. System notifications must be enabled in your device settings.',
@@ -238,10 +251,10 @@ class _NotificationPreferencesPageState
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.paddingMd,
         decoration: BoxDecoration(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
           ),
@@ -253,7 +266,7 @@ class _NotificationPreferencesPageState
               height: 48,
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
               ),
               child: Icon(
                 icon,
@@ -261,7 +274,7 @@ class _NotificationPreferencesPageState
                 size: 24,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: KDesignConstants.spacing16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

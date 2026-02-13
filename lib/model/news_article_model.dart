@@ -59,33 +59,37 @@ class ArticleModel {
 
   factory ArticleModel.fromJson(Map<String, dynamic> json) {
     return ArticleModel(
-      articleId: json['article_id'],
-      link: json['link'],
-      title: json['title'],
-      description: json['description'],
-      content: json['content'],
+      articleId: json['article_id'] ?? '',
+      link: json['link'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      content: json['content'] ?? '',
       keywords: List<String>.from(json['keywords'] ?? []),
       creator: List<String>.from(json['creator'] ?? []),
-      language: json['language'],
+      language: json['language'] ?? 'en',
       country: List<String>.from(json['country'] ?? []),
       category: List<String>.from(json['category'] ?? []),
-      datatype: json['datatype'],
-      pubDate: DateTime.parse(json['pubDate']),
-      pubDateTZ: json['pubDateTZ'],
+      datatype: json['datatype'] ?? 'news',
+      pubDate: json['pubDate'] != null
+          ? DateTime.parse(json['pubDate'])
+          : DateTime.now(),
+      pubDateTZ: json['pubDateTZ'] ?? 'UTC',
       imageUrl: json['image_url'],
       videoUrl: json['video_url'],
-      sourceId: json['source_id'],
-      sourceName: json['source_name'],
-      sourcePriority: json['source_priority'],
-      sourceUrl: json['source_url'],
-      sourceIcon: json['source_icon'],
-      sentiment: json['sentiment'],
-      sentimentStats: SentimentStats.fromJson(json['sentiment_stats']),
+      sourceId: json['source_id'] ?? '',
+      sourceName: json['source_name'] ?? 'Unknown',
+      sourcePriority: json['source_priority'] ?? 0,
+      sourceUrl: json['source_url'] ?? '',
+      sourceIcon: json['source_icon'] ?? '',
+      sentiment: json['sentiment'] ?? 'neutral',
+      sentimentStats: json['sentiment_stats'] != null
+          ? SentimentStats.fromJson(json['sentiment_stats'])
+          : SentimentStats(negative: 0, neutral: 1, positive: 0),
       aiTag: List<String>.from(json['ai_tag'] ?? []),
       aiRegion: List<String>.from(json['ai_region'] ?? []),
       aiOrg: json['ai_org'],
-      aiSummary: json['ai_summary'],
-      duplicate: json['duplicate'],
+      aiSummary: json['ai_summary'] ?? '',
+      duplicate: json['duplicate'] ?? false,
     );
   }
 

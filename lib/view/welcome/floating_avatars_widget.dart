@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/data/avatar_data.dart';
 import 'package:the_news/utils/avator_color_util.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class FloatingAvatars extends StatefulWidget {
   const FloatingAvatars({super.key});
@@ -70,14 +71,14 @@ class _FloatingAvatarsState extends State<FloatingAvatars>
                 clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
+                  color: KAppColors.darkOnBackground,
                   // border: Border.all(
-                  //   color: KAppColors.background.withValues(alpha: 0.3),
+                  //   color: KAppColors.getBackground(context).withValues(alpha: 0.3),
                   //   width: 2,
                   // ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: KAppColors.darkBackground.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -89,7 +90,7 @@ class _FloatingAvatarsState extends State<FloatingAvatars>
                   child: ClipOval(
                     child: Padding(
                       padding: EdgeInsets.all(avatar.size * 0.15),
-                      child: Image.network(
+                      child: SafeNetworkImage(
                         avatar.imageUrl,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
@@ -100,7 +101,7 @@ class _FloatingAvatarsState extends State<FloatingAvatars>
                               child: Text(
                                 avatar.brandName,
                                 style: KAppTextStyles.bodySmall.copyWith(
-                                  color: KAppColors.background,
+                                  color: KAppColors.getBackground(context),
                                   fontSize: avatar.size * 0.25,
                                   fontWeight: FontWeight.bold,
                                 ),

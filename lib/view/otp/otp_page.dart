@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/controller/otp_controller.dart';
 import 'package:the_news/model/register_login_success_model.dart';
@@ -6,6 +7,7 @@ import 'package:the_news/model/register_user_model.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
 import 'package:the_news/view/widgets/buildotp_widget.dart';
 import 'package:the_news/view/widgets/show_message_widget.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   final RegisterLoginUserSuccessModel successUser;
@@ -36,12 +38,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
   final String _awaitingOtpMessage = 'Awaiting verification, please verify email';
   final String _successMessage = 'Otp sent Successufully';
 
-  final Color _screenBackgroundColor = KAppColors.background;
-
   @override
   void initState() {
     super.initState();
-    StatusBarHelper.setLightStatusBar();
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
@@ -96,20 +95,25 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final backgroundColor = KAppColors.getBackground(context);
+    final onSurface = KAppColors.getOnSurface(context);
+    final onBackground = KAppColors.getOnBackground(context);
+
     return StatusBarHelper.wrapWithStatusBar(
-      backgroundColor: _screenBackgroundColor,
+      backgroundColor: backgroundColor,
       child: Scaffold(
-        backgroundColor: _screenBackgroundColor,
+        backgroundColor: backgroundColor,
         body: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                _screenBackgroundColor,
-                _screenBackgroundColor,
+                backgroundColor,
+                backgroundColor,
                 // _screenBackgroundColor.withValues(alpha: 0.95),
-                // KAppColors.secondary.withValues(alpha: 0.05),
+                // colorScheme.primary.withValues(alpha: 0.05),
               ],
             ),
           ),
@@ -124,19 +128,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: KAppColors.onSurface.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_ios_new,
-                            color: KAppColors.onSurface,
-                            size: 20,
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                      AppBackButton(
+                        onPressed: () => Navigator.pop(context),
+                        backgroundColor: onSurface.withValues(alpha: 0.1),
+                        iconColor: onSurface,
                       ),
                     ],
                   ),
@@ -148,11 +143,11 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                     child: SlideTransition(
                       position: _slideAnimation,
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
+                        padding: KDesignConstants.paddingLg,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 20),
+                            const SizedBox(height: KDesignConstants.spacing20),
 
                             //? Icon Container with gradient
                             Center(
@@ -164,31 +159,31 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      KAppColors.secondary.withValues(
+                                      colorScheme.primary.withValues(
                                         alpha: 0.2,
                                       ),
-                                      KAppColors.secondary.withValues(
+                                      colorScheme.primary.withValues(
                                         alpha: 0.05,
                                       ),
                                     ],
                                   ),
                                   borderRadius: BorderRadius.circular(30),
                                   border: Border.all(
-                                    color: KAppColors.secondary.withValues(
+                                    color: colorScheme.primary.withValues(
                                       alpha: 0.3,
                                     ),
                                     width: 2,
                                   ),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.mail_outline_rounded,
                                   size: 48,
-                                  color: KAppColors.secondary,
+                                  color: colorScheme.primary,
                                 ),
                               ),
                             ),
 
-                            const SizedBox(height: 32),
+                            const SizedBox(height: KDesignConstants.spacing32),
 
                             //? Header
                             Center(
@@ -196,7 +191,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                 _verificationHeader,
                                 style: Theme.of(context).textTheme.displaySmall
                                     ?.copyWith(
-                                      color: KAppColors.onSurface,
+                                      color: onSurface,
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: -0.5,
@@ -204,7 +199,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                               ),
                             ),
 
-                            const SizedBox(height: 12),
+                            const SizedBox(height: KDesignConstants.spacing12),
 
                             //? Sub-header
                             Center(
@@ -214,23 +209,23 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                     _verificationSubHeader,
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      color: KAppColors.getOnBackground(context).withValues(alpha: 0.4),
+                                      color: onBackground.withValues(alpha: 0.4),
                                       fontSize: 15,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: KDesignConstants.spacing4),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: KAppColors.secondary.withValues(
+                                      color: colorScheme.primary.withValues(
                                         alpha: 0.1,
                                       ),
-                                      borderRadius: BorderRadius.circular(20),
+                                      borderRadius: KBorderRadius.xl,
                                       border: Border.all(
-                                        color: KAppColors.secondary.withValues(
+                                        color: colorScheme.primary.withValues(
                                           alpha: 0.3,
                                         ),
                                         width: 1,
@@ -238,8 +233,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                     ),
                                     child: Text(
                                       widget.successUser.email,
-                                      style: const TextStyle(
-                                        color: KAppColors.secondary,
+                                      style: TextStyle(
+                                        color: colorScheme.primary,
                                         fontWeight: FontWeight.w600,
                                         fontSize: 14,
                                       ),
@@ -249,18 +244,18 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                               ),
                             ),
 
-                            const SizedBox(height: 48),
+                            const SizedBox(height: KDesignConstants.spacing48),
 
                             //? OTP Fields Container
                             Container(
-                              padding: const EdgeInsets.all(24),
+                              padding: KDesignConstants.paddingLg,
                               decoration: BoxDecoration(
-                                color: KAppColors.onSurface.withValues(
+                                color: onSurface.withValues(
                                   alpha: 0.05,
                                 ),
-                                borderRadius: BorderRadius.circular(24),
+                                borderRadius: KBorderRadius.xxl,
                                 border: Border.all(
-                                  color: KAppColors.onSurface.withValues(
+                                  color: onSurface.withValues(
                                     alpha: 0.1,
                                   ),
                                   width: 1,
@@ -281,7 +276,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                     ),
                                   ),
 
-                                  const SizedBox(height: 24),
+                                  const SizedBox(height: KDesignConstants.spacing24),
 
                                   //? Timer/Resend Section
                                   AnimatedBuilder(
@@ -299,10 +294,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
                                               colors: [
-                                                KAppColors.secondary.withValues(
+                                                colorScheme.primary.withValues(
                                                   alpha: 0.1,
                                                 ),
-                                                KAppColors.secondary.withValues(
+                                                colorScheme.primary.withValues(
                                                   alpha: 0.05,
                                                 ),
                                               ],
@@ -311,7 +306,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                               16,
                                             ),
                                             border: Border.all(
-                                              color: KAppColors.secondary
+                                              color: colorScheme.primary
                                                   .withValues(alpha: 0.2),
                                               width: 1,
                                             ),
@@ -323,14 +318,14 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                             children: [
                                               Icon(
                                                 Icons.timer_outlined,
-                                                color: KAppColors.secondary,
+                                                color: colorScheme.primary,
                                                 size: 20,
                                               ),
-                                              const SizedBox(width: 8),
+                                              const SizedBox(width: KDesignConstants.spacing8),
                                               Text(
                                                 otp.timerText,
-                                                style: const TextStyle(
-                                                  color: KAppColors.secondary,
+                                                style: TextStyle(
+                                                  color: colorScheme.primary,
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w600,
                                                 ),
@@ -347,7 +342,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                           Text(
                                             _resendText,
                                             style: TextStyle(
-                                              color: KAppColors.getOnBackground(context).withValues(alpha: 0.4),
+                                              color: onBackground.withValues(alpha: 0.4),
                                             ),
                                           ),
                                           GestureDetector(
@@ -361,19 +356,19 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                               decoration: BoxDecoration(
                                                 gradient: LinearGradient(
                                                   colors: [
-                                                    KAppColors.secondary
+                                                    colorScheme.primary
                                                         .withValues(alpha: 0.2),
-                                                    KAppColors.secondary
+                                                    colorScheme.primary
                                                         .withValues(alpha: 0.1),
                                                   ],
                                                 ),
                                                 borderRadius:
                                                     BorderRadius.circular(8),
                                               ),
-                                              child: const Text(
+                                              child: Text(
                                                 'Resend Code',
                                                 style: TextStyle(
-                                                  color: KAppColors.secondary,
+                                                  color: colorScheme.primary,
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 16,
                                                 ),
@@ -388,7 +383,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                               ),
                             ),
 
-                            const SizedBox(height: 32),
+                            const SizedBox(height: KDesignConstants.spacing32),
 
                             //? Verify Button
                             SizedBox(
@@ -402,26 +397,26 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                       gradient: LinearGradient(
                                         colors: loading
                                             ? [
-                                                KAppColors.secondary.withValues(
+                                                colorScheme.primary.withValues(
                                                   alpha: 0.9,
                                                 ),
-                                                KAppColors.secondary.withValues(
+                                                colorScheme.primary.withValues(
                                                   alpha: 0.9,
                                                 ),
                                               ]
                                             : [
-                                                KAppColors.secondary,
-                                                KAppColors.secondary.withValues(
+                                                colorScheme.primary,
+                                                colorScheme.primary.withValues(
                                                   alpha: 0.9,
                                                 ),
                                               ],
                                       ),
-                                      borderRadius: BorderRadius.circular(16),
+                                      borderRadius: KBorderRadius.lg,
                                       boxShadow: loading
                                           ? []
                                           : [
                                               BoxShadow(
-                                                color: KAppColors.onPrimary
+                                                color: colorScheme.onPrimary
                                                     .withValues(alpha: 0.3),
                                                 blurRadius: 20,
                                                 offset: const Offset(0, 10),
@@ -437,7 +432,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                             ),
                                       style: FilledButton.styleFrom(
                                         backgroundColor: Colors.transparent,
-                                        foregroundColor: KAppColors.onPrimary,
+                                        foregroundColor: colorScheme.onPrimary,
                                         shadowColor: Colors.transparent,
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
@@ -446,12 +441,12 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                         ),
                                       ),
                                       child: loading
-                                          ? const SizedBox(
+                                          ? SizedBox(
                                               width: 24,
                                               height: 24,
                                               child: CircularProgressIndicator(
                                                 strokeWidth: 2.5,
-                                                color: KAppColors.onPrimary,
+                                                color: colorScheme.onPrimary,
                                               ),
                                             )
                                           : const Row(
@@ -466,7 +461,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                                     letterSpacing: 0.5,
                                                   ),
                                                 ),
-                                                SizedBox(width: 8),
+                                                SizedBox(width: KDesignConstants.spacing8),
                                                 Icon(
                                                   Icons.arrow_forward_rounded,
                                                   size: 20,
@@ -479,7 +474,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                               ),
                             ),
 
-                            const SizedBox(height: 24),
+                            const SizedBox(height: KDesignConstants.spacing24),
 
                             //? Security note
                             Center(
@@ -489,10 +484,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                   vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: KAppColors.onSurface.withValues(
+                                  color: onSurface.withValues(
                                     alpha: 0.05,
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: KBorderRadius.md,
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -500,13 +495,13 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
                                     Icon(
                                       Icons.lock_outline,
                                       size: 16,
-                                      color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
+                                      color: onBackground.withValues(alpha: 0.5),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: KDesignConstants.spacing8),
                                     Text(
                                       'Your data is secure and encrypted',
                                       style: TextStyle(
-                                        color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
+                                        color: onBackground.withValues(alpha: 0.5),
                                         fontSize: 12,
                                       ),
                                     ),

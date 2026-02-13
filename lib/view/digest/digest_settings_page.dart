@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/daily_digest_model.dart';
 import 'package:the_news/service/daily_digest_service.dart';
+import 'package:the_news/service/notification_service.dart';
 import 'package:the_news/view/settings/ai_settings_page.dart';
 
 /// Settings page for daily digest customization
@@ -26,7 +29,7 @@ class _DigestSettingsPageState extends State<DigestSettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         title: const Text('Digest Settings'),
         actions: [
@@ -68,7 +71,7 @@ class _DigestSettingsPageState extends State<DigestSettingsPage> {
               }),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           _buildSection(
             'Content',
@@ -95,7 +98,7 @@ class _DigestSettingsPageState extends State<DigestSettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           _buildSection(
             'Tone',
@@ -120,7 +123,7 @@ class _DigestSettingsPageState extends State<DigestSettingsPage> {
               }),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           _buildSection(
             'Notifications',
@@ -138,7 +141,7 @@ class _DigestSettingsPageState extends State<DigestSettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           _buildSection(
             'AI Integration',
@@ -188,7 +191,7 @@ class _DigestSettingsPageState extends State<DigestSettingsPage> {
         Container(
           decoration: BoxDecoration(
             color: KAppColors.getBackground(context),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
             border: Border.all(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
             ),
@@ -201,6 +204,7 @@ class _DigestSettingsPageState extends State<DigestSettingsPage> {
 
   Future<void> _saveSettings() async {
     await _digestService.updateSettings(_settings);
+    await NotificationService.instance.scheduleDailyDigestNotification(_settings);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Settings saved')),

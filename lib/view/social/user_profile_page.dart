@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/user_profile_model.dart';
 import 'package:the_news/model/reading_list_model.dart';
@@ -6,6 +7,7 @@ import 'package:the_news/model/activity_feed_model.dart';
 import 'package:the_news/service/social_features_backend_service.dart';
 import 'package:the_news/service/auth_service.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 class UserProfilePage extends StatefulWidget {
   final String userId;
@@ -46,11 +48,15 @@ class _UserProfilePageState extends State<UserProfilePage> {
     try {
       // Check if viewing current user's profile
       final currentUser = await _authService.getCurrentUser();
-      final currentUserId = currentUser?['id'] as String?;
+      final currentUserId = currentUser?['id'] as String? ?? currentUser?['userId'] as String?;
       _isCurrentUser = currentUserId == widget.userId;
 
       // Load user profile
-      final profile = await _socialService.getUserProfile(widget.userId);
+      UserProfile? profile = await _socialService.getUserProfile(widget.userId);
+
+      if (profile == null && _isCurrentUser && currentUserId != null) {
+        profile = await _createInitialProfile(currentUser);
+      }
 
       if (profile != null) {
         // Load user's data
@@ -95,11 +101,49 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
+  Future<UserProfile?> _createInitialProfile(Map<String, dynamic>? currentUser) async {
+    if (currentUser == null) return null;
+
+    try {
+      final userId = currentUser['id'] as String? ?? currentUser['userId'] as String?;
+      if (userId == null) return null;
+
+      final email = currentUser['email'] as String? ?? '';
+      final name = (currentUser['name'] as String?) ?? (email.isNotEmpty ? email.split('@').first : 'reader');
+      final username = name.toLowerCase().replaceAll(' ', '_');
+
+      final profile = UserProfile(
+        userId: userId,
+        username: username,
+        displayName: name,
+        bio: currentUser['bio'] as String?,
+        avatarUrl: currentUser['photoURL'] as String?,
+        joinedDate: DateTime.now(),
+        followersCount: 0,
+        followingCount: 0,
+        articlesReadCount: 0,
+        collectionsCount: 0,
+        privacySettings: const {
+          'showStats': true,
+          'showLists': true,
+          'showActivity': true,
+          'showHighlights': true,
+        },
+      );
+
+      await _socialService.updateUserProfile(profile);
+      return profile;
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _toggleFollow() async {
     try {
       if (_isFollowing) {
         await _socialService.unfollowUser(widget.userId);
         if (mounted) {
+          await _loadData();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Unfollowed @${_userProfile?.username ?? 'user'}'),
@@ -110,6 +154,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       } else {
         await _socialService.followUser(widget.userId);
         if (mounted) {
+          await _loadData();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Following @${_userProfile?.username ?? 'user'}'),
@@ -153,7 +198,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           size: 64,
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: KDesignConstants.spacing16),
                         Text(
                           'User not found',
                           style: KAppTextStyles.titleLarge.copyWith(
@@ -168,12 +213,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       // App Bar
                       SliverAppBar(
                         expandedHeight: 200,
-                        floating: true,
-                        snap: true,
+                        pinned: true,
+                        floating: false,
                         backgroundColor: KAppColors.getPrimary(context),
-                        leading: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                        elevation: 0,
+                        scrolledUnderElevation: 0,
+                        surfaceTintColor: Colors.transparent,
+                        leading: AppBackButton(
                           onPressed: () => Navigator.pop(context),
+                          backgroundColor: KAppColors.getBackground(context).withValues(alpha: 0.8),
+                          iconColor: KAppColors.darkOnBackground,
                         ),
                         flexibleSpace: FlexibleSpaceBar(
                           background: Container(
@@ -191,17 +240,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const SizedBox(height: 40),
+                                  const SizedBox(height: KDesignConstants.spacing40),
                                   CircleAvatar(
                                     radius: 50,
-                                    backgroundColor: Colors.white,
+                                    backgroundColor: KAppColors.darkOnBackground,
                                     child: CircleAvatar(
                                       radius: 47,
                                       backgroundColor: KAppColors.getPrimary(context).withValues(alpha: 0.8),
                                       child: Text(
                                         _userProfile!.displayName.substring(0, 1).toUpperCase(),
                                         style: KAppTextStyles.displaySmall.copyWith(
-                                          color: Colors.white,
+                                          color: KAppColors.darkOnBackground,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -227,7 +276,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: KDesignConstants.spacing4),
                               Text(
                                 '@${_userProfile!.username}',
                                 style: KAppTextStyles.bodyMedium.copyWith(
@@ -235,7 +284,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                 ),
                               ),
                               if (_userProfile!.bio != null && _userProfile!.bio!.isNotEmpty) ...[
-                                const SizedBox(height: 12),
+                                const SizedBox(height: KDesignConstants.spacing12),
                                 Text(
                                   _userProfile!.bio!,
                                   style: KAppTextStyles.bodyMedium.copyWith(
@@ -244,7 +293,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                   textAlign: TextAlign.center,
                                 ),
                               ],
-                              const SizedBox(height: 16),
+                              const SizedBox(height: KDesignConstants.spacing16),
                               Row(
                                 children: [
                                   Icon(
@@ -261,7 +310,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 20),
+                              const SizedBox(height: KDesignConstants.spacing20),
 
                               // Stats Row
                               Row(
@@ -288,7 +337,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
                               // Follow Button
                               if (!_isCurrentUser) ...[
-                                const SizedBox(height: 24),
+                                const SizedBox(height: KDesignConstants.spacing24),
                                 SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton(
@@ -299,10 +348,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
                                           : KAppColors.getPrimary(context),
                                       foregroundColor: _isFollowing
                                           ? KAppColors.getOnBackground(context)
-                                          : Colors.white,
+                                          : KAppColors.darkOnBackground,
                                       padding: const EdgeInsets.symmetric(vertical: 14),
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: KBorderRadius.md,
                                         side: _isFollowing
                                             ? BorderSide(
                                                 color: KAppColors.getOnBackground(context)
@@ -402,7 +451,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
                           ),
                         ),
 
-                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                      const SliverToBoxAdapter(child: SizedBox(height: KDesignConstants.spacing40)),
                     ],
                   ),
       ),
@@ -419,7 +468,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: KDesignConstants.spacing4),
         Text(
           label,
           style: KAppTextStyles.labelSmall.copyWith(
@@ -434,10 +483,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: KBorderRadius.md,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
           ),
@@ -449,7 +498,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               color: KAppColors.getPrimary(context),
               size: 20,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,10 +545,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: KBorderRadius.md,
         ),
         child: Row(
           children: [
@@ -508,7 +557,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               color: _getActivityColor(activity.activityType),
               size: 20,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,6 +598,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
         return Icons.person_add;
       case ActivityType.shareList:
         return Icons.share;
+      case ActivityType.shareArticle:
+        return Icons.ios_share;
       case ActivityType.commentArticle:
         return Icons.comment;
       case ActivityType.likeArticle:
@@ -570,6 +621,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
         return KAppColors.orange;
       case ActivityType.shareList:
         return KAppColors.cyan;
+      case ActivityType.shareArticle:
+        return KAppColors.blue;
       case ActivityType.commentArticle:
         return KAppColors.red;
       case ActivityType.likeArticle:
@@ -591,6 +644,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
         return 'Followed @${activity.followedUsername ?? 'a user'}';
       case ActivityType.shareList:
         return 'Shared list "${activity.listName ?? 'a list'}"';
+      case ActivityType.shareArticle:
+        return 'Shared "${activity.articleTitle ?? 'an article'}"';
       case ActivityType.commentArticle:
         return 'Commented on an article';
       case ActivityType.likeArticle:

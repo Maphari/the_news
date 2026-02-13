@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/daily_digest_model.dart';
 import 'package:the_news/service/daily_digest_service.dart';
 import 'package:the_news/service/news_provider_service.dart';
 import 'package:the_news/view/article_details/article_detail_page.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 /// Page for reading a daily digest
 class DigestReaderPage extends StatefulWidget {
@@ -28,7 +30,10 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
     super.initState();
     // Mark as read when opened
     if (!widget.digest.isRead) {
-      _digestService.markAsRead(widget.digest.digestId);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _digestService.markAsRead(widget.digest.digestId);
+      });
     }
   }
 
@@ -63,7 +68,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDigestHeader(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: KDesignConstants.spacing24),
                     _buildDigestItems(),
                   ],
                 ),
@@ -88,14 +93,8 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.arrow_back_ios_new,
-              color: KAppColors.getOnBackground(context),
-            ),
-          ),
-          const SizedBox(width: 12),
+          const AppBackButton(),
+          const SizedBox(width: KDesignConstants.spacing12),
           Expanded(
             child: Text(
               widget.digest.title,
@@ -107,7 +106,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
           ),
           // Share button
           IconButton(
-            onPressed: () => _digestService.shareDigest(widget.digest),
+            onPressed: () => _digestService.shareDigest(context, widget.digest),
             icon: Icon(
               Icons.share_outlined,
               color: KAppColors.getOnBackground(context),
@@ -133,13 +132,8 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            KAppColors.getPrimary(context).withValues(alpha: 0.1),
-            KAppColors.getPrimary(context).withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: KAppColors.getPrimary(context).withValues(alpha: 0.08),
+        borderRadius: KBorderRadius.lg,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +145,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                 color: KAppColors.getPrimary(context),
                 size: 24,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Text(
                 'Your Daily Digest',
                 style: KAppTextStyles.titleLarge.copyWith(
@@ -161,7 +155,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Text(
             widget.digest.summary,
             style: KAppTextStyles.bodyMedium.copyWith(
@@ -192,7 +186,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
     return Container(
       decoration: BoxDecoration(
         color: KAppColors.getBackground(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
@@ -202,7 +196,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             decoration: BoxDecoration(
               color: _getItemTypeColor(item.type).withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
@@ -230,7 +224,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +251,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
 
           // Content
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -269,7 +263,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: KDesignConstants.spacing12),
 
                 // Summary
                 Text(
@@ -278,7 +272,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.8),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: KDesignConstants.spacing16),
 
                 // Key points
                 if (item.keyPoints.isNotEmpty) ...[
@@ -289,7 +283,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: KDesignConstants.spacing8),
                   ...item.keyPoints.map((point) => Padding(
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Row(
@@ -304,7 +298,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: KDesignConstants.spacing12),
                         Expanded(
                           child: Text(
                             point,
@@ -316,12 +310,12 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                       ],
                     ),
                   )),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KDesignConstants.spacing16),
                 ],
 
                 // Why it matters
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: KDesignConstants.paddingSm,
                   decoration: BoxDecoration(
                     color: KAppColors.getPrimary(context).withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(8),
@@ -333,7 +327,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                         size: 16,
                         color: KAppColors.getPrimary(context),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: KDesignConstants.spacing8),
                       Expanded(
                         child: Text(
                           item.whyItMatters,
@@ -345,7 +339,7 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: KDesignConstants.spacing12),
 
                 // Read full article button
                 TextButton.icon(
@@ -374,17 +368,17 @@ class _DigestReaderPageState extends State<DigestReaderPage> {
   Color _getItemTypeColor(DigestItemType type) {
     switch (type) {
       case DigestItemType.news:
-        return const Color(0xFF2196F3);
+        return KAppColors.info;
       case DigestItemType.trending:
-        return const Color(0xFFFF9800);
+        return KAppColors.warning;
       case DigestItemType.analysis:
-        return const Color(0xFF9C27B0);
+        return KAppColors.purple;
       case DigestItemType.opinion:
-        return const Color(0xFFE91E63);
+        return KAppColors.pink;
       case DigestItemType.local:
-        return const Color(0xFF4CAF50);
+        return KAppColors.success;
       case DigestItemType.followed:
-        return const Color(0xFF00BCD4);
+        return KAppColors.cyan;
     }
   }
 

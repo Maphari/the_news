@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/ai_analysis_service.dart';
+import 'package:the_news/utils/contrast_check.dart';
 
 /// Widget to display AI analysis results for an article
 class ArticleAnalysisCard extends StatelessWidget {
@@ -14,11 +16,11 @@ class ArticleAnalysisCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: KDesignConstants.paddingMd,
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: KBorderRadius.md),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.paddingMd,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -27,10 +29,10 @@ class ArticleAnalysisCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.psychology,
-                  color: KAppColors.primary,
+                  color: KAppColors.getPrimary(context),
                   size: 24,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: KDesignConstants.spacing8),
                 Text(
                   'AI Analysis',
                   style: TextStyle(
@@ -41,7 +43,7 @@ class ArticleAnalysisCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
 
             // Credibility Score
             _buildCredibilitySection(context),
@@ -55,7 +57,7 @@ class ArticleAnalysisCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(child: _buildSentimentSection(context)),
-                const SizedBox(width: 16),
+                const SizedBox(width: KDesignConstants.spacing16),
                 Expanded(child: _buildBiasSection(context)),
               ],
             ),
@@ -86,10 +88,16 @@ class ArticleAnalysisCard extends StatelessWidget {
   Widget _buildCredibilitySection(BuildContext context) {
     final score = analysis.credibilityScore;
     final color = score >= 70
-        ? Colors.green
+        ? KAppColors.success
         : score >= 40
-            ? Colors.orange
-            : Colors.red;
+            ? KAppColors.warning
+            : KAppColors.error;
+    debugCheckContrast(
+      foreground: color,
+      background: color.withValues(alpha: 0.2),
+      contextLabel: 'AI analysis credibility bar',
+      minRatio: 3.0,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,7 +110,7 @@ class ArticleAnalysisCard extends StatelessWidget {
             color: KAppColors.getOnBackground(context),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Row(
           children: [
             Expanded(
@@ -114,7 +122,7 @@ class ArticleAnalysisCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             Text(
               '$score%',
               style: TextStyle(
@@ -151,18 +159,20 @@ class ArticleAnalysisCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Row(
           children: List.generate(5, (index) {
             final isFilled = index < analysis.factCheckRating;
             return Icon(
               isFilled ? Icons.star : Icons.star_border,
-              color: isFilled ? Colors.amber : Colors.grey,
+              color: isFilled
+                  ? KAppColors.yellow
+                  : KAppColors.getOnBackground(context).withValues(alpha: 0.3),
               size: 24,
             );
           }),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Text(
           analysis.factCheckExplanation,
           style: TextStyle(
@@ -176,10 +186,10 @@ class ArticleAnalysisCard extends StatelessWidget {
 
   Widget _buildSentimentSection(BuildContext context) {
     final color = analysis.sentiment == 'positive'
-        ? Colors.green
+        ? KAppColors.success
         : analysis.sentiment == 'negative'
-            ? Colors.red
-            : Colors.grey;
+            ? KAppColors.error
+            : KAppColors.getOnBackground(context).withValues(alpha: 0.5);
 
     final icon = analysis.sentiment == 'positive'
         ? Icons.sentiment_satisfied
@@ -198,7 +208,7 @@ class ArticleAnalysisCard extends StatelessWidget {
             color: KAppColors.getOnBackground(context),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Row(
           children: [
             Icon(icon, color: color, size: 20),
@@ -219,10 +229,10 @@ class ArticleAnalysisCard extends StatelessWidget {
 
   Widget _buildBiasSection(BuildContext context) {
     final color = analysis.biasDirection == 'left'
-        ? Colors.blue
+        ? KAppColors.info
         : analysis.biasDirection == 'right'
-            ? Colors.red
-            : Colors.grey;
+            ? KAppColors.error
+            : KAppColors.getOnBackground(context).withValues(alpha: 0.5);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,12 +245,12 @@ class ArticleAnalysisCard extends StatelessWidget {
             color: KAppColors.getOnBackground(context),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
             border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Text(
@@ -265,7 +275,7 @@ class ArticleAnalysisCard extends StatelessWidget {
             Icon(
               Icons.warning_amber_rounded,
               size: 16,
-              color: Colors.red,
+              color: KAppColors.error,
             ),
             const SizedBox(width: 6),
             Text(
@@ -273,19 +283,19 @@ class ArticleAnalysisCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.red,
+                color: KAppColors.error,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         ...analysis.redFlags.map((flag) => Padding(
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.error_outline, size: 16, color: Colors.red),
-                  const SizedBox(width: 8),
+                  Icon(Icons.error_outline, size: 16, color: KAppColors.error),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Expanded(
                     child: Text(
                       flag,
@@ -325,7 +335,7 @@ class ArticleAnalysisCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         ...analysis.keyClaims.asMap().entries.map((entry) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
@@ -335,7 +345,7 @@ class ArticleAnalysisCard extends StatelessWidget {
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: KAppColors.primary.withValues(alpha: 0.15),
+                      color: KAppColors.getPrimary(context).withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -344,12 +354,12 @@ class ArticleAnalysisCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
-                          color: KAppColors.primary,
+                          color: KAppColors.getPrimary(context),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Expanded(
                     child: Text(
                       entry.value,
@@ -376,7 +386,7 @@ class ArticleAnalysisCard extends StatelessWidget {
             Icon(
               Icons.verified,
               size: 16,
-              color: Colors.green,
+              color: KAppColors.success,
             ),
             const SizedBox(width: 6),
             Text(
@@ -389,7 +399,7 @@ class ArticleAnalysisCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -397,15 +407,15 @@ class ArticleAnalysisCard extends StatelessWidget {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                color: KAppColors.success.withValues(alpha: 0.1),
+                borderRadius: KBorderRadius.md,
+                border: Border.all(color: KAppColors.success.withValues(alpha: 0.3)),
               ),
               child: Text(
                 signal,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.green,
+                  color: KAppColors.success,
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/config/env_config.dart';
-import 'package:the_news/constant/theme/app_theme.dart';
+import 'package:the_news/constant/app_theme.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/service/auth_service.dart';
 import 'package:the_news/service/app_initialization_service.dart';
 import 'package:the_news/service/theme_service.dart';
 import 'package:the_news/service/notification_navigation_service.dart';
+import 'package:the_news/service/notification_service.dart';
+import 'package:the_news/service/accessibility_service.dart';
 import 'package:the_news/config/firebase_config.dart';
 import 'package:the_news/view/welcome/welcome_page.dart';
 import 'package:the_news/routes/app_routes.dart';
@@ -42,6 +44,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final ThemeService _themeService = ThemeService.instance;
+  final AccessibilityService _accessibilityService = AccessibilityService.instance;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -49,6 +52,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     // Listen to theme changes
     _themeService.addListener(_onThemeChanged);
+    _accessibilityService.addListener(_onThemeChanged);
     // Set up navigation key for notifications
     NotificationNavigationService.instance.setNavigatorKey(_navigatorKey);
   }
@@ -56,6 +60,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _themeService.removeListener(_onThemeChanged);
+    _accessibilityService.removeListener(_onThemeChanged);
     super.dispose();
   }
 
@@ -72,6 +77,17 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeService.themeMode,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: TextScaler.linear(
+              _accessibilityService.getTextScaleFactor(),
+            ),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       onGenerateRoute: AppRoutes.generateRoute,
       initialRoute: '/',
       home: const AuthWrapper(),
@@ -108,7 +124,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         if (!mounted) return;
 
         if (userData != null) {
-          final userId = userData['id'] ?? '';
+          final userId = userData['id'] ?? userData['userId'] ?? '';
 
           _userData = RegisterLoginUserSuccessModel(
             token: '',
@@ -127,6 +143,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
             try {
               await AppInitializationService.instance
                   .initializeSubscriptionForUser(userId);
+              await NotificationService.instance.initialize();
+              final tokenValid = await _authService.validateToken();
+              if (tokenValid) {
+                await NotificationService.instance.fetchPreferencesFromBackend(userId);
+                await NotificationService.instance.registerToken(userId);
+              }
             } catch (e) {
               debugPrint('Failed to initialize subscription: $e');
             }

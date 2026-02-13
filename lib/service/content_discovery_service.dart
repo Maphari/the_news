@@ -37,7 +37,7 @@ class ContentDiscoveryService {
       return _getTrendingRecommendations(availableArticles, limit);
     }
 
-    final userId = userData['id'] as String;
+    final userId = userData['id'] as String? ?? userData['userId'] as String;
     final interestProfile = await _getUserInterestProfile(userId);
     final readingSessions = await _db.getAllSessions();
 
@@ -152,7 +152,7 @@ class ContentDiscoveryService {
     final userData = await _authService.getCurrentUser();
     if (userData == null) return;
 
-    final userId = userData['id'] as String;
+    final userId = userData['id'] as String? ?? userData['userId'] as String;
     var profile = await _getUserInterestProfile(userId);
 
     profile ??= UserInterestProfile(

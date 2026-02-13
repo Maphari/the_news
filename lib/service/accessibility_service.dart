@@ -1,5 +1,8 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -256,7 +259,7 @@ class AccessibilitySettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: KAppBar(
         title: const Text('Accessibility'),
       ),
       body: ListenableBuilder(
@@ -267,13 +270,10 @@ class AccessibilitySettingsPage extends StatelessWidget {
           return ListView(
             children: [
               const Padding(
-                padding: EdgeInsets.all(16),
+                padding: KDesignConstants.paddingMd,
                 child: Text(
                   'Visual Accessibility',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: KAppTextStyles.titleMedium,
                 ),
               ),
               SwitchListTile(
@@ -296,13 +296,10 @@ class AccessibilitySettingsPage extends StatelessWidget {
               ),
               const Divider(),
               const Padding(
-                padding: EdgeInsets.all(16),
+                padding: KDesignConstants.paddingMd,
                 child: Text(
                   'Motion & Interaction',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: KAppTextStyles.titleMedium,
                 ),
               ),
               SwitchListTile(
@@ -324,7 +321,7 @@ class AccessibilitySettingsPage extends StatelessWidget {
               ),
               const Divider(),
               const Padding(
-                padding: EdgeInsets.all(16),
+                padding: KDesignConstants.paddingMd,
                 child: Text(
                   'Screen Reader',
                   style: TextStyle(
@@ -343,13 +340,13 @@ class AccessibilitySettingsPage extends StatelessWidget {
                   service.provideHapticFeedback();
                 },
               ),
-              const Padding(
-                padding: EdgeInsets.all(16),
+              Padding(
+                padding: KDesignConstants.paddingMd,
                 child: Text(
                   'When enabled, the app will provide more detailed descriptions and better navigation for screen reader users.',
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.grey,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),

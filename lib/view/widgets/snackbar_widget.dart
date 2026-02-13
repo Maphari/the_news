@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 enum MessageType { success, error, warning, info }
@@ -95,26 +96,26 @@ class _ModernSnackBarState extends State<ModernSnackBar>
   Color _getBackgroundColor() {
     switch (widget.type) {
       case MessageType.success:
-        return const Color(0xFF10B981).withValues(alpha: 0.15);
+        return KAppColors.success.withValues(alpha: 0.15);
       case MessageType.error:
-        return const Color(0xFFEF4444).withValues(alpha: 0.15);
+        return KAppColors.error.withValues(alpha: 0.15);
       case MessageType.warning:
-        return const Color(0xFFF59E0B).withValues(alpha: 0.15);
+        return KAppColors.warning.withValues(alpha: 0.15);
       case MessageType.info:
-        return KAppColors.secondary.withValues(alpha: 0.15);
+        return KAppColors.getSecondary(context).withValues(alpha: 0.15);
     }
   }
 
   Color _getBorderColor() {
     switch (widget.type) {
       case MessageType.success:
-        return const Color(0xFF10B981);
+        return KAppColors.success;
       case MessageType.error:
-        return const Color(0xFFEF4444);
+        return KAppColors.error;
       case MessageType.warning:
-        return const Color(0xFFF59E0B);
+        return KAppColors.warning;
       case MessageType.info:
-        return KAppColors.secondary;
+        return KAppColors.getSecondary(context);
     }
   }
 
@@ -151,8 +152,8 @@ class _ModernSnackBarState extends State<ModernSnackBar>
               onTap: _dismiss,
               child: Container(
                 decoration: BoxDecoration(
-                  color: KAppColors.onBackground.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(16),
+                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.95),
+                  borderRadius: KBorderRadius.lg,
                   border: Border.all(
                     color: _getBorderColor().withValues(alpha: 0.3),
                     width: 1.5,
@@ -165,7 +166,7 @@ class _ModernSnackBarState extends State<ModernSnackBar>
                       spreadRadius: 0,
                     ),
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
+                      color: KAppColors.darkBackground.withValues(alpha: 0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                       spreadRadius: -4,
@@ -173,11 +174,11 @@ class _ModernSnackBarState extends State<ModernSnackBar>
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: KBorderRadius.lg,
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -203,7 +204,7 @@ class _ModernSnackBarState extends State<ModernSnackBar>
                                   _getIconColor().withValues(alpha: 0.1),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: KBorderRadius.md,
                               border: Border.all(
                                 color: _getIconColor().withValues(alpha: 0.3),
                                 width: 1,
@@ -215,7 +216,7 @@ class _ModernSnackBarState extends State<ModernSnackBar>
                               size: 22,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: KDesignConstants.spacing12),
                           
                           //? Message
                           Expanded(
@@ -229,7 +230,7 @@ class _ModernSnackBarState extends State<ModernSnackBar>
                               ),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: KDesignConstants.spacing8),
                           
                           //? Close button
                           GestureDetector(
@@ -238,13 +239,13 @@ class _ModernSnackBarState extends State<ModernSnackBar>
                               width: 32,
                               height: 32,
                               decoration: BoxDecoration(
-                                color: KAppColors.onSurface.withValues(alpha: 0.1),
+                                color: KAppColors.getOnSurface(context).withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
                                 Icons.close_rounded,
                                 size: 18,
-                                color: KAppColors.onSurface.withValues(alpha: 0.7),
+                                color: KAppColors.getOnSurface(context).withValues(alpha: 0.7),
                               ),
                             ),
                           ),

@@ -39,7 +39,7 @@ class SocialFeaturesService {
     final userData = await _authService.getCurrentUser();
     if (userData == null) return null;
 
-    final userId = userData['id'] as String;
+    final userId = userData['id'] as String? ?? userData['userId'] as String;
     return await getUserProfile(userId);
   }
 
@@ -110,7 +110,7 @@ class SocialFeaturesService {
     final currentUser = await _authService.getCurrentUser();
     if (currentUser == null) throw Exception('User not logged in');
 
-    final currentUserId = currentUser['id'] as String;
+    final currentUserId = currentUser['id'] as String? ?? currentUser['userId'] as String;
     if (currentUserId == targetUserId) {
       throw Exception('Cannot follow yourself');
     }

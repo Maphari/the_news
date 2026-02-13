@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 /// Word cloud visualization for trending topics
 class TopicWordCloud extends StatelessWidget {
@@ -21,7 +22,7 @@ class TopicWordCloud extends StatelessWidget {
     if (topics.isEmpty) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: EdgeInsets.all(KDesignConstants.spacing32),
           child: Text('No topic data available'),
         ),
       );
@@ -41,7 +42,7 @@ class TopicWordCloud extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: KDesignConstants.cardPadding,
           child: Text(
             'Trending Topics',
             style: TextStyle(
@@ -53,10 +54,10 @@ class TopicWordCloud extends StatelessWidget {
         ),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: KDesignConstants.cardPadding,
           child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: KDesignConstants.spacing12,
+            runSpacing: KDesignConstants.spacing12,
             alignment: WrapAlignment.center,
             children: displayTopics.map((entry) {
               final normalized = _normalize(
@@ -102,7 +103,7 @@ class _WordChip extends StatelessWidget {
     final opacity = 0.5 + (normalized * 0.5);
 
     // Color variation
-    final color = _getColorForWord(word).withValues(alpha: opacity);
+    final color = _getColorForWord(word, context).withValues(alpha: opacity);
 
     return InkWell(
       onTap: () {
@@ -113,15 +114,15 @@ class _WordChip extends StatelessWidget {
           ),
         );
       },
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: KBorderRadius.xl,
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: 8 + (normalized * 8),
-          vertical: 4 + (normalized * 4),
+          horizontal: KDesignConstants.spacing8 + (normalized * KDesignConstants.spacing8),
+          vertical: KDesignConstants.spacing4 + (normalized * KDesignConstants.spacing4),
         ),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: color.withValues(alpha: 0.3),
             width: 1,
@@ -139,18 +140,18 @@ class _WordChip extends StatelessWidget {
     );
   }
 
-  Color _getColorForWord(String word) {
+  Color _getColorForWord(String word, BuildContext context) {
     // Generate consistent color based on word hash
     final hash = word.hashCode.abs();
     final colors = [
-      KAppColors.primary,
-      Colors.blue,
-      Colors.purple,
-      Colors.orange,
-      Colors.teal,
-      Colors.pink,
-      Colors.indigo,
-      Colors.cyan,
+      KAppColors.getPrimary(context),
+      KAppColors.blue,
+      KAppColors.purple,
+      KAppColors.orange,
+      KAppColors.cyan,
+      KAppColors.pink,
+      KAppColors.getTertiary(context),
+      KAppColors.getSecondary(context),
     ];
 
     return colors[hash % colors.length];
@@ -178,11 +179,11 @@ class GridWordCloud extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.cardPadding,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+        crossAxisSpacing: KDesignConstants.spacing12,
+        mainAxisSpacing: KDesignConstants.spacing12,
         childAspectRatio: 2,
       ),
       itemCount: min(15, sortedTopics.length),
@@ -214,13 +215,13 @@ class _TopicCard extends StatelessWidget {
     final isTop3 = rank <= 3;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: KDesignConstants.cardPaddingCompact,
       decoration: BoxDecoration(
         gradient: isTop3
             ? LinearGradient(
                 colors: [
-                  KAppColors.primary.withValues(alpha: 0.2),
-                  KAppColors.primary.withValues(alpha: 0.05),
+                  KAppColors.getPrimary(context).withValues(alpha: 0.2),
+                  KAppColors.getPrimary(context).withValues(alpha: 0.05),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -229,10 +230,10 @@ class _TopicCard extends StatelessWidget {
         color: isTop3
             ? null
             : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
           color: isTop3
-              ? KAppColors.primary.withValues(alpha: 0.3)
+              ? KAppColors.getPrimary(context).withValues(alpha: 0.3)
               : KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
       ),
@@ -243,9 +244,9 @@ class _TopicCard extends StatelessWidget {
             Icon(
               Icons.trending_up,
               size: 16,
-              color: KAppColors.primary,
+              color: KAppColors.getPrimary(context),
             ),
-          const SizedBox(height: 4),
+          const SizedBox(height: KDesignConstants.spacing4),
           Text(
             topic,
             textAlign: TextAlign.center,
@@ -255,11 +256,11 @@ class _TopicCard extends StatelessWidget {
               fontSize: 13,
               fontWeight: isTop3 ? FontWeight.bold : FontWeight.w600,
               color: isTop3
-                  ? KAppColors.primary
+                  ? KAppColors.getPrimary(context)
                   : KAppColors.getOnBackground(context),
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: KDesignConstants.spacing4),
           Text(
             '$count',
             style: TextStyle(

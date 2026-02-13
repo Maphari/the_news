@@ -1,0 +1,65 @@
+[
+  {
+    "id": "free",
+    "name": "Free",
+    "description": "Try mindful news basics",
+    "price": 0,
+    "billingPeriod": "forever",
+    "isFree": true,
+    "features": [
+      "10 articles per day",
+      "Basic article reading",
+      "Save articles",
+      "3 categories only",
+      "Basic calm mode",
+      "Ads supported"
+    ]
+  },
+  {
+    "id": "premium_monthly",
+    "name": "Premium",
+    "description": "Full mindful reading experience with 7-day free trial",
+    "price": 4.99,
+    "billingPeriod": "monthly",
+    "trialDays": 7,
+    "features": [
+      "7-day free trial",
+      "Unlimited articles daily",
+      "All news categories",
+      "Ad-free experience",
+      "Advanced calm mode",
+      "Content intensity filter",
+      "Mood tracking & insights",
+      "Break reminders",
+      "Solution-focused badges",
+      "Article enrichment",
+      "Text-to-speech",
+      "Video articles",
+      "Priority support"
+    ]
+  },
+  {
+    "id": "premium_yearly",
+    "name": "Premium Yearly",
+    "description": "Best value - Save 40% annually",
+    "price": 35.99,
+    "billingPeriod": "yearly",
+    "trialDays": 7,
+    "features": [
+      "7-day free trial",
+      "Save $24/year (40% off)",
+      "Unlimited articles daily",
+      "All news categories",
+      "Ad-free experience",
+      "Advanced calm mode",
+      "Content intensity filter",
+      "Mood tracking & insights",
+      "Break reminders",
+      "Solution-focused badges",
+      "Article enrichment",
+      "Text-to-speech",
+      "Video articles",
+      "Priority support"
+    ]
+  }
+]

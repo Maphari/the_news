@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/service/subscription_service.dart';
 import 'package:the_news/service/app_rating_service.dart';
@@ -51,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildPremiumUpgradeCard(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing8),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -63,19 +64,12 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           );
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: KDesignConstants.paddingMd,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                KAppColors.getPrimary(context).withValues(alpha: 0.2),
-                KAppColors.getPrimary(context).withValues(alpha: 0.05),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(16),
+            color: KAppColors.getPrimary(context).withValues(alpha: 0.12),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
               color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
               width: 2,
@@ -88,7 +82,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 height: 60,
                 decoration: BoxDecoration(
                   color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: KBorderRadius.lg,
                 ),
                 child: Icon(
                   Icons.workspace_premium,
@@ -96,7 +90,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   size: 32,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: KDesignConstants.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +102,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: KDesignConstants.spacing4),
                     Text(
                       'Unlock exclusive features and ad-free experience',
                       style: KAppTextStyles.bodySmall.copyWith(
@@ -140,15 +134,23 @@ class _ProfilePageState extends State<ProfilePage> {
         color: screenBackgroundColor,
         child: SafeArea(
           bottom: false, // Don't add bottom padding - MainScaffold has bottom nav
-          child: CustomScrollView(
-            slivers: [
+          child: Material(
+            color: screenBackgroundColor,
+            child: CustomScrollView(
+              slivers: [
               // Header
-              SliverToBoxAdapter(
+              MeasuredPinnedHeaderSliver(
+                height: HomeHeader.estimatedHeight(
+                  title: 'Profile',
+                  subtitle: 'Manage your account and preferences',
+                  bottom: 15,
+                ),
                 child: HomeHeader(
                   title: 'Profile',
                   subtitle: 'Manage your account and preferences',
                   showActions: false,
                   bottom: 15,
+                  useSafeArea: false,
                 ),
               ),
 
@@ -198,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Wellness Dashboard Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: Column(
                     children: [
                       InkWell(
@@ -207,12 +209,12 @@ class _ProfilePageState extends State<ProfilePage> {
                             _isWellnessExpanded = !_isWellnessExpanded;
                           });
                         },
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         child: Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: KDesignConstants.paddingMd,
                           decoration: BoxDecoration(
                             color: KAppColors.getPrimary(context).withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: KBorderRadius.lg,
                             border: Border.all(
                               color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
                             ),
@@ -224,7 +226,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: KBorderRadius.md,
                                 ),
                                 child: Icon(
                                   Icons.spa_outlined,
@@ -232,7 +234,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   size: 24,
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: KDesignConstants.spacing16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,7 +268,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       if (_isWellnessExpanded) ...[
-                        const SizedBox(height: 16),
+                        const SizedBox(height: KDesignConstants.spacing16),
                         const WellnessDashboard(),
                       ],
                     ],
@@ -277,7 +279,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Break Reminders Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -287,12 +289,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -303,16 +305,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00BCD4).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.cyan.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.self_improvement_outlined,
-                              color: Color(0xFF00BCD4),
+                              color: KAppColors.cyan,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +368,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Analytics Dashboard Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -376,12 +378,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -392,16 +394,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF3F51B5).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.blue.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.analytics_outlined,
-                              color: Color(0xFF3F51B5),
+                              color: KAppColors.blue,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,7 +440,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Reading History Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -449,12 +451,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -465,16 +467,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF5722).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.orange.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.history,
-                              color: Color(0xFFFF5722),
+                              color: KAppColors.orange,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,7 +513,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Notification History Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -521,12 +523,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -537,16 +539,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF9C27B0).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.purple.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.history,
-                              color: Color(0xFF9C27B0),
+                              color: KAppColors.purple,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -600,7 +602,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Social Hub Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -612,12 +614,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -628,16 +630,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE91E63).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.pink.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.people_outline,
-                              color: Color(0xFFE91E63),
+                              color: KAppColors.pink,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -690,7 +692,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Offline Reading Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -700,12 +702,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -716,16 +718,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.success.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.offline_pin_outlined,
-                              color: Color(0xFF4CAF50),
+                              color: KAppColors.success,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -762,7 +764,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Followed Publishers Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -772,12 +774,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -788,16 +790,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF9C27B0).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.purple.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.rss_feed,
-                              color: Color(0xFF9C27B0),
+                              color: KAppColors.purple,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -834,7 +836,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Country Preferences Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -844,12 +846,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -860,16 +862,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF00BCD4).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.cyan.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.public,
-                              color: Color(0xFF00BCD4),
+                              color: KAppColors.cyan,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -906,7 +908,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Notification Preferences Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -917,12 +919,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -933,16 +935,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFF9800).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.warning.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.notifications_outlined,
-                              color: Color(0xFFFF9800),
+                              color: KAppColors.warning,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -996,17 +998,17 @@ class _ProfilePageState extends State<ProfilePage> {
               // Rate App Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () async {
                       await AppRatingService.instance.promptUserForRating();
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -1017,16 +1019,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFD700).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.yellow.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.star_rounded,
-                              color: Color(0xFFFFD700),
+                              color: KAppColors.yellow,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1064,7 +1066,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Feedback Tile
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing4),
                   child: InkWell(
                     onTap: () {
                       Navigator.push(
@@ -1074,12 +1076,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       );
                     },
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: KDesignConstants.paddingMd,
                       decoration: BoxDecoration(
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                         border: Border.all(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                         ),
@@ -1090,16 +1092,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 48,
                             height: 48,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF2196F3).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                              color: KAppColors.blue.withValues(alpha: 0.15),
+                              borderRadius: KBorderRadius.md,
                             ),
                             child: const Icon(
                               Icons.feedback_outlined,
-                              color: Color(0xFF2196F3),
+                              color: KAppColors.blue,
                               size: 24,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: KDesignConstants.spacing16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1138,7 +1140,8 @@ class _ProfilePageState extends State<ProfilePage> {
               const SliverToBoxAdapter(
                 child: SizedBox(height: 100),
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

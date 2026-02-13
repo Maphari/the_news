@@ -1,8 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/user_profile_model.dart';
 import 'package:the_news/service/social_features_backend_service.dart';
 import 'package:the_news/view/widgets/show_message_widget.dart';
+import 'package:the_news/utils/image_utils.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key, required this.profile});
@@ -21,8 +27,37 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _displayNameController;
   late TextEditingController _bioController;
   late TextEditingController _avatarUrlController;
+  late TextEditingController _websiteController;
+  late TextEditingController _xController;
+  late TextEditingController _instagramController;
+  late TextEditingController _linkedinController;
 
   bool _isLoading = false;
+
+  InputDecoration _fieldDecoration(BuildContext context, String hintText, {Widget? prefix}) {
+    final border = OutlineInputBorder(
+      borderRadius: KBorderRadius.md,
+      borderSide: BorderSide(
+        color: KAppColors.getOnBackground(context).withValues(alpha: 0.12),
+      ),
+    );
+
+    return InputDecoration(
+      hintText: hintText,
+      prefixIcon: prefix,
+      filled: true,
+      fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.04),
+      border: border,
+      enabledBorder: border,
+      focusedBorder: border.copyWith(
+        borderSide: BorderSide(color: KAppColors.getPrimary(context), width: 2),
+      ),
+      errorBorder: border,
+      focusedErrorBorder: border.copyWith(
+        borderSide: BorderSide(color: KAppColors.getPrimary(context), width: 2),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -31,6 +66,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _displayNameController = TextEditingController(text: widget.profile.displayName);
     _bioController = TextEditingController(text: widget.profile.bio ?? '');
     _avatarUrlController = TextEditingController(text: widget.profile.avatarUrl ?? '');
+    _websiteController = TextEditingController(text: widget.profile.socialLinks['website'] ?? '');
+    _xController = TextEditingController(text: widget.profile.socialLinks['x'] ?? '');
+    _instagramController = TextEditingController(text: widget.profile.socialLinks['instagram'] ?? '');
+    _linkedinController = TextEditingController(text: widget.profile.socialLinks['linkedin'] ?? '');
   }
 
   @override
@@ -39,6 +78,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _displayNameController.dispose();
     _bioController.dispose();
     _avatarUrlController.dispose();
+    _websiteController.dispose();
+    _xController.dispose();
+    _instagramController.dispose();
+    _linkedinController.dispose();
     super.dispose();
   }
 
@@ -53,6 +96,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
         displayName: _displayNameController.text.trim(),
         bio: _bioController.text.trim(),
         avatarUrl: _avatarUrlController.text.trim(),
+        socialLinks: {
+          'website': _websiteController.text.trim(),
+          'x': _xController.text.trim(),
+          'instagram': _instagramController.text.trim(),
+          'linkedin': _linkedinController.text.trim(),
+        },
       );
 
       await _socialService.updateUserProfile(updatedProfile);
@@ -71,11 +120,104 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  Future<void> _pickAvatarImage(ImageSource source) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        imageQuality: 85,
+        maxWidth: 640,
+        maxHeight: 640,
+      );
+
+      if (picked == null) return;
+
+      final bytes = await picked.readAsBytes();
+      final base64Data = base64Encode(bytes);
+      final dataUrl = 'data:image/jpeg;base64,$base64Data';
+
+      if (mounted) {
+        setState(() {
+          _avatarUrlController.text = dataUrl;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      errorMessage(context: context, message: 'Failed to pick image: ${e.toString()}');
+    }
+  }
+
+  void _showAvatarActions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: KAppColors.getBackground(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: KDesignConstants.spacing16,
+              vertical: KDesignConstants.spacing12,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                ListTile(
+                  leading: Icon(Icons.photo_library_outlined, color: KAppColors.getOnBackground(context)),
+                  title: Text('Choose from gallery', style: KAppTextStyles.bodyLarge),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _pickAvatarImage(ImageSource.gallery);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.photo_camera_outlined, color: KAppColors.getOnBackground(context)),
+                  title: Text('Take a photo', style: KAppTextStyles.bodyLarge),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _pickAvatarImage(ImageSource.camera);
+                  },
+                ),
+                if (_avatarUrlController.text.trim().isNotEmpty)
+                  ListTile(
+                    leading: Icon(Icons.delete_outline, color: KAppColors.error),
+                    title: Text(
+                      'Remove photo',
+                      style: KAppTextStyles.bodyLarge.copyWith(color: KAppColors.error),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      setState(() {
+                        _avatarUrlController.text = '';
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final avatarProvider = resolveImageProvider(_avatarUrlController.text);
+
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         elevation: 0,
         leading: IconButton(
@@ -96,13 +238,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
           if (_isLoading)
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: KDesignConstants.paddingHorizontalMd,
                 child: SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(KAppColors.primary),
+                    valueColor: AlwaysStoppedAnimation(KAppColors.getPrimary(context)),
                   ),
                 ),
               ),
@@ -113,7 +255,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               child: Text(
                 'Save',
                 style: TextStyle(
-                  color: KAppColors.primary,
+                  color: KAppColors.getPrimary(context),
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -124,7 +266,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(24),
+          padding: KDesignConstants.paddingLg,
           children: [
             // Avatar Preview
             Center(
@@ -134,23 +276,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: KAppColors.primary.withValues(alpha: 0.3),
+                        color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
                     child: CircleAvatar(
                       radius: 60,
-                      backgroundColor: KAppColors.primary.withValues(alpha: 0.2),
-                      backgroundImage: _avatarUrlController.text.isNotEmpty
-                          ? NetworkImage(_avatarUrlController.text)
-                          : null,
-                      child: _avatarUrlController.text.isEmpty
+                      backgroundColor: KAppColors.getPrimary(context).withValues(alpha: 0.2),
+                      backgroundImage: avatarProvider,
+                      child: avatarProvider == null
                           ? Text(
                               _displayNameController.text.isNotEmpty
                                   ? _displayNameController.text[0].toUpperCase()
                                   : 'U',
                               style: KAppTextStyles.displayMedium.copyWith(
-                                color: KAppColors.primary,
+                                color: KAppColors.getPrimary(context),
                                 fontWeight: FontWeight.bold,
                               ),
                             )
@@ -162,7 +302,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     right: 0,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: KAppColors.primary,
+                        color: KAppColors.getPrimary(context),
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: KAppColors.getBackground(context),
@@ -170,17 +310,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                        onPressed: () {
-                          // TODO: Implement image picker
-                        },
+                        icon: const Icon(Icons.camera_alt, color: KAppColors.darkOnBackground, size: 20),
+                        onPressed: _showAvatarActions,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: KDesignConstants.spacing32),
 
             // Username Field
             Text(
@@ -190,28 +328,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             TextFormField(
               controller: _usernameController,
-              decoration: InputDecoration(
-                hintText: 'Enter username',
+              decoration: _fieldDecoration(context, 'Enter username').copyWith(
                 prefixText: '@',
                 prefixStyle: TextStyle(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-                ),
-                filled: true,
-                fillColor: KAppColors.secondary.withValues(alpha: 0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: KAppColors.primary, width: 2),
                 ),
               ),
               validator: (value) {
@@ -227,7 +350,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Display Name Field
             Text(
@@ -237,26 +360,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             TextFormField(
               controller: _displayNameController,
-              decoration: InputDecoration(
-                hintText: 'Enter display name',
-                filled: true,
-                fillColor: KAppColors.secondary.withValues(alpha: 0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: KAppColors.primary, width: 2),
-                ),
-              ),
+              decoration: _fieldDecoration(context, 'Enter display name'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Display name is required';
@@ -264,7 +371,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Bio Field
             Text(
@@ -274,62 +381,43 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             TextFormField(
               controller: _bioController,
               maxLines: 4,
               maxLength: 160,
-              decoration: InputDecoration(
-                hintText: 'Tell us about yourself...',
-                filled: true,
-                fillColor: KAppColors.secondary.withValues(alpha: 0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: KAppColors.primary, width: 2),
-                ),
-              ),
+              decoration: _fieldDecoration(context, 'Tell us about yourself...'),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
-            // Avatar URL Field (temporary, will be replaced with image picker)
             Text(
-              'Avatar URL',
+              'Social Links',
               style: KAppTextStyles.bodyLarge.copyWith(
                 color: KAppColors.getOnBackground(context),
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             TextFormField(
-              controller: _avatarUrlController,
-              decoration: InputDecoration(
-                hintText: 'Enter image URL (optional)',
-                filled: true,
-                fillColor: KAppColors.secondary.withValues(alpha: 0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: KAppColors.primary, width: 2),
-                ),
-              ),
-              onChanged: (value) => setState(() {}), // Trigger avatar preview update
+              controller: _websiteController,
+              decoration: _fieldDecoration(context, 'Website URL'),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: KDesignConstants.spacing12),
+            TextFormField(
+              controller: _xController,
+              decoration: _fieldDecoration(context, 'X / Twitter'),
+            ),
+            const SizedBox(height: KDesignConstants.spacing12),
+            TextFormField(
+              controller: _instagramController,
+              decoration: _fieldDecoration(context, 'Instagram'),
+            ),
+            const SizedBox(height: KDesignConstants.spacing12),
+            TextFormField(
+              controller: _linkedinController,
+              decoration: _fieldDecoration(context, 'LinkedIn'),
+            ),
+            const SizedBox(height: KDesignConstants.spacing32),
 
             // Save Button
             SizedBox(
@@ -337,12 +425,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: KAppColors.primary,
-                  foregroundColor: Colors.white,
+                  backgroundColor: KAppColors.getPrimary(context),
+                  foregroundColor: KAppColors.darkOnBackground,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: KBorderRadius.md,
                   ),
-                  disabledBackgroundColor: KAppColors.primary.withValues(alpha: 0.5),
+                  disabledBackgroundColor: KAppColors.getPrimary(context).withValues(alpha: 0.5),
                 ),
                 child: _isLoading
                     ? const SizedBox(
@@ -350,7 +438,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                          valueColor: AlwaysStoppedAnimation(KAppColors.darkOnBackground),
                         ),
                       )
                     : const Text(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/utils/reading_time_calculator.dart';
 
@@ -31,7 +32,7 @@ class ReadingTimeBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -66,7 +67,7 @@ class ReadingTimeBadge extends StatelessWidget {
             size: 12,
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: KDesignConstants.spacing4),
         ],
         Text(
           readingTime,
@@ -96,14 +97,14 @@ class ReadingTimeCardBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final readingTime = ReadingTimeCalculator.calculateReadingTime(text);
-    final bgColor = backgroundColor ?? Colors.black.withValues(alpha: 0.1);
-    final txtColor = textColor ?? Colors.black.withValues(alpha: 0.7);
+    final bgColor = backgroundColor ?? KAppColors.darkBackground.withValues(alpha: 0.1);
+    final txtColor = textColor ?? KAppColors.darkBackground.withValues(alpha: 0.7);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -113,7 +114,7 @@ class ReadingTimeCardBadge extends StatelessWidget {
             size: 12,
             color: txtColor,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: KDesignConstants.spacing4),
           Text(
             readingTime,
             style: KAppTextStyles.labelSmall.copyWith(

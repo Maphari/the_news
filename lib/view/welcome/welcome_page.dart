@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
 import 'package:the_news/view/login/login_page.dart';
@@ -22,10 +23,7 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   void initState() {
     super.initState();
-    
-    //? Set status bar for dark background
-    StatusBarHelper.setLightStatusBar();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -57,10 +55,14 @@ class _WelcomePageState extends State<WelcomePage>
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final surface = KAppColors.getSurface(context);
+    final onSurface = KAppColors.getOnSurface(context);
+
     return StatusBarHelper.wrapWithStatusBar(
-      backgroundColor: KAppColors.surface,
+      backgroundColor: surface,
       child: Scaffold(
-        backgroundColor: KAppColors.surface,
+        backgroundColor: surface,
         body: SafeArea(
           child: Stack(
             children: [
@@ -73,7 +75,7 @@ class _WelcomePageState extends State<WelcomePage>
                 child: Column(
                   children: [
                     const Spacer(flex: 10),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: KDesignConstants.spacing32),
 
                     //? Headline
                     SlideTransition(
@@ -85,7 +87,7 @@ class _WelcomePageState extends State<WelcomePage>
                             Text(
                               'Stories with a',
                               style: KAppTextStyles.displaySmall.copyWith(
-                                color: KAppColors.onSurface,
+                                color: onSurface,
                                 fontSize: 36,
                                 fontWeight: FontWeight.w300,
                                 letterSpacing: 0.5,
@@ -95,7 +97,7 @@ class _WelcomePageState extends State<WelcomePage>
                             Text(
                               'Human touch!',
                               style: KAppTextStyles.displaySmall.copyWith(
-                                color: KAppColors.onSurface,
+                                color: onSurface,
                                 fontSize: 36,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
@@ -107,7 +109,7 @@ class _WelcomePageState extends State<WelcomePage>
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KDesignConstants.spacing16),
 
                     //? Subtitle
                     FadeTransition(
@@ -115,7 +117,7 @@ class _WelcomePageState extends State<WelcomePage>
                       child: Text(
                         'Discover news curated by real people,\nfor people who care',
                         style: KAppTextStyles.bodyLarge.copyWith(
-                          color: KAppColors.onSurface.withValues(alpha: 0.7),
+                          color: onSurface.withValues(alpha: 0.7),
                           fontSize: 16,
                           height: 1.5,
                         ),
@@ -142,10 +144,10 @@ class _WelcomePageState extends State<WelcomePage>
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: KAppColors.secondary,
-                            foregroundColor: KAppColors.onSecondary,
+                            backgroundColor: colorScheme.primary,
+                            foregroundColor: colorScheme.onPrimary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: KBorderRadius.lg,
                             ),
                             elevation: 0,
                           ),
@@ -160,7 +162,7 @@ class _WelcomePageState extends State<WelcomePage>
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KDesignConstants.spacing16),
 
                     //? Sign In Link
                     FadeTransition(
@@ -171,7 +173,7 @@ class _WelcomePageState extends State<WelcomePage>
                           Text(
                             'Already have an account? ',
                             style: KAppTextStyles.bodyMedium.copyWith(
-                              color: KAppColors.onSurface.withValues(alpha: 0.7),
+                              color: onSurface.withValues(alpha: 0.7),
                             ),
                           ),
                           TextButton(
@@ -190,7 +192,7 @@ class _WelcomePageState extends State<WelcomePage>
                             child: Text(
                               'Sign in',
                               style: KAppTextStyles.labelLarge.copyWith(
-                                color: KAppColors.secondary,
+                                color: colorScheme.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -199,7 +201,7 @@ class _WelcomePageState extends State<WelcomePage>
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: KDesignConstants.spacing24),
                   ],
                 ),
               ),

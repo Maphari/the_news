@@ -21,8 +21,8 @@ class PaymentService extends ChangeNotifier {
   static const String yearlyPlan = 'yearly';
 
   // Prices in ZAR (South African Rand) - in kobo (1/100 of currency)
-  static const int monthlyPriceKobo = 9900; // R99.00
-  static const int yearlyPriceKobo = 99900; // R999.00 (save R189)
+  static const int monthlyPriceKobo = 11900; // R119.00
+  static const int yearlyPriceKobo = 119900; // R1,199.00 (save R229)
 
   bool _isPremium = false;
   String? _subscriptionType;

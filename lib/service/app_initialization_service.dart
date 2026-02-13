@@ -6,7 +6,16 @@ import 'package:the_news/service/theme_service.dart';
 import 'package:the_news/service/app_rating_service.dart';
 import 'package:the_news/service/location_service.dart';
 import 'package:the_news/service/payment_service.dart';
+import 'package:the_news/service/followed_publishers_service.dart';
+import 'package:the_news/service/premium_features_service.dart';
+import 'package:the_news/service/calm_mode_service.dart';
+import 'package:the_news/service/notification_service.dart';
+import 'package:the_news/service/realtime_comments_service.dart';
 import 'package:the_news/config/env_config.dart';
+import 'package:the_news/service/accessibility_service.dart';
+import 'package:the_news/service/sync_manager_service.dart';
+import 'package:the_news/service/background_download_service.dart';
+import 'package:the_news/service/content_discovery_service.dart';
 
 /// Centralized app initialization service
 ///
@@ -43,12 +52,30 @@ class AppInitializationService {
       await themeService.initialize();
       debugPrint('✅ Theme service ready (${themeService.themeModeName} mode)');
 
+      // 0.1 Initialize calm mode preferences
+      final calmModeService = CalmModeService.instance;
+      await calmModeService.initialize();
+
+      // 0.2 Initialize notifications (local + FCM token)
+      final notificationService = NotificationService.instance;
+      await notificationService.initialize();
+
+      // 0.3 Initialize comment streaming preferences
+      await RealtimeCommentsService.instance.initialize();
+
+      // 0.4 Initialize accessibility and sync orchestration
+      await AccessibilityService.instance.initialize();
+      await SyncManagerService.instance.initialize();
+      BackgroundDownloadService.instance.startAutoDownload();
+
       // 1. Initialize subscription service
       debugPrint('📱 Initializing subscription service...');
       final subscriptionService = SubscriptionService.instance;
 
       if (userId != null) {
         await subscriptionService.initializeForUser(userId);
+        await FollowedPublishersService.instance.loadFollowedPublishers(userId);
+        await SyncManagerService.instance.performFullSync(userId);
         debugPrint('✅ Subscription initialized for user: $userId');
       } else {
         debugPrint('⚠️ No userId provided - subscription will initialize on login');
@@ -62,14 +89,15 @@ class AppInitializationService {
       if (newsApiService.isConfigured) {
         debugPrint('✅ News API configured and ready');
       } else {
-        debugPrint('⚠️ News API not configured - using dummy data');
-        debugPrint('   Add NEWS_API_KEY to .env to enable real news');
+        debugPrint('⚠️ News API not configured - using backend only');
+        debugPrint('   Add NEWS_API_KEY to .env to enable external news feed');
       }
 
       // 3. Initialize news provider and load initial articles
       debugPrint('📚 Loading initial news articles...');
       final newsProvider = NewsProviderService.instance;
       await newsProvider.initialize();
+      await ContentDiscoveryService.instance.updateTrendingTopics(newsProvider.articles);
       debugPrint('✅ News articles loaded');
 
       // Note: The following services no longer require explicit initialization
@@ -109,6 +137,10 @@ class AppInitializationService {
       } else {
         debugPrint('⚠️ Payment service not configured - add PAYSTACK_PUBLIC_KEY to .env');
       }
+
+      // 12. Initialize premium feature limits
+      final premiumFeaturesService = PremiumFeaturesService.instance;
+      await premiumFeaturesService.initialize();
 
       _isInitialized = true;
       _initializationError = null;

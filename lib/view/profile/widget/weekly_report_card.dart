@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/wellness_report_model.dart';
 import 'package:the_news/service/wellness_report_service.dart';
@@ -34,15 +35,15 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
   Color _getScoreColor(String score) {
     switch (score) {
       case 'Excellent':
-        return const Color(0xFF4CAF50);
+        return KAppColors.success;
       case 'Great':
-        return const Color(0xFF8BC34A);
+        return KAppColors.green;
       case 'Good':
-        return const Color(0xFFFFA726);
+        return KAppColors.warning;
       case 'Fair':
-        return const Color(0xFFFF9800);
+        return KAppColors.orange;
       default:
-        return const Color(0xFFEF5350);
+        return KAppColors.error;
     }
   }
 
@@ -64,8 +65,8 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: KAppColors.primary),
+      return Center(
+        child: CircularProgressIndicator(color: KAppColors.getPrimary(context)),
       );
     }
 
@@ -79,15 +80,8 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            scoreColor.withValues(alpha: 0.2),
-            scoreColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: scoreColor.withValues(alpha: 0.12),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
           color: scoreColor.withValues(alpha: 0.3),
           width: 1,
@@ -100,7 +94,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.paddingSm,
                 decoration: BoxDecoration(
                   color: scoreColor.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
@@ -111,7 +105,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: KDesignConstants.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +116,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: KDesignConstants.spacing4),
                     Text(
                       report.wellnessScore,
                       style: KAppTextStyles.headlineMedium.copyWith(
@@ -141,7 +135,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: KDesignConstants.spacing20),
 
           // Quick Stats
           Row(
@@ -153,7 +147,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
                   Icons.article_outlined,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: _buildStatItem(
                   'Reading Time',
@@ -161,7 +155,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
                   Icons.access_time,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: _buildStatItem(
                   'Active Days',
@@ -171,12 +165,12 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: KDesignConstants.spacing20),
 
           // Week over week comparison
           if (report.weekOverWeekComparison['articlesChange'] != 0) ...[
             _buildWeekOverWeekComparison(report),
-            const SizedBox(height: 20),
+            const SizedBox(height: KDesignConstants.spacing20),
           ],
 
           // Insights
@@ -188,7 +182,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             ...report.insights.take(3).map((insight) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
@@ -196,10 +190,10 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
                 children: [
                   Icon(
                     Icons.lightbulb_outline,
-                    color: KAppColors.primary,
+                    color: KAppColors.getPrimary(context),
                     size: 16,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Expanded(
                     child: Text(
                       insight,
@@ -219,10 +213,10 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
 
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: KDesignConstants.paddingSm,
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           width: 1,
@@ -230,7 +224,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
       ),
       child: Column(
         children: [
-          Icon(icon, color: KAppColors.primary, size: 20),
+          Icon(icon, color: KAppColors.getPrimary(context), size: 20),
           const SizedBox(height: 6),
           Text(
             value,
@@ -259,19 +253,19 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
     final isPositive = articlesChange > 0;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: KDesignConstants.paddingSm,
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
       ),
       child: Row(
         children: [
           Icon(
             isPositive ? Icons.trending_up : Icons.trending_down,
-            color: isPositive ? const Color(0xFF4CAF50) : const Color(0xFFEF5350),
+            color: isPositive ? KAppColors.success : KAppColors.error,
             size: 20,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: KDesignConstants.spacing8),
           Expanded(
             child: Text(
               isPositive
@@ -286,7 +280,7 @@ class _WeeklyReportCardState extends State<WeeklyReportCard> {
             Text(
               '${isPositive ? '+' : ''}$articlesPercent%',
               style: KAppTextStyles.labelMedium.copyWith(
-                color: isPositive ? const Color(0xFF4CAF50) : const Color(0xFFEF5350),
+                color: isPositive ? KAppColors.success : KAppColors.error,
                 fontWeight: FontWeight.bold,
               ),
             ),

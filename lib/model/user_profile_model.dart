@@ -5,6 +5,9 @@ class UserProfile {
   final String? bio;
   final String? avatarUrl;
   final String? coverImageUrl;
+  final Map<String, String> socialLinks;
+  final Map<String, bool> privacySettings;
+  final String? featuredListId;
   final DateTime joinedDate;
   final int followersCount;
   final int followingCount;
@@ -21,6 +24,9 @@ class UserProfile {
     this.bio,
     this.avatarUrl,
     this.coverImageUrl,
+    this.socialLinks = const {},
+    this.privacySettings = const {},
+    this.featuredListId,
     required this.joinedDate,
     this.followersCount = 0,
     this.followingCount = 0,
@@ -39,6 +45,9 @@ class UserProfile {
       'bio': bio,
       'avatarUrl': avatarUrl,
       'coverImageUrl': coverImageUrl,
+      'socialLinks': socialLinks,
+      'privacySettings': privacySettings,
+      'featuredListId': featuredListId,
       'joinedDate': joinedDate.toIso8601String(),
       'followersCount': followersCount,
       'followingCount': followingCount,
@@ -58,6 +67,9 @@ class UserProfile {
       bio: map['bio'] as String?,
       avatarUrl: map['avatarUrl'] as String?,
       coverImageUrl: map['coverImageUrl'] as String?,
+      socialLinks: Map<String, String>.from(map['socialLinks'] ?? {}),
+      privacySettings: Map<String, bool>.from(map['privacySettings'] ?? {}),
+      featuredListId: map['featuredListId'] as String?,
       joinedDate: DateTime.parse(map['joinedDate'] as String),
       followersCount: map['followersCount'] as int? ?? 0,
       followingCount: map['followingCount'] as int? ?? 0,
@@ -76,6 +88,9 @@ class UserProfile {
     String? bio,
     String? avatarUrl,
     String? coverImageUrl,
+    Map<String, String>? socialLinks,
+    Map<String, bool>? privacySettings,
+    String? featuredListId,
     DateTime? joinedDate,
     int? followersCount,
     int? followingCount,
@@ -92,6 +107,9 @@ class UserProfile {
       bio: bio ?? this.bio,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      socialLinks: socialLinks ?? this.socialLinks,
+      privacySettings: privacySettings ?? this.privacySettings,
+      featuredListId: featuredListId ?? this.featuredListId,
       joinedDate: joinedDate ?? this.joinedDate,
       followersCount: followersCount ?? this.followersCount,
       followingCount: followingCount ?? this.followingCount,

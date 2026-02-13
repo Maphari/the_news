@@ -4,6 +4,23 @@ import { Timestamp } from "firebase-admin/firestore";
 
 const readingHistoryCollection = db.collection("readingHistory");
 
+const toValidMillis = (value: unknown): number | null => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.trunc(value);
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric)) {
+      return Math.trunc(numeric);
+    }
+    const parsed = Date.parse(value);
+    if (!Number.isNaN(parsed)) {
+      return Math.trunc(parsed);
+    }
+  }
+  return null;
+};
+
 /**
  * Get reading history for a user
  * GET /api/v1/user/reading-history/:userId
@@ -82,11 +99,12 @@ export const addReadingHistory = async (req: Request, res: Response) => {
       }
 
       const docRef = readingHistoryCollection.doc();
+      const readAtMillis = toValidMillis(entry.readAt);
       batch.set(docRef, {
         userId,
         articleId: entry.articleId,
         articleTitle: entry.articleTitle,
-        readAt: entry.readAt ? Timestamp.fromMillis(entry.readAt) : Timestamp.now(),
+        readAt: readAtMillis != null ? Timestamp.fromMillis(readAtMillis) : Timestamp.now(),
         readDuration: entry.readDuration || 0,
         createdAt: Timestamp.now(),
       });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/reading_tracker_service.dart';
 import 'package:the_news/service/calm_mode_service.dart';
@@ -85,7 +86,7 @@ class _ReadingLimitBannerState extends State<ReadingLimitBanner> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: color.withValues(alpha: 0.3),
           width: 1,
@@ -94,7 +95,7 @@ class _ReadingLimitBannerState extends State<ReadingLimitBanner> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: KDesignConstants.paddingSm,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.2),
               shape: BoxShape.circle,
@@ -105,7 +106,7 @@ class _ReadingLimitBannerState extends State<ReadingLimitBanner> {
               size: 20,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: KDesignConstants.spacing12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +118,7 @@ class _ReadingLimitBannerState extends State<ReadingLimitBanner> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: KDesignConstants.spacing4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
@@ -127,7 +128,7 @@ class _ReadingLimitBannerState extends State<ReadingLimitBanner> {
                     minHeight: 6,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: KDesignConstants.spacing4),
                 Text(
                   '${_limitPercentage.toStringAsFixed(0)}% of daily limit',
                   style: KAppTextStyles.labelSmall.copyWith(

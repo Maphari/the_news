@@ -1,14 +1,18 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' hide TimeOfDay;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:the_news/utils/share_utils.dart';
 import 'package:the_news/model/daily_digest_model.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/news_provider_service.dart';
 import 'package:the_news/service/followed_publishers_service.dart';
 import 'package:the_news/service/text_to_speech_service.dart';
 import 'package:the_news/service/ai_service.dart';
+import 'package:the_news/core/network/api_client.dart';
+import 'package:the_news/service/calm_mode_service.dart';
+import 'package:the_news/service/content_intensity_service.dart';
+import 'package:the_news/service/location_service.dart';
 
 /// Service for generating and managing daily AI digests
 class DailyDigestService extends ChangeNotifier {
@@ -23,6 +27,7 @@ class DailyDigestService extends ChangeNotifier {
   final FollowedPublishersService _followedService = FollowedPublishersService.instance;
   final TextToSpeechService _ttsService = TextToSpeechService.instance;
   final AIService _aiService = AIService.instance;
+  final ApiClient _api = ApiClient.instance;
 
   List<DailyDigest> _digests = [];
   DigestSettings _settings = const DigestSettings();
@@ -59,10 +64,22 @@ class DailyDigestService extends ChangeNotifier {
       await _loadDigests();
       await _loadSettings();
       await _loadLastGenerated();
+      notifyListeners();
       log('✅ Daily digest service initialized');
     } catch (e) {
       log('⚠️ Error initializing daily digest service: $e');
     }
+  }
+
+  /// Initialize and sync digests for a specific user
+  Future<void> initializeForUser(String userId) async {
+    await initialize();
+    await _syncFromBackend(userId);
+    notifyListeners();
+  }
+
+  Future<void> syncFromBackend(String userId) async {
+    await _syncFromBackend(userId);
   }
 
   /// Load saved digests
@@ -176,9 +193,23 @@ class DailyDigestService extends ChangeNotifier {
       log('🤖 Generating daily digest...');
 
       // Get articles
-      final articles = _newsProvider.articles;
+      var articles = _newsProvider.articles;
       if (articles.isEmpty) {
         log('⚠️ No articles available for digest');
+        _isGenerating = false;
+        notifyListeners();
+        return null;
+      }
+
+      // Apply calm mode and intensity filters for wellbeing
+      final calmMode = CalmModeService.instance;
+      if (calmMode.isCalmModeEnabled) {
+        articles = calmMode.filterArticles(articles);
+      }
+      articles = ContentIntensityService.instance.filterArticles(articles);
+
+      if (articles.isEmpty) {
+        log('⚠️ No eligible articles after filters');
         _isGenerating = false;
         notifyListeners();
         return null;
@@ -187,13 +218,14 @@ class DailyDigestService extends ChangeNotifier {
       // Get user preferences
       final followedSources = _followedService.followedPublisherNames.toList();
       final preferredCategories = await _getPreferredCategories(articles);
+      final locationService = LocationService.instance;
 
       // Create personalization
       final personalization = DigestPersonalization(
         followedSources: followedSources,
         preferredCategories: preferredCategories,
         categoryWeights: _calculateCategoryWeights(preferredCategories),
-        userLocation: 'US',
+        userLocation: locationService.currentCountryCode ?? 'US',
         readingLevel: _settings.tone == DigestTone.concise ? 'quick' : 'standard',
         includeOpinions: !_settings.excludedCategories.contains('opinion'),
         includeInternational: !_settings.excludedCategories.contains('world'),
@@ -233,6 +265,7 @@ class DailyDigestService extends ChangeNotifier {
 
       await _saveDigests();
       await _saveLastGenerated();
+      await _uploadDigest(digest);
 
       log('✅ Daily digest generated successfully');
       log('📊 ${items.length} items, ${digest.estimatedReadingMinutes} min read');
@@ -578,10 +611,13 @@ class DailyDigestService extends ChangeNotifier {
   }
 
   /// Delete digest
-  Future<void> deleteDigest(String digestId) async {
+  Future<void> deleteDigest(String digestId, {String? userId}) async {
     _digests.removeWhere((d) => d.digestId == digestId);
     notifyListeners();
     await _saveDigests();
+    if (userId != null && userId.isNotEmpty) {
+      await deleteDigestRemote(userId: userId, digestId: digestId);
+    }
     log('🗑️ Digest deleted');
   }
 
@@ -595,8 +631,80 @@ class DailyDigestService extends ChangeNotifier {
     log('🗑️ All digests cleared');
   }
 
+  Future<void> deleteDigestRemote({
+    required String userId,
+    required String digestId,
+  }) async {
+    try {
+      await _api.delete(
+        'digests/$userId/$digestId',
+        timeout: const Duration(seconds: 10),
+      );
+    } catch (e) {
+      log('⚠️ Error deleting digest on backend: $e');
+    }
+  }
+
+  Future<void> _uploadDigest(DailyDigest digest) async {
+    try {
+      final response = await _api.post(
+        'digests',
+        body: digest.toJson(),
+        timeout: const Duration(seconds: 12),
+      );
+      if (_api.isSuccess(response)) {
+        log('✅ Digest synced to backend');
+      } else {
+        log('⚠️ Digest sync failed: ${_api.getErrorMessage(response)}');
+      }
+    } catch (e) {
+      log('⚠️ Error syncing digest: $e');
+    }
+  }
+
+  Future<void> _syncFromBackend(String userId) async {
+    try {
+      final response = await _api.get(
+        'digests/$userId',
+        timeout: const Duration(seconds: 12),
+      );
+      if (_api.isSuccess(response)) {
+        final data = _api.parseJson(response);
+        if (data['success'] == true) {
+          final List<dynamic> items = data['digests'] ?? [];
+          final remoteDigests = items
+              .map((json) => DailyDigest.fromJson(json as Map<String, dynamic>))
+              .toList();
+          if (remoteDigests.isNotEmpty) {
+            _digests = _mergeRemoteDigests(remoteDigests, _digests);
+            await _saveDigests();
+          }
+        }
+      }
+    } catch (e) {
+      log('⚠️ Error syncing digests from backend: $e');
+    }
+    notifyListeners();
+  }
+
+  List<DailyDigest> _mergeRemoteDigests(
+    List<DailyDigest> remote,
+    List<DailyDigest> local,
+  ) {
+    final map = <String, DailyDigest>{};
+    for (final digest in local) {
+      map[digest.digestId] = digest;
+    }
+    for (final digest in remote) {
+      map[digest.digestId] = digest;
+    }
+    final merged = map.values.toList()
+      ..sort((a, b) => b.generatedAt.compareTo(a.generatedAt));
+    return merged;
+  }
+
   /// Share digest
-  Future<void> shareDigest(DailyDigest digest) async {
+  Future<void> shareDigest(BuildContext context, DailyDigest digest) async {
     try {
       final shareText = StringBuffer();
       shareText.writeln('📰 ${digest.title}');
@@ -615,7 +723,8 @@ class DailyDigestService extends ChangeNotifier {
 
       shareText.writeln('Generated by The News App');
 
-      await Share.share(
+      await ShareUtils.shareText(
+        context,
         shareText.toString(),
         subject: digest.title,
       );

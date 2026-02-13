@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/highlight_model.dart';
 import 'package:the_news/service/notes_highlights_service.dart';
@@ -171,155 +172,160 @@ class _HighlightColorPickerState extends State<_HighlightColorPicker> {
         color: KAppColors.getBackground(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      child: SingleChildScrollView(
+        padding: KDesignConstants.paddingLg,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: KDesignConstants.spacing24),
+
+            // Selected text preview
+            Text(
+              'Highlight',
+              style: KAppTextStyles.titleMedium.copyWith(
+                color: KAppColors.getOnBackground(context),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: KDesignConstants.spacing12),
+            Container(
+              padding: KDesignConstants.paddingSm,
               decoration: BoxDecoration(
-                color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+                borderRadius: KBorderRadius.md,
+              ),
+              child: Text(
+                widget.selectedText.length > 100
+                    ? '${widget.selectedText.substring(0, 100)}...'
+                    : widget.selectedText,
+                style: KAppTextStyles.bodyMedium.copyWith(
+                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.8),
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
-          // Selected text preview
-          Text(
-            'Highlight',
-            style: KAppTextStyles.titleMedium.copyWith(
-              color: KAppColors.getOnBackground(context),
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              widget.selectedText.length > 100
-                  ? '${widget.selectedText.substring(0, 100)}...'
-                  : widget.selectedText,
-              style: KAppTextStyles.bodyMedium.copyWith(
-                color: KAppColors.getOnBackground(context).withValues(alpha: 0.8),
+            // Color selection
+            Text(
+              'Choose color',
+              style: KAppTextStyles.labelMedium.copyWith(
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
               ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(height: 24),
-
-          // Color selection
-          Text(
-            'Choose color',
-            style: KAppTextStyles.labelMedium.copyWith(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: HighlightColor.values.map((color) {
-              return InkWell(
-                onTap: () {
-                  final note = _showNoteField && _noteController.text.isNotEmpty
-                      ? _noteController.text
-                      : null;
-                  widget.onColorSelected(color, note);
-                },
-                child: Container(
-                  width: (MediaQuery.of(context).size.width - 96) / 3,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Color(color.value).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Color(color.value).withValues(alpha: 0.5),
-                      width: 2,
+            const SizedBox(height: KDesignConstants.spacing12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: HighlightColor.values.map((color) {
+                return InkWell(
+                  onTap: () {
+                    final note = _showNoteField && _noteController.text.isNotEmpty
+                        ? _noteController.text
+                        : null;
+                    widget.onColorSelected(color, note);
+                  },
+                  child: Container(
+                    width: (MediaQuery.of(context).size.width - 96) / 3,
+                    padding: KDesignConstants.paddingMd,
+                    decoration: BoxDecoration(
+                      color: Color(color.value).withValues(alpha: 0.2),
+                      borderRadius: KBorderRadius.md,
+                      border: Border.all(
+                        color: Color(color.value).withValues(alpha: 0.5),
+                        width: 2,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Color(color.value),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(height: KDesignConstants.spacing8),
+                        Text(
+                          color.label,
+                          style: KAppTextStyles.labelSmall.copyWith(
+                            color: KAppColors.getOnBackground(context),
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        Text(
+                          color.description,
+                          style: KAppTextStyles.labelSmall.copyWith(
+                            color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
+                            fontSize: 10,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Color(color.value),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        color.label,
-                        style: KAppTextStyles.labelSmall.copyWith(
-                          color: KAppColors.getOnBackground(context),
-                          fontWeight: FontWeight.w600,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      Text(
-                        color.description,
-                        style: KAppTextStyles.labelSmall.copyWith(
-                          color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-                          fontSize: 10,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: KDesignConstants.spacing16),
+
+            // Add note toggle
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _showNoteField = !_showNoteField;
+                });
+              },
+              icon: Icon(
+                _showNoteField ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                size: 20,
+              ),
+              label: Text(_showNoteField ? 'Remove note' : 'Add note'),
+            ),
+
+            // Note field
+            if (_showNoteField) ...[
+              const SizedBox(height: KDesignConstants.spacing12),
+              TextField(
+                controller: _noteController,
+                decoration: InputDecoration(
+                  hintText: 'Add your thoughts...',
+                  filled: true,
+                  fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: KBorderRadius.md,
+                    borderSide: BorderSide.none,
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 16),
-
-          // Add note toggle
-          TextButton.icon(
-            onPressed: () {
-              setState(() {
-                _showNoteField = !_showNoteField;
-              });
-            },
-            icon: Icon(
-              _showNoteField ? Icons.remove_circle_outline : Icons.add_circle_outline,
-              size: 20,
-            ),
-            label: Text(_showNoteField ? 'Remove note' : 'Add note'),
-          ),
-
-          // Note field
-          if (_showNoteField) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _noteController,
-              decoration: InputDecoration(
-                hintText: 'Add your thoughts...',
-                filled: true,
-                fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
+                maxLines: 3,
+                textInputAction: TextInputAction.done,
               ),
-              maxLines: 3,
-              textInputAction: TextInputAction.done,
-            ),
-          ],
+            ],
 
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: KDesignConstants.spacing24),
+          ],
+        ),
       ),
     );
   }

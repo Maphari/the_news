@@ -8,6 +8,7 @@ import {
   FeedbackResponse,
 } from "../models/feedback.model";
 import { Timestamp } from "firebase-admin/firestore";
+import { getOptionalString } from "../utils/request.utils";
 
 const feedbackCollection = db.collection("feedback");
 
@@ -80,7 +81,7 @@ export const submitFeedback = async (req: Request, res: Response) => {
  */
 export const getUserFeedback = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
 
     if (!userId) {
       return res.status(400).json({
@@ -213,7 +214,7 @@ export const getAllFeedback = async (req: Request, res: Response) => {
  */
 export const updateFeedbackStatus = async (req: Request, res: Response) => {
   try {
-    const { feedbackId } = req.params;
+    const feedbackId = getOptionalString(req.params.feedbackId);
     const { status } = req.body;
 
     if (!feedbackId || !status) {

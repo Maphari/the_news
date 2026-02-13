@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:the_news/core/network/api_client.dart';
 import 'package:the_news/model/news_article_model.dart';
+import 'package:the_news/service/calm_mode_service.dart';
 
 /// Service to manage saved articles (bookmarks)
 /// Uses ApiClient for all network requests following clean architecture
@@ -16,13 +17,30 @@ class SavedArticlesService extends ChangeNotifier {
   List<ArticleModel> _savedArticles = [];
   bool _isLoading = false;
   String? _error;
+  Future<void>? _loadInFlight;
+  String _lastQueryKey = '';
+  final Map<String, List<ArticleModel>> _queryArticlesCache = {};
+  final Map<String, Set<String>> _queryIdsCache = {};
+  final Map<String, DateTime> _queryFetchedAt = {};
+
+  static const Duration _queryTtl = Duration(minutes: 2);
 
   // Getters
   Set<String> get savedArticleIds => _savedArticleIds;
-  List<ArticleModel> get savedArticles => _savedArticles;
+  List<ArticleModel> get savedArticles {
+    final calmMode = CalmModeService.instance;
+    if (!calmMode.isCalmModeEnabled) return _savedArticles;
+    return calmMode.filterArticles(_savedArticles);
+  }
   bool get isLoading => _isLoading;
   String? get error => _error;
   int get savedCount => _savedArticleIds.length;
+
+  bool _isQueryFresh(String queryKey) {
+    final fetched = _queryFetchedAt[queryKey];
+    if (fetched == null) return false;
+    return DateTime.now().difference(fetched) < _queryTtl;
+  }
 
   /// Check if an article is saved
   bool isArticleSaved(String articleId) {
@@ -30,18 +48,54 @@ class SavedArticlesService extends ChangeNotifier {
   }
 
   /// Load saved article IDs for a user
-  Future<void> loadSavedArticles(String userId) async {
+  Future<void> loadSavedArticles(
+    String userId, {
+    String? category,
+    String? search,
+    String sort = 'recent',
+    int limit = 50,
+    int offset = 0,
+    bool forceRefresh = false,
+  }) async {
+    final normalizedCategory = (category ?? '').trim().toLowerCase();
+    final normalizedSearch = (search ?? '').trim().toLowerCase();
+    final normalizedSort = sort.trim().toLowerCase();
+    final queryKey =
+        '$userId|$normalizedCategory|$normalizedSearch|$normalizedSort|$limit|$offset';
+
+    if (!forceRefresh && _loadInFlight != null && _lastQueryKey == queryKey) {
+      return _loadInFlight!;
+    }
+
+    if (!forceRefresh && _queryArticlesCache.containsKey(queryKey) && _isQueryFresh(queryKey)) {
+      _savedArticles = _queryArticlesCache[queryKey]!;
+      _savedArticleIds = _queryIdsCache[queryKey] ?? {};
+      _error = null;
+      notifyListeners();
+      return;
+    }
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
-    try {
+    final request = () async {
+      try {
       // Fetch from backend first to ensure cross-device data consistency
       log('📥 Fetching saved articles from backend for user: $userId');
 
-      final response = await _api.get('saved-articles/$userId', queryParams: {
-        'includeArticles': 'true', // Request full article data
-      });
+      final response = await _api.get(
+        'saved-articles/$userId',
+        queryParams: {
+          'includeArticles': 'true',
+          if (normalizedCategory.isNotEmpty && normalizedCategory != 'all')
+            'category': normalizedCategory,
+          if (normalizedSearch.isNotEmpty) 'search': normalizedSearch,
+          'sort': normalizedSort,
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+        },
+      );
 
       if (_api.isSuccess(response)) {
         final data = _api.parseJson(response);
@@ -57,13 +111,17 @@ class SavedArticlesService extends ChangeNotifier {
                 .map((json) => ArticleModel.fromJson(json))
                 .toList();
 
+            _queryArticlesCache[queryKey] = _savedArticles;
+            _queryIdsCache[queryKey] = _savedArticleIds;
+            _queryFetchedAt[queryKey] = DateTime.now();
+
             // Save to local storage for offline access
             await _saveToLocalStorage(userId);
             log('✅ Loaded ${_savedArticles.length} saved articles with full data from backend');
           } else if (_savedArticleIds.isNotEmpty) {
             // Backend returned IDs but no articles - try to fetch them
             log('⚠️ Backend returned ${_savedArticleIds.length} IDs but no article data, fetching...');
-            await _fetchMissingArticles(_savedArticleIds.toList());
+            await _fetchMissingArticles(userId, _savedArticleIds.toList());
           } else {
             _savedArticles = [];
             log('✅ No saved articles found');
@@ -76,7 +134,7 @@ class SavedArticlesService extends ChangeNotifier {
         log('⚠️ Backend unavailable, loading from local cache');
         await _loadFromLocalStorage(userId);
       }
-    } catch (e) {
+      } catch (e) {
       _error = e.toString();
       log('⚠️ Error loading saved articles from backend, trying local cache: $e');
       // Fall back to local storage on error
@@ -85,14 +143,20 @@ class SavedArticlesService extends ChangeNotifier {
       } catch (localError) {
         log('⚠️ Error loading from local storage: $localError');
       }
-    } finally {
+      } finally {
       _isLoading = false;
       notifyListeners();
-    }
+      }
+    }();
+
+    _lastQueryKey = queryKey;
+    _loadInFlight = request;
+    await request;
+    _loadInFlight = null;
   }
 
   /// Fetch missing article details by article IDs
-  Future<void> _fetchMissingArticles(List<String> articleIds) async {
+  Future<void> _fetchMissingArticles(String userId, List<String> articleIds) async {
     if (articleIds.isEmpty) return;
 
     try {
@@ -125,11 +189,33 @@ class SavedArticlesService extends ChangeNotifier {
 
       if (fetchedArticles.isNotEmpty) {
         _savedArticles = fetchedArticles;
+        await _saveToLocalStorage(userId);
         log('✅ Fetched ${fetchedArticles.length} articles from backend');
         notifyListeners();
+
+        // Best-effort backfill of articleData for existing saved items
+        await _backfillArticleData(userId, fetchedArticles);
       }
     } catch (e) {
       log('⚠️ Error fetching missing articles: $e');
+    }
+  }
+
+  Future<void> _backfillArticleData(String userId, List<ArticleModel> articles) async {
+    try {
+      for (final article in articles) {
+        await _api.post(
+          'saved-articles',
+          body: {
+            'userId': userId,
+            'articleId': article.articleId,
+            'articleData': article.toJson(),
+          },
+        );
+      }
+      log('✅ Backfilled article data for ${articles.length} saved items');
+    } catch (e) {
+      log('⚠️ Error backfilling article data: $e');
     }
   }
 
@@ -178,6 +264,9 @@ class SavedArticlesService extends ChangeNotifier {
 
       // Save to local storage immediately
       await _saveToLocalStorage(userId);
+      _queryArticlesCache.clear();
+      _queryIdsCache.clear();
+      _queryFetchedAt.clear();
 
       // Then sync to backend with full article data
       final response = await _api.post(
@@ -219,6 +308,9 @@ class SavedArticlesService extends ChangeNotifier {
 
       // Update local storage immediately
       await _saveToLocalStorage(userId);
+      _queryArticlesCache.clear();
+      _queryIdsCache.clear();
+      _queryFetchedAt.clear();
 
       // Then sync to backend
       final response = await _api.delete(

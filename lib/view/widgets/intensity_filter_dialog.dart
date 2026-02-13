@@ -1,5 +1,6 @@
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/service/content_intensity_service.dart';
 import 'package:the_news/utils/haptic_service.dart';
 
@@ -43,19 +44,12 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
       backgroundColor: Colors.transparent,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
-        padding: const EdgeInsets.all(24),
+        padding: KDesignConstants.paddingLg,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF1A1A2E).withValues(alpha: 0.98),
-              const Color(0xFF16213E).withValues(alpha: 0.98),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
+          color: KAppColors.getBackground(context),
+          borderRadius: KBorderRadius.xxl,
           border: Border.all(
-            color: KAppColors.primary.withValues(alpha: 0.3),
+            color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -66,27 +60,20 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    KAppColors.primary.withValues(alpha: 0.25),
-                    KAppColors.tertiary.withValues(alpha: 0.25),
-                  ],
-                ),
+                color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: KAppColors.primary.withValues(alpha: 0.4),
+                  color: KAppColors.getPrimary(context).withValues(alpha: 0.4),
                   width: 2,
                 ),
               ),
               child: Icon(
                 Icons.tune_outlined,
-                color: KAppColors.primary,
+                color: KAppColors.getPrimary(context),
                 size: 32,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: KDesignConstants.spacing20),
 
             // Title
             Text(
@@ -99,7 +86,7 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
 
             // Subtitle
             Text(
@@ -111,18 +98,18 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Filter options
             _buildFilterOption(IntensityLevel.low),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             _buildFilterOption(IntensityLevel.medium),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             _buildFilterOption(IntensityLevel.high),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             _buildFilterOption(IntensityLevel.all),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Buttons
             Row(
@@ -136,7 +123,7 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: _buildButton(
                     label: 'Apply',
@@ -166,24 +153,19 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.paddingMd,
         decoration: BoxDecoration(
           gradient: isSelected
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    KAppColors.primary.withValues(alpha: 0.25),
-                    KAppColors.tertiary.withValues(alpha: 0.25),
-                  ],
-                )
+              ? null
               : null,
-          color: isSelected ? null : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected
+              ? KAppColors.getPrimary(context).withValues(alpha: 0.2)
+              : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: isSelected
-                ? KAppColors.primary.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.1),
+                ? KAppColors.getPrimary(context).withValues(alpha: 0.5)
+                : KAppColors.getOnBackground(context).withValues(alpha: 0.1),
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -195,7 +177,7 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
               height: 48,
               decoration: BoxDecoration(
                 color: KAppColors.getOnBackground(context).withValues(alpha: isSelected ? 0.15 : 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
                 border: Border.all(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
                   width: 1,
@@ -221,7 +203,7 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Text(
                     level.description,
                     style: TextStyle(
@@ -236,7 +218,7 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: KAppColors.primary,
+                color: KAppColors.getPrimary(context),
                 size: 24,
               ),
           ],
@@ -254,33 +236,28 @@ class _IntensityFilterDialogState extends State<IntensityFilterDialog> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            gradient: isPrimary
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      KAppColors.primary.withValues(alpha: 0.3),
-                      KAppColors.tertiary.withValues(alpha: 0.3),
-                    ],
-                  )
-                : null,
-            color: isPrimary ? null : Colors.white.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(16),
+            gradient: null,
+            color: isPrimary
+                ? KAppColors.getPrimary(context)
+                : KAppColors.getOnBackground(context).withValues(alpha: 0.08),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
               color: isPrimary
-                  ? KAppColors.primary.withValues(alpha: 0.4)
-                  : Colors.white.withValues(alpha: 0.15),
+                  ? KAppColors.getPrimary(context).withValues(alpha: 0.4)
+                  : KAppColors.getOnBackground(context).withValues(alpha: 0.15),
               width: 1.5,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: KAppColors.getOnBackground(context),
+              color: isPrimary
+                  ? KAppColors.getOnPrimary(context)
+                  : KAppColors.getOnBackground(context),
               fontSize: 15,
               fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
             ),

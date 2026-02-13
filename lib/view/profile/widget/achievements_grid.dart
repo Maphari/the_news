@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/achievement_model.dart';
 import 'package:the_news/service/achievements_service.dart';
@@ -34,8 +35,8 @@ class _AchievementsGridState extends State<AchievementsGrid> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: KAppColors.primary),
+      return Center(
+        child: CircularProgressIndicator(color: KAppColors.getPrimary(context)),
       );
     }
 
@@ -61,18 +62,18 @@ class _AchievementsGridState extends State<AchievementsGrid> {
                 const Color(0xFFFFD700),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             Expanded(
               child: _buildStatCard(
                 'In Progress',
                 inProgress.length.toString(),
                 Icons.trending_up,
-                KAppColors.primary,
+                KAppColors.getPrimary(context),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: KDesignConstants.spacing24),
 
         // Unlocked achievements
         if (unlocked.isNotEmpty) ...[
@@ -83,9 +84,9 @@ class _AchievementsGridState extends State<AchievementsGrid> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildAchievementsList(unlocked, isUnlocked: true),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
 
         // In progress achievements
@@ -97,9 +98,9 @@ class _AchievementsGridState extends State<AchievementsGrid> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildAchievementsList(inProgress, isUnlocked: false),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
 
         // Locked achievements
@@ -111,7 +112,7 @@ class _AchievementsGridState extends State<AchievementsGrid> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildAchievementsList(locked, isUnlocked: false, isLocked: true),
         ],
       ],
@@ -120,10 +121,10 @@ class _AchievementsGridState extends State<AchievementsGrid> {
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: color.withValues(alpha: 0.3),
           width: 1,
@@ -132,7 +133,7 @@ class _AchievementsGridState extends State<AchievementsGrid> {
       child: Column(
         children: [
           Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             value,
             style: KAppTextStyles.displaySmall.copyWith(
@@ -141,7 +142,7 @@ class _AchievementsGridState extends State<AchievementsGrid> {
               fontSize: 28,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: KDesignConstants.spacing4),
           Text(
             label,
             style: KAppTextStyles.labelSmall.copyWith(
@@ -174,16 +175,16 @@ class _AchievementsGridState extends State<AchievementsGrid> {
     bool isLocked,
   ) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
         color: isUnlocked
             ? achievement.color.withValues(alpha: 0.15)
-            : Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+            : KAppColors.darkOnBackground.withValues(alpha: 0.05),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: isUnlocked
               ? achievement.color.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.1),
+              : KAppColors.darkOnBackground.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -191,22 +192,22 @@ class _AchievementsGridState extends State<AchievementsGrid> {
         children: [
           // Icon
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: KDesignConstants.paddingSm,
             decoration: BoxDecoration(
               color: isUnlocked
                   ? achievement.color.withValues(alpha: 0.3)
-                  : Colors.white.withValues(alpha: 0.1),
+                  : KAppColors.darkOnBackground.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               achievement.icon,
               color: isUnlocked
                   ? achievement.color
-                  : Colors.white.withValues(alpha: 0.3),
+                  : KAppColors.darkOnBackground.withValues(alpha: 0.3),
               size: 24,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: KDesignConstants.spacing16),
 
           // Details
           Expanded(
@@ -232,7 +233,7 @@ class _AchievementsGridState extends State<AchievementsGrid> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: KDesignConstants.spacing4),
                 Text(
                   achievement.description,
                   style: KAppTextStyles.bodySmall.copyWith(
@@ -240,7 +241,7 @@ class _AchievementsGridState extends State<AchievementsGrid> {
                   ),
                 ),
                 if (!isUnlocked && !isLocked) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: KDesignConstants.spacing8),
                   // Progress bar
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
@@ -253,7 +254,7 @@ class _AchievementsGridState extends State<AchievementsGrid> {
                       minHeight: 6,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Text(
                     '${achievement.currentValue}/${achievement.targetValue} (${achievement.progressPercent}%)',
                     style: KAppTextStyles.labelSmall.copyWith(

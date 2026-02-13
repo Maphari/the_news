@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:the_news/constant/theme/enhanced_typography.dart';
+import 'package:the_news/constant/enhanced_typography.dart';
 import 'package:the_news/service/subscription_service.dart';
 import 'package:the_news/view/subscription/subscription_paywall_page.dart';
 import 'package:the_news/utils/haptic_service.dart';

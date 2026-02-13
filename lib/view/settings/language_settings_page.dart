@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
+import 'package:the_news/service/localization_service.dart';
+import 'package:the_news/service/auth_service.dart';
 
 /// Page for selecting app language
 class LanguageSettingsPage extends StatefulWidget {
@@ -12,6 +16,9 @@ class LanguageSettingsPage extends StatefulWidget {
 
 class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
   String _selectedLanguage = 'en';
+  final LocalizationService _localizationService = LocalizationService.instance;
+  final AuthService _authService = AuthService();
+  String? _userId;
 
   final List<Map<String, String>> _languages = [
     {'code': 'en', 'name': 'English', 'nativeName': 'English'},
@@ -33,16 +40,19 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
   }
 
   Future<void> _loadLanguage() async {
-    final prefs = await SharedPreferences.getInstance();
+    final userData = await _authService.getCurrentUser();
+    _userId = userData?['id'] as String? ?? userData?['userId'] as String?;
+
     setState(() {
-      _selectedLanguage = prefs.getString('app_language') ?? 'en';
+      _selectedLanguage = _localizationService.currentLocale.languageCode;
     });
   }
 
   Future<void> _saveLanguage(String languageCode) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('app_language', languageCode);
-
+    await _localizationService.changeLocale(
+      Locale(languageCode),
+      userId: _userId,
+    );
     setState(() {
       _selectedLanguage = languageCode;
     });
@@ -61,16 +71,10 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: KAppColors.getOnBackground(context),
-          ),
-        ),
+        leading: const AppBackButton(),
         title: Text(
           'Language',
           style: KAppTextStyles.titleLarge.copyWith(
@@ -83,7 +87,7 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
         padding: const EdgeInsets.all(20),
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -91,7 +95,7 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
                   KAppColors.getPrimary(context).withValues(alpha: 0.05),
                 ],
               ),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
             ),
             child: Row(
               children: [
@@ -100,7 +104,7 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
                   color: KAppColors.getPrimary(context),
                   size: 32,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: KDesignConstants.spacing16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,7 +116,7 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: KDesignConstants.spacing4),
                       Text(
                         'Choose your preferred language for the app interface',
                         style: KAppTextStyles.bodySmall.copyWith(
@@ -125,11 +129,11 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
           Container(
             decoration: BoxDecoration(
               color: KAppColors.getBackground(context),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: KBorderRadius.lg,
               border: Border.all(
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
               ),
@@ -203,12 +207,12 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
               }).toList(),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             decoration: BoxDecoration(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
               border: Border.all(
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
               ),
@@ -220,7 +224,7 @@ class _LanguageSettingsPageState extends State<LanguageSettingsPage> {
                   size: 20,
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: Text(
                     'You may need to restart the app for language changes to take full effect.',

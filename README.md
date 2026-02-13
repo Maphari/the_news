@@ -141,6 +141,8 @@ FIREBASE_DB_URL=your_firebase_url
 PAYSTACK_SECRET_KEY=your_paystack_secret
 GOOGLE_APP_EMAIL=your_email@gmail.com
 GOOGLE_APP_PASSWORD=your_app_password
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4o-mini
 ```
 
 ## Project Structure

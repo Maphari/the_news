@@ -87,6 +87,15 @@ class UserPreferencesSyncService extends ChangeNotifier {
       'autoDownloadOnWiFi': prefs.getBool('autoDownloadOnWiFi') ?? false,
       'downloadImagesOffline': prefs.getBool('downloadImagesOffline') ?? true,
 
+      // Location preferences
+      'preferredCountries': prefs.getStringList('preferredCountries') ??
+          prefs.getStringList('preferred_countries') ??
+          <String>[],
+      'currentCountry': prefs.getString('currentCountry') ??
+          prefs.getString('current_country'),
+      'currentCountryCode': prefs.getString('currentCountryCode') ??
+          prefs.getString('current_country_code'),
+
       // Accessibility
       'highContrast': prefs.getBool('highContrast') ?? false,
       'screenReaderEnabled': prefs.getBool('screenReaderEnabled') ?? false,
@@ -235,6 +244,20 @@ class UserPreferencesSyncService extends ChangeNotifier {
       await prefs.setBool('downloadImagesOffline', preferences['downloadImagesOffline'] as bool);
     }
 
+    // Location preferences
+    if (preferences['preferredCountries'] != null) {
+      final list = List<String>.from(preferences['preferredCountries'] as List);
+      await prefs.setStringList('preferredCountries', list);
+    }
+    if (preferences['currentCountry'] != null) {
+      await prefs.setString('currentCountry', preferences['currentCountry'] as String);
+      await prefs.setString('current_country', preferences['currentCountry'] as String);
+    }
+    if (preferences['currentCountryCode'] != null) {
+      await prefs.setString('currentCountryCode', preferences['currentCountryCode'] as String);
+      await prefs.setString('current_country_code', preferences['currentCountryCode'] as String);
+    }
+
     // Accessibility
     if (preferences['highContrast'] != null) {
       await prefs.setBool('highContrast', preferences['highContrast'] as bool);
@@ -267,6 +290,8 @@ class UserPreferencesSyncService extends ChangeNotifier {
         await prefs.setInt(key, value);
       } else if (value is double) {
         await prefs.setDouble(key, value);
+      } else if (value is List<String>) {
+        await prefs.setStringList(key, value);
       }
 
       // Update timestamp

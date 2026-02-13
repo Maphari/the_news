@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/view/comments/comments_page.dart';
+import 'package:the_news/service/comments_service.dart';
 
 class CommentSection extends StatelessWidget {
-  const CommentSection({
+  CommentSection({
     super.key,
     required this.commentCount,
     required this.article,
@@ -15,6 +17,7 @@ class CommentSection extends StatelessWidget {
   final int commentCount;
   final ArticleModel article;
   final RegisterLoginUserSuccessModel user;
+  final CommentsService _commentsService = CommentsService.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +30,7 @@ class CommentSection extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.comment_outlined, color: KAppColors.getOnBackground(context).withValues(alpha: 0.7), size: 20),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Text(
                   'Comments ($commentCount)',
                   style: KAppTextStyles.titleMedium.copyWith(
@@ -52,93 +55,205 @@ class CommentSection extends StatelessWidget {
               child: Text(
                 'View All',
                 style: KAppTextStyles.bodyMedium.copyWith(
-                  color: Colors.blue.shade300,
+                  color: KAppColors.info,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        if (commentCount == 0) _buildEmptyCommentsState(context) else _buildComingSoonMessage(context),
-        const SizedBox(height: 16),
+        const SizedBox(height: KDesignConstants.spacing16),
+        if (commentCount == 0)
+          _buildEmptyCommentsState(context)
+        else
+          _buildCommentsPreview(context),
+        const SizedBox(height: KDesignConstants.spacing16),
         _buildCommentInput(context),
       ],
     );
   }
 
   Widget _buildEmptyCommentsState(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+    return SizedBox(
+      width: double.infinity,
+      child: Container(
+        padding: KDesignConstants.paddingLg,
+        decoration: BoxDecoration(
+          color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
+          borderRadius: KBorderRadius.lg,
+          border: Border.all(
+            color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.comment_outlined,
-            color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
-            size: 48,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No comments yet',
-            style: KAppTextStyles.titleMedium.copyWith(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
-              fontWeight: FontWeight.w600,
+        child: Column(
+          children: [
+            Icon(
+              Icons.comment_outlined,
+              color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
+              size: 48,
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Be the first to share your thoughts',
-            style: KAppTextStyles.bodySmall.copyWith(
-              color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
+            const SizedBox(height: KDesignConstants.spacing12),
+            Text(
+              'No comments yet',
+              style: KAppTextStyles.titleMedium.copyWith(
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              'Be the first to share your thoughts',
+              style: KAppTextStyles.bodySmall.copyWith(
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildComingSoonMessage(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.blue.withValues(alpha: 0.1),
-            Colors.purple.withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Colors.blue.withValues(alpha: 0.2),
-        ),
+  Widget _buildCommentsPreview(BuildContext context) {
+    return FutureBuilder<List<CommentModel>>(
+      future: _commentsService.getComments(
+        article.articleId,
+        userId: user.userId,
       ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            color: Colors.blue.shade300,
-            size: 24,
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Comments feature coming soon! Stay tuned for updates.',
-              style: KAppTextStyles.bodyMedium.copyWith(
-                color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
-                height: 1.4,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            width: double.infinity,
+            padding: KDesignConstants.paddingLg,
+            decoration: BoxDecoration(
+              color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
+              borderRadius: KBorderRadius.lg,
+              border: Border.all(
+                color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
               ),
             ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(
+                      KAppColors.getPrimary(context),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: KDesignConstants.spacing12),
+                Text(
+                  'Loading comments...',
+                  style: KAppTextStyles.bodySmall.copyWith(
+                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final comments = snapshot.data ?? [];
+        if (comments.isEmpty) {
+          return _buildEmptyCommentsState(context);
+        }
+
+        final preview = comments.take(2).toList();
+
+        return Container(
+          width: double.infinity,
+          padding: KDesignConstants.paddingLg,
+          decoration: BoxDecoration(
+            color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
+            borderRadius: KBorderRadius.lg,
+            border: Border.all(
+              color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+            ),
           ),
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Latest comments',
+                style: KAppTextStyles.labelLarge.copyWith(
+                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: KDesignConstants.spacing12),
+              ...preview.map((comment) => Padding(
+                    padding: const EdgeInsets.only(bottom: KDesignConstants.spacing12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: KAppColors.getPrimary(context).withValues(alpha: 0.15),
+                          child: Text(
+                            comment.userName.isNotEmpty
+                                ? comment.userName[0].toUpperCase()
+                                : 'U',
+                            style: KAppTextStyles.labelSmall.copyWith(
+                              color: KAppColors.getPrimary(context),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: KDesignConstants.spacing12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                comment.userName,
+                                style: KAppTextStyles.bodySmall.copyWith(
+                                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                comment.text,
+                                style: KAppTextStyles.bodySmall.copyWith(
+                                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                                  height: 1.4,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CommentsPage(
+                        article: article,
+                        user: user,
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  'View all comments',
+                  style: KAppTextStyles.bodySmall.copyWith(
+                    color: KAppColors.info,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -169,10 +284,10 @@ class CommentSection extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: Colors.blue.shade300,
-              child: const Icon(Icons.person, size: 16, color: Colors.white),
+              backgroundColor: KAppColors.info,
+              child: Icon(Icons.person, size: 16, color: KAppColors.getOnPrimary(context)),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             Expanded(
               child: Text(
                 'Add a comment...',

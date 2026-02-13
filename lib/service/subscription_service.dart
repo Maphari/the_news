@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:the_news/core/network/api_client.dart';
@@ -19,9 +20,7 @@ class SubscriptionService extends ChangeNotifier {
   SubscriptionService._init();
 
   // Getters
-  List<SubscriptionPlan> get availablePlans => _availablePlans.isNotEmpty
-      ? _availablePlans
-      : SubscriptionPlan.allPlans; // Fallback to hardcoded plans
+  List<SubscriptionPlan> get availablePlans => _availablePlans;
 
   List<SubscriptionPlan> get paidPlans => availablePlans.where((p) => !p.isFree).toList();
   UserSubscription? get currentSubscription => _currentSubscription;
@@ -33,6 +32,9 @@ class SubscriptionService extends ChangeNotifier {
     try {
       // Load from local cache first (instant)
       await _loadPlansFromCache();
+      if (_availablePlans.isEmpty) {
+        await _loadPlansFromAsset();
+      }
       notifyListeners();
 
       // Then fetch from backend
@@ -62,9 +64,8 @@ class SubscriptionService extends ChangeNotifier {
       }
     } catch (e) {
       log('⚠️ Error loading subscription plans: $e');
-      // Use cached or default plans
       if (_availablePlans.isEmpty) {
-        _availablePlans = SubscriptionPlan.allPlans;
+        await _loadPlansFromAsset();
       }
     }
   }
@@ -84,6 +85,20 @@ class SubscriptionService extends ChangeNotifier {
       }
     } catch (e) {
       log('⚠️ Error loading plans from cache: $e');
+    }
+  }
+
+  /// Load plans from bundled asset fallback
+  Future<void> _loadPlansFromAsset() async {
+    try {
+      final jsonString = await rootBundle.loadString('assets/data/subscription_plans.json');
+      final List<dynamic> plansJson = jsonDecode(jsonString);
+      _availablePlans = plansJson
+          .map((json) => SubscriptionPlan.fromJson(json as Map<String, dynamic>))
+          .toList();
+      log('📦 Loaded ${_availablePlans.length} plans from asset');
+    } catch (e) {
+      log('⚠️ Error loading plans from asset: $e');
     }
   }
 
@@ -217,7 +232,18 @@ class SubscriptionService extends ChangeNotifier {
     required String transactionId,
   }) async {
     final now = DateTime.now();
-    final plan = SubscriptionPlan.allPlans.firstWhere((p) => p.id == planId);
+    await loadSubscriptionPlans();
+    final plan = _availablePlans.firstWhere(
+      (p) => p.id == planId,
+      orElse: () => SubscriptionPlan(
+        id: planId,
+        name: planId,
+        description: '',
+        price: 0,
+        billingPeriod: 'monthly',
+        features: const [],
+      ),
+    );
 
     DateTime endDate;
     if (plan.billingPeriod == 'yearly') {
@@ -393,9 +419,12 @@ class SubscriptionService extends ChangeNotifier {
   // Get current plan
   SubscriptionPlan get currentPlan {
     final planId = _currentSubscription?.planId ?? 'free';
-    return SubscriptionPlan.allPlans.firstWhere(
+    if (_availablePlans.isEmpty) {
+      return SubscriptionPlan.free;
+    }
+    return _availablePlans.firstWhere(
       (plan) => plan.id == planId,
-      orElse: () => SubscriptionPlan.free,
+      orElse: () => _availablePlans.first,
     );
   }
 }

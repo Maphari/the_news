@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 
@@ -18,7 +19,7 @@ class ArticleSentimentCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
@@ -30,10 +31,10 @@ class ArticleSentimentCard extends StatelessWidget {
             children: [
               Icon(
                 _getSentimentIcon(),
-                color: _getSentimentColor(),
+                color: _getSentimentColor(context),
                 size: 24,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Text(
                 'Sentiment Analysis',
                 style: KAppTextStyles.titleMedium.copyWith(
@@ -43,12 +44,12 @@ class ArticleSentimentCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildSentimentBar('Positive', sentimentStats.positive, Colors.green, context),
-          const SizedBox(height: 12),
-          _buildSentimentBar('Neutral', sentimentStats.neutral, Colors.grey, context),
-          const SizedBox(height: 12),
-          _buildSentimentBar('Negative', sentimentStats.negative, Colors.red, context),
+          const SizedBox(height: KDesignConstants.spacing16),
+          _buildSentimentBar('Positive', sentimentStats.positive, KAppColors.success, context),
+          const SizedBox(height: KDesignConstants.spacing12),
+          _buildSentimentBar('Neutral', sentimentStats.neutral, KAppColors.getOnBackground(context).withValues(alpha: 0.5), context),
+          const SizedBox(height: KDesignConstants.spacing12),
+          _buildSentimentBar('Negative', sentimentStats.negative, KAppColors.error, context),
         ],
       ),
     );
@@ -65,14 +66,14 @@ class ArticleSentimentCard extends StatelessWidget {
     }
   }
 
-  Color _getSentimentColor() {
+  Color _getSentimentColor(BuildContext context) {
     switch (sentiment.toLowerCase()) {
       case 'positive':
-        return Colors.green;
+        return KAppColors.success;
       case 'negative':
-        return Colors.red;
+        return KAppColors.error;
       default:
-        return Colors.grey;
+        return KAppColors.getOnBackground(context).withValues(alpha: 0.5);
     }
   }
 
@@ -103,7 +104,7 @@ class ArticleSentimentCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           child: LinearProgressIndicator(
             value: percentage / 100,
-            backgroundColor: Colors.white.withValues(alpha: 0.1),
+            backgroundColor: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(color),
             minHeight: 8,
           ),

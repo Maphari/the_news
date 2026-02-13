@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/content_intensity_service.dart';
 import 'package:the_news/view/widgets/intensity_filter_dialog.dart';
@@ -18,7 +19,7 @@ class _IntensityFilterChipState extends State<IntensityFilterChip> {
     final currentLevel = _intensityService.currentFilter;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: KDesignConstants.paddingHorizontalMd,
       child: GestureDetector(
         onTap: () async {
           final result = await IntensityFilterDialog.show(
@@ -39,13 +40,13 @@ class _IntensityFilterChipState extends State<IntensityFilterChip> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                KAppColors.primary.withValues(alpha: 0.15),
-                KAppColors.tertiary.withValues(alpha: 0.15),
+                KAppColors.getPrimary(context).withValues(alpha: 0.15),
+                KAppColors.getTertiary(context).withValues(alpha: 0.15),
               ],
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
-              color: KAppColors.primary.withValues(alpha: 0.25),
+              color: KAppColors.getPrimary(context).withValues(alpha: 0.25),
               width: 1,
             ),
           ),
@@ -59,8 +60,8 @@ class _IntensityFilterChipState extends State<IntensityFilterChip> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      KAppColors.primary.withValues(alpha: 0.3),
-                      KAppColors.tertiary.withValues(alpha: 0.3),
+                      KAppColors.getPrimary(context).withValues(alpha: 0.3),
+                      KAppColors.getTertiary(context).withValues(alpha: 0.3),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(10),
@@ -89,7 +90,7 @@ class _IntensityFilterChipState extends State<IntensityFilterChip> {
                         const SizedBox(width: 6),
                         Icon(
                           Icons.tune,
-                          color: KAppColors.primary,
+                          color: KAppColors.getPrimary(context),
                           size: 16,
                         ),
                       ],

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/auth_service.dart';
 import 'package:the_news/service/feedback_service.dart';
+import 'package:the_news/view/widgets/pill_tab.dart';
 
 class FeedbackFormPage extends StatefulWidget {
   const FeedbackFormPage({super.key});
@@ -39,7 +42,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
     final userData = await _authService.getCurrentUser();
     if (userData != null && mounted) {
       setState(() {
-        _userId = userData['id'];
+        _userId = userData['id'] ?? userData['userId'];
         _userEmail = userData['email'];
       });
     }
@@ -66,7 +69,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Thank you for your feedback!'),
-              backgroundColor: Colors.green,
+              backgroundColor: KAppColors.success,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -75,7 +78,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Failed to submit feedback. Please try again.'),
-              backgroundColor: Colors.red,
+              backgroundColor: KAppColors.error,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -87,7 +90,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: KAppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -99,7 +102,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         elevation: 0,
         leading: IconButton(
@@ -117,28 +120,26 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: KDesignConstants.paddingMd,
           children: [
             // Header
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue.withValues(alpha: 0.1),
-                    Colors.purple.withValues(alpha: 0.1),
-                  ],
+                color: KAppColors.getPrimary(context).withValues(alpha: 0.08),
+                borderRadius: KBorderRadius.lg,
+                border: Border.all(
+                  color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
                 ),
-                borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
                 children: [
                   Icon(
                     Icons.feedback_outlined,
                     size: 48,
-                    color: Colors.blue.shade400,
+                    color: KAppColors.getPrimary(context),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: KDesignConstants.spacing12),
                   Text(
                     'We value your feedback',
                     style: KAppTextStyles.titleLarge.copyWith(
@@ -147,7 +148,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: KDesignConstants.spacing8),
                   Text(
                     'Help us improve The News by sharing your thoughts, reporting bugs, or suggesting new features.',
                     style: KAppTextStyles.bodyMedium.copyWith(
@@ -158,7 +159,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Feedback Type
             Text(
@@ -168,45 +169,42 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: FeedbackType.values.map((type) {
                 final isSelected = _selectedType == type;
-                return ChoiceChip(
-                  label: Row(
+                return PillTabContainer(
+                  selected: isSelected,
+                  onTap: () => setState(() => _selectedType = type),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         _getTypeIcon(type),
                         size: 16,
                         color: isSelected
-                            ? Colors.white
+                            ? KAppColors.getOnPrimary(context)
                             : KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: 6),
-                      Text(_getTypeLabel(type)),
+                      Text(
+                        _getTypeLabel(type),
+                        style: KAppTextStyles.labelMedium.copyWith(
+                          color: isSelected
+                              ? KAppColors.getOnPrimary(context)
+                              : KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
-                  ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() => _selectedType = type);
-                    }
-                  },
-                  selectedColor: _getTypeColor(type),
-                  backgroundColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-                  labelStyle: TextStyle(
-                    color: isSelected
-                        ? Colors.white
-                        : KAppColors.getOnBackground(context),
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Title Field
             Text(
@@ -216,7 +214,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             TextFormField(
               controller: _titleController,
               decoration: InputDecoration(
@@ -224,20 +222,23 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                 filled: true,
                 fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   borderSide: BorderSide(
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   borderSide: BorderSide(
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+                  borderRadius: KBorderRadius.md,
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
                 ),
               ),
               validator: (value) {
@@ -251,7 +252,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
               },
               maxLength: 100,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
 
             // Description Field
             Text(
@@ -261,7 +262,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             TextFormField(
               controller: _descriptionController,
               decoration: InputDecoration(
@@ -269,20 +270,23 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                 filled: true,
                 fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   borderSide: BorderSide(
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   borderSide: BorderSide(
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
+                  borderRadius: KBorderRadius.md,
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
                 ),
                 alignLabelWithHint: true,
               ),
@@ -298,59 +302,61 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
                 return null;
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Submit Button
             FilledButton(
               onPressed: _isSubmitting ? null : _submitFeedback,
               style: FilledButton.styleFrom(
-                backgroundColor: Colors.blue.shade400,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                padding: KDesignConstants.paddingVerticalMd,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                 ),
               ),
               child: _isSubmitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.onPrimary,
+                        ),
                       ),
                     )
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(Icons.send, size: 20),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: KDesignConstants.spacing8),
                         Text(
                           'Submit Feedback',
                           style: KAppTextStyles.titleMedium.copyWith(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
 
             // Privacy Note
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: KDesignConstants.paddingSm,
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: KAppColors.info.withValues(alpha: 0.1),
+                borderRadius: KBorderRadius.md,
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
                     size: 20,
-                    color: Colors.blue.shade400,
+                    color: KAppColors.info,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KDesignConstants.spacing12),
                   Expanded(
                     child: Text(
                       'Your feedback helps us improve. We may contact you for follow-up questions.',
@@ -397,13 +403,13 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
   Color _getTypeColor(FeedbackType type) {
     switch (type) {
       case FeedbackType.bug:
-        return Colors.red.shade400;
+        return KAppColors.error;
       case FeedbackType.feature:
-        return Colors.purple.shade400;
+        return KAppColors.purple;
       case FeedbackType.improvement:
-        return Colors.orange.shade400;
+        return KAppColors.warning;
       case FeedbackType.general:
-        return Colors.blue.shade400;
+        return KAppColors.info;
     }
   }
 }

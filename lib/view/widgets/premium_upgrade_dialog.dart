@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:the_news/constant/theme/enhanced_typography.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/constant/enhanced_typography.dart';
 import 'package:the_news/service/premium_features_service.dart';
 import 'package:the_news/view/subscription/subscription_paywall_page.dart';
 
@@ -81,7 +82,7 @@ class PremiumUpgradeDialog {
       padding: const EdgeInsets.all(Spacing.md),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
       ),
       child: Row(
         children: [
@@ -261,7 +262,7 @@ class PremiumUpgradeDialog {
               padding: const EdgeInsets.all(Spacing.sm),
               decoration: BoxDecoration(
                 color: colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
               ),
               child: Icon(
                 icon,
@@ -281,7 +282,7 @@ class PremiumUpgradeDialog {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Text(
                     description,
                     style: EnhancedTypography.bodySmall.copyWith(

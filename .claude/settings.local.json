@@ -24,7 +24,12 @@
       "Bash(done)",
       "Bash(npm install:*)",
       "Bash(npm run build:*)",
-      "Bash(flutter pub:*)"
+      "Bash(flutter pub:*)",
+      "Bash(while read file)",
+      "Bash(do if ! grep -q \"static final.*instance\" \"$file\")",
+      "Bash(! grep -q \"_init\\(\\)\" \"$file\")",
+      "Bash(then echo \"$file\")",
+      "Bash(fi)"
     ]
   }
 }

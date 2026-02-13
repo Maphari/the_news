@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/offline_reading_service.dart';
+import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/service/experience_service.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/view/article_details/article_detail_page.dart';
 
@@ -14,9 +19,19 @@ class OfflineReadingPage extends StatefulWidget {
 
 class _OfflineReadingPageState extends State<OfflineReadingPage> {
   final OfflineReadingService _offlineService = OfflineReadingService.instance;
+  final AuthService _authService = AuthService.instance;
+  final ExperienceService _experienceService = ExperienceService.instance;
   final TextEditingController _searchController = TextEditingController();
   List<ArticleModel> _filteredArticles = [];
   bool _isSearching = false;
+  bool _isCloudSyncing = false;
+  int _manifestArticleCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadManifestCount();
+  }
 
   @override
   void dispose() {
@@ -31,20 +46,46 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
     });
   }
 
+  Future<void> _loadManifestCount() async {
+    final user = await _authService.getCurrentUser();
+    final userId = (user?['id'] ?? user?['userId'])?.toString();
+    if (userId == null || userId.isEmpty) return;
+    final ids = await _experienceService.fetchOfflineManifestArticleIds(userId);
+    if (!mounted) return;
+    setState(() {
+      _manifestArticleCount = ids.length;
+    });
+  }
+
+  Future<void> _syncCloudManifest() async {
+    final user = await _authService.getCurrentUser();
+    final userId = (user?['id'] ?? user?['userId'])?.toString();
+    if (userId == null || userId.isEmpty) return;
+
+    setState(() => _isCloudSyncing = true);
+    final queued = await _experienceService.syncOfflineManifest(userId);
+    if (!mounted) return;
+    setState(() => _isCloudSyncing = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          queued > 0
+              ? 'Synced $queued articles from cloud manifest'
+              : 'Cloud manifest is already in sync',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: KAppColors.getOnBackground(context),
-          ),
-        ),
+        leading: const AppBackButton(),
         title: Text(
           'Offline Reading',
           style: KAppTextStyles.titleLarge.copyWith(
@@ -88,7 +129,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
     final total = _offlineService.totalToDownload;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
         color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
         border: Border(
@@ -113,7 +154,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                       valueColor: AlwaysStoppedAnimation(KAppColors.getPrimary(context)),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KDesignConstants.spacing12),
                   Text(
                     'Downloading articles...',
                     style: KAppTextStyles.titleSmall.copyWith(
@@ -136,7 +177,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
@@ -146,7 +187,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
               minHeight: 8,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             '$downloaded of $total articles downloaded (${(progress * 100).toStringAsFixed(0)}%)',
             style: KAppTextStyles.labelSmall.copyWith(
@@ -189,7 +230,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                         size: 20,
                         color: KAppColors.getPrimary(context),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: KDesignConstants.spacing8),
                       Text(
                         'Storage',
                         style: KAppTextStyles.titleSmall.copyWith(
@@ -207,7 +248,33 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: KDesignConstants.spacing10),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _manifestArticleCount > 0
+                          ? 'Cloud manifest: $_manifestArticleCount articles'
+                          : 'Cloud manifest unavailable',
+                      style: KAppTextStyles.labelSmall.copyWith(
+                        color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: _isCloudSyncing ? null : _syncCloudManifest,
+                    icon: _isCloudSyncing
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_download_outlined, size: 18),
+                    label: const Text('Sync cloud'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: KDesignConstants.spacing12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
@@ -215,15 +282,15 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                   backgroundColor: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                   valueColor: AlwaysStoppedAnimation(
                     percentage > 0.9
-                        ? Colors.red
+                        ? KAppColors.error
                         : percentage > 0.7
-                            ? Colors.orange
+                            ? KAppColors.warning
                             : KAppColors.getPrimary(context),
                   ),
                   minHeight: 8,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: KDesignConstants.spacing8),
               Text(
                 '${_offlineService.cachedArticleCount} articles cached',
                 style: KAppTextStyles.labelSmall.copyWith(
@@ -278,7 +345,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
           filled: true,
           fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
             borderSide: BorderSide.none,
           ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -304,7 +371,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                 size: 80,
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: KDesignConstants.spacing24),
               Text(
                 'No Results Found',
                 style: KAppTextStyles.titleLarge.copyWith(
@@ -312,7 +379,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: KDesignConstants.spacing12),
               Text(
                 'Try different keywords or clear the search',
                 style: KAppTextStyles.bodyMedium.copyWith(
@@ -336,7 +403,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: KAppColors.getBackground(context),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
             border: Border.all(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
             ),
@@ -350,9 +417,9 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                 ),
               );
             },
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               child: Row(
                 children: [
                   // Offline indicator
@@ -360,16 +427,16 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50).withValues(alpha: 0.2),
+                      color: KAppColors.success.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.offline_pin,
-                      color: Color(0xFF4CAF50),
+                      color: KAppColors.success,
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: KDesignConstants.spacing16),
 
                   // Article info
                   Expanded(
@@ -385,7 +452,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: KDesignConstants.spacing4),
                         Text(
                           article.sourceName,
                           style: KAppTextStyles.labelSmall.copyWith(
@@ -425,7 +492,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
               size: 80,
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
             Text(
               'No Offline Articles',
               style: KAppTextStyles.titleLarge.copyWith(
@@ -433,7 +500,7 @@ class _OfflineReadingPageState extends State<OfflineReadingPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             Text(
               'Download articles for offline reading by tapping the download icon on any article.',
               style: KAppTextStyles.bodyMedium.copyWith(
@@ -516,7 +583,7 @@ class _OfflineSettingsDialogState extends State<_OfflineSettingsDialog> {
               });
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           ListTile(
             title: const Text('Max Storage'),
             subtitle: Text('$_maxStorageMB MB'),
@@ -533,7 +600,7 @@ class _OfflineSettingsDialogState extends State<_OfflineSettingsDialog> {
               });
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
@@ -569,7 +636,7 @@ class _OfflineSettingsDialogState extends State<_OfflineSettingsDialog> {
               icon: const Icon(Icons.delete_sweep),
               label: const Text('Clear All Cache'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.red,
+                foregroundColor: KAppColors.error,
               ),
             ),
           ),

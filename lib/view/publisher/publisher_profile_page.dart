@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/model/register_login_success_model.dart';
+import 'package:the_news/core/network/api_client.dart';
 import 'package:the_news/service/news_api_service.dart';
 import 'package:the_news/service/followed_publishers_service.dart';
 import 'package:the_news/view/article_details/article_detail_page.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class PublisherProfilePage extends StatefulWidget {
   const PublisherProfilePage({
@@ -25,6 +29,7 @@ class PublisherProfilePage extends StatefulWidget {
 
 class _PublisherProfilePageState extends State<PublisherProfilePage> {
   final NewsApiService _newsApiService = NewsApiService.instance;
+  final ApiClient _api = ApiClient.instance;
   final FollowedPublishersService _followedPublishersService = FollowedPublishersService.instance;
 
   List<ArticleModel> _publisherArticles = [];
@@ -54,18 +59,18 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
     setState(() => _isLoading = true);
 
     try {
-      // Get all articles and filter by publisher
-      final allArticles = await _newsApiService.fetchNews(useCache: true);
-      final publisherArticles = allArticles
-          .where((article) => article.sourceName == widget.publisherName)
-          .toList();
+      final dbFuture = _fetchPublisherArticlesFromDb(widget.publisherName);
+      final apiFuture = _fetchPublisherArticlesFromApi(widget.publisherName);
+      final results = await Future.wait([dbFuture, apiFuture]);
 
-      // Sort by date (newest first)
-      publisherArticles.sort((a, b) => b.pubDate.compareTo(a.pubDate));
+      final dbArticles = results[0];
+      final apiArticles = results[1];
+
+      final merged = _mergeArticlesKeepingNewest(dbArticles, apiArticles);
 
       setState(() {
-        _publisherArticles = publisherArticles;
-        _articleCount = publisherArticles.length;
+        _publisherArticles = merged;
+        _articleCount = merged.length;
         _isLoading = false;
       });
     } catch (e) {
@@ -76,6 +81,82 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
         );
       }
     }
+  }
+
+  Future<List<ArticleModel>> _fetchPublisherArticlesFromDb(
+    String publisherName,
+  ) async {
+    try {
+      final response = await _api.get(
+        'articles',
+        queryParams: {
+          'sourceName': publisherName,
+          'limit': '150',
+          'offset': '0',
+        },
+        timeout: const Duration(seconds: 20),
+      );
+
+      if (_api.isSuccess(response)) {
+        final data = _api.parseJson(response);
+        if (data['success'] == true && data['articles'] is List) {
+          final List<dynamic> list = data['articles'] as List<dynamic>;
+          return list
+              .map((json) => ArticleModel.fromJson(json as Map<String, dynamic>))
+              .toList();
+        }
+      }
+    } catch (_) {
+      // Fallback handled by caller merge path.
+    }
+    return <ArticleModel>[];
+  }
+
+  Future<List<ArticleModel>> _fetchPublisherArticlesFromApi(
+    String publisherName,
+  ) async {
+    try {
+      final allArticles = await _newsApiService.fetchNews(useCache: false);
+      return allArticles
+          .where(
+            (article) => article.sourceName.toLowerCase() ==
+                publisherName.toLowerCase(),
+          )
+          .toList();
+    } catch (_) {
+      return <ArticleModel>[];
+    }
+  }
+
+  List<ArticleModel> _mergeArticlesKeepingNewest(
+    List<ArticleModel> dbArticles,
+    List<ArticleModel> apiArticles,
+  ) {
+    final byKey = <String, ArticleModel>{};
+
+    String normalizeTitle(String value) => value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^\w\s]'), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+
+    String dedupeKey(ArticleModel article) {
+      if (article.articleId.isNotEmpty) return 'id:${article.articleId}';
+      if (article.link.isNotEmpty) return 'link:${article.link}';
+      return 'title:${normalizeTitle(article.title)}';
+    }
+
+    for (final article in [...dbArticles, ...apiArticles]) {
+      final key = dedupeKey(article);
+      final current = byKey[key];
+      if (current == null || article.pubDate.isAfter(current.pubDate)) {
+        byKey[key] = article;
+      }
+    }
+
+    final merged = byKey.values.toList()
+      ..sort((a, b) => b.pubDate.compareTo(a.pubDate));
+    return merged;
   }
 
   Future<void> _handleFollowToggle() async {
@@ -124,12 +205,16 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
             // App Bar with Publisher Info
             SliverAppBar(
               expandedHeight: 320,
-              floating: true,
-              snap: true,
+              pinned: true,
+              floating: false,
               backgroundColor: KAppColors.getPrimary(context),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+              leading: AppBackButton(
                 onPressed: () => Navigator.pop(context),
+                backgroundColor: KAppColors.getBackground(context).withValues(alpha: 0.8),
+                iconColor: KAppColors.darkOnBackground,
               ),
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
@@ -152,9 +237,9 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                         widget.publisherIcon != null && widget.publisherIcon!.isNotEmpty
                             ? CircleAvatar(
                                 radius: 50,
-                                backgroundColor: Colors.white,
+                                backgroundColor: KAppColors.darkOnBackground,
                                 child: ClipOval(
-                                  child: Image.network(
+                                  child: SafeNetworkImage(
                                     widget.publisherIcon!,
                                     width: 100,
                                     height: 100,
@@ -173,7 +258,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                               )
                             : CircleAvatar(
                                 radius: 50,
-                                backgroundColor: Colors.white,
+                                backgroundColor: KAppColors.darkOnBackground,
                                 child: Text(
                                   _getInitials(widget.publisherName),
                                   style: KAppTextStyles.displayMedium.copyWith(
@@ -182,14 +267,14 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                                   ),
                                 ),
                               ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: KDesignConstants.spacing12),
                         // Publisher Name
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: KDesignConstants.paddingHorizontalLg,
                           child: Text(
                             widget.publisherName,
                             style: KAppTextStyles.displaySmall.copyWith(
-                              color: Colors.white,
+                              color: KAppColors.darkOnBackground,
                               fontWeight: FontWeight.bold,
                               fontSize: 24,
                             ),
@@ -198,7 +283,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: KDesignConstants.spacing8),
                         // Stats
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -210,8 +295,8 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                             Container(
                               height: 30,
                               width: 1,
-                              color: Colors.white.withValues(alpha: 0.3),
-                              margin: const EdgeInsets.symmetric(horizontal: 24),
+                              color: KAppColors.darkOnBackground.withValues(alpha: 0.3),
+                              margin: KDesignConstants.paddingHorizontalLg,
                             ),
                             _buildStatItem(
                               isFollowed ? 'Following' : 'Follow',
@@ -219,7 +304,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: KDesignConstants.spacing16),
                         // Follow Button
                         _isFollowLoading
                             ? const SizedBox(
@@ -227,7 +312,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                                 height: 44,
                                 child: Center(
                                   child: CircularProgressIndicator(
-                                    color: Colors.white,
+                                    color: KAppColors.darkOnBackground,
                                     strokeWidth: 2,
                                   ),
                                 ),
@@ -246,10 +331,10 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: isFollowed
-                                      ? Colors.white.withValues(alpha: 0.2)
-                                      : Colors.white,
+                                      ? KAppColors.darkOnBackground.withValues(alpha: 0.2)
+                                      : KAppColors.darkOnBackground,
                                   foregroundColor: isFollowed
-                                      ? Colors.white
+                                      ? KAppColors.darkOnBackground
                                       : KAppColors.getPrimary(context),
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 32,
@@ -286,14 +371,14 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                                 size: 64,
                                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: KDesignConstants.spacing16),
                               Text(
                                 'No articles found',
                                 style: KAppTextStyles.titleLarge.copyWith(
                                   color: KAppColors.getOnBackground(context),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: KDesignConstants.spacing8),
                               Text(
                                 'This publisher hasn\'t published any articles yet',
                                 style: KAppTextStyles.bodyMedium.copyWith(
@@ -305,7 +390,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                         ),
                       )
                     : SliverPadding(
-                        padding: const EdgeInsets.all(16),
+                        padding: KDesignConstants.paddingMd,
                         sliver: SliverList(
                           delegate: SliverChildBuilderDelegate(
                             (context, index) {
@@ -341,14 +426,14 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
         Text(
           value,
           style: KAppTextStyles.titleLarge.copyWith(
-            color: Colors.white,
+            color: KAppColors.darkOnBackground,
             fontWeight: FontWeight.bold,
           ),
         ),
         Text(
           label,
           style: KAppTextStyles.bodySmall.copyWith(
-            color: Colors.white.withValues(alpha: 0.8),
+            color: KAppColors.darkOnBackground.withValues(alpha: 0.8),
           ),
         ),
       ],
@@ -362,7 +447,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           ),
@@ -377,7 +462,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                   topLeft: Radius.circular(16),
                   bottomLeft: Radius.circular(16),
                 ),
-                child: Image.network(
+                child: SafeNetworkImage(
                   article.imageUrl!,
                   width: 120,
                   height: 120,
@@ -399,7 +484,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
             // Article Info
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.paddingSm,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -412,7 +497,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
                     Text(
                       article.description,
                       style: KAppTextStyles.bodySmall.copyWith(
@@ -421,7 +506,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
                     Row(
                       children: [
                         Icon(
@@ -429,7 +514,7 @@ class _PublisherProfilePageState extends State<PublisherProfilePage> {
                           size: 12,
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: KDesignConstants.spacing4),
                         Text(
                           _formatDate(article.pubDate),
                           style: KAppTextStyles.labelSmall.copyWith(

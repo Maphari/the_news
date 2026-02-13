@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 class ArticleTagsSection extends StatelessWidget {
@@ -34,21 +35,21 @@ class ArticleTagsSection extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: keywords.map((keyword) {
-              return _buildTag(keyword, Colors.blue, context);
+              return _buildTag(keyword, KAppColors.info, context);
             }).toList(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
         if (hasAiTags) ...[
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: Colors.purple.shade300, size: 18),
-              const SizedBox(width: 8),
+              Icon(Icons.auto_awesome, color: KAppColors.purple, size: 18),
+              const SizedBox(width: KDesignConstants.spacing8),
               Text(
                 'AI Tags',
                 style: KAppTextStyles.titleMedium.copyWith(
@@ -58,21 +59,21 @@ class ArticleTagsSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: aiTags.map((tag) {
-              return _buildTag(tag, Colors.purple, context, hasAI: true);
+              return _buildTag(tag, KAppColors.purple, context, hasAI: true);
             }).toList(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
         if (hasRegion) ...[
           Row(
             children: [
-              Icon(Icons.location_on, color: Colors.orange.shade300, size: 18),
-              const SizedBox(width: 8),
+              Icon(Icons.location_on, color: KAppColors.warning, size: 18),
+              const SizedBox(width: KDesignConstants.spacing8),
               Text(
                 'Regions',
                 style: KAppTextStyles.titleMedium.copyWith(
@@ -82,12 +83,12 @@ class ArticleTagsSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
             children: aiRegion.map((region) {
-              return _buildTag(region, Colors.orange, context);
+              return _buildTag(region, KAppColors.warning, context);
             }).toList(),
           ),
         ],
@@ -100,7 +101,7 @@ class ArticleTagsSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
@@ -108,7 +109,7 @@ class ArticleTagsSection extends StatelessWidget {
         children: [
           if (hasAI) ...[
             Icon(Icons.auto_awesome, size: 12, color: color),
-            const SizedBox(width: 4),
+            const SizedBox(width: KDesignConstants.spacing4),
           ],
           Flexible(
             child: Text(

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/routes/app_routes.dart';
 import 'package:the_news/service/news_provider_service.dart';
 import 'package:the_news/service/disliked_articles_service.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class CategoryDetailPage extends StatefulWidget {
   const CategoryDetailPage({
@@ -49,40 +52,19 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
               // Header with back button
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: KDesignConstants.paddingMd,
                   child: Row(
                     children: [
                       // Back button
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () => Navigator.pop(context),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.1),
-                              ),
-                            ),
-                            child: Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
+                      const AppBackButton(),
+                      const SizedBox(width: KDesignConstants.spacing16),
 
                       // Category icon and title
                       Expanded(
                         child: Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: KDesignConstants.paddingSm,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -101,7 +83,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                                 size: 24,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: KDesignConstants.spacing12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +100,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                                         ? 'Loading articles...'
                                         : '${categoryArticles.length} articles',
                                     style: KAppTextStyles.bodySmall.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.6),
+                                      color: KAppColors.darkOnBackground.withValues(alpha: 0.6),
                                     ),
                                   ),
                                 ],
@@ -185,7 +167,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: KDesignConstants.spacing32),
               Text(
                 "Loading ${widget.category.toLowerCase()} news...",
                 style: TextStyle(
@@ -195,11 +177,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                   letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: KDesignConstants.spacing12),
               Text(
                 "Finding the latest stories",
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: KAppColors.darkOnBackground.withValues(alpha: 0.6),
                   fontSize: 14,
                   height: 1.5,
                 ),
@@ -243,7 +225,7 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                   size: 72,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: KDesignConstants.spacing24),
               Text(
                 "No ${widget.category.toLowerCase()} articles",
                 style: TextStyle(
@@ -253,11 +235,11 @@ class _CategoryDetailPageState extends State<CategoryDetailPage> {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: KDesignConstants.spacing12),
               Text(
                 "We couldn't find any articles in this category.\nTry exploring other categories or check back later.",
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: KAppColors.darkOnBackground.withValues(alpha: 0.6),
                   fontSize: 14,
                   height: 1.6,
                 ),
@@ -295,7 +277,7 @@ class _CategoryArticleCard extends StatelessWidget {
             categoryColor.withValues(alpha: 0.03),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
           color: categoryColor.withValues(alpha: 0.15),
           width: 1,
@@ -305,16 +287,16 @@ class _CategoryArticleCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: KBorderRadius.xl,
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Image
                 if (article.imageUrl != null)
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: KBorderRadius.lg,
                     child: Container(
                       width: double.infinity,
                       height: 180,
@@ -323,9 +305,9 @@ class _CategoryArticleCard extends StatelessWidget {
                           color: categoryColor.withValues(alpha: 0.2),
                           width: 1,
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: KBorderRadius.lg,
                       ),
-                      child: Image.network(
+                      child: SafeNetworkImage(
                         article.imageUrl!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
@@ -350,7 +332,7 @@ class _CategoryArticleCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                const SizedBox(height: 16),
+                const SizedBox(height: KDesignConstants.spacing16),
 
                 // Title
                 Text(
@@ -363,19 +345,19 @@ class _CategoryArticleCard extends StatelessWidget {
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: KDesignConstants.spacing12),
 
                 // Description
                 Text(
                   article.description,
                   style: KAppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: KAppColors.darkOnBackground.withValues(alpha: 0.7),
                     height: 1.5,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: KDesignConstants.spacing16),
 
                 // Metadata row
                 Row(
@@ -394,7 +376,7 @@ class _CategoryArticleCard extends StatelessWidget {
                             child: Text(
                               article.sourceName,
                               style: KAppTextStyles.bodySmall.copyWith(
-                                color: Colors.white.withValues(alpha: 0.7),
+                                color: KAppColors.darkOnBackground.withValues(alpha: 0.7),
                                 fontWeight: FontWeight.w600,
                               ),
                               maxLines: 1,
@@ -404,18 +386,18 @@ class _CategoryArticleCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: KDesignConstants.spacing12),
                     // Time
                     Icon(
                       Icons.schedule_rounded,
                       size: 14,
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: KAppColors.darkOnBackground.withValues(alpha: 0.5),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: KDesignConstants.spacing4),
                     Text(
                       _getTimeAgo(article.pubDate),
                       style: KAppTextStyles.bodySmall.copyWith(
-                        color: Colors.white.withValues(alpha: 0.5),
+                        color: KAppColors.darkOnBackground.withValues(alpha: 0.5),
                       ),
                     ),
                   ],

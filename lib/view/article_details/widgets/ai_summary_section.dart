@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/enriched_article_model.dart';
 import 'package:the_news/service/subscription_service.dart';
@@ -23,15 +24,8 @@ class AISummarySection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            KAppColors.getPrimary(context).withValues(alpha: 0.1),
-            KAppColors.getTertiary(context).withValues(alpha: 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: KAppColors.getPrimary(context).withValues(alpha: 0.08),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
           width: 1,
@@ -46,15 +40,8 @@ class AISummarySection extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      KAppColors.getPrimary(context).withValues(alpha: 0.3),
-                      KAppColors.getTertiary(context).withValues(alpha: 0.3),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+                  color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
+                  borderRadius: KBorderRadius.md,
                 ),
                 child: Icon(
                   Icons.auto_awesome,
@@ -62,7 +49,7 @@ class AISummarySection extends StatelessWidget {
                   size: 24,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: Text(
                   'AI Summary',
@@ -76,10 +63,10 @@ class AISummarySection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.2),
+                    color: KAppColors.warning.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.amber.withValues(alpha: 0.5),
+                      color: KAppColors.warning.withValues(alpha: 0.5),
                       width: 1,
                     ),
                   ),
@@ -89,13 +76,13 @@ class AISummarySection extends StatelessWidget {
                       Icon(
                         Icons.workspace_premium,
                         size: 14,
-                        color: Colors.amber.shade600,
+                        color: KAppColors.warning,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: KDesignConstants.spacing4),
                       Text(
                         'Premium',
                         style: KAppTextStyles.labelSmall.copyWith(
-                          color: Colors.amber.shade600,
+                          color: KAppColors.warning,
                           fontWeight: FontWeight.bold,
                           fontSize: 11,
                         ),
@@ -105,7 +92,7 @@ class AISummarySection extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
 
           // Content
           if (!hasPremiumAccess)
@@ -136,7 +123,7 @@ class AISummarySection extends StatelessWidget {
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: KDesignConstants.spacing12),
         _buildBenefitItem(
           context,
           Icons.auto_awesome,
@@ -152,7 +139,7 @@ class AISummarySection extends StatelessWidget {
           Icons.speed,
           'Save 80% reading time',
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: KDesignConstants.spacing16),
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
@@ -169,10 +156,10 @@ class AISummarySection extends StatelessWidget {
             label: const Text('Try Premium Free'),
             style: ElevatedButton.styleFrom(
               backgroundColor: KAppColors.getPrimary(context),
-              foregroundColor: KAppColors.darkBackground,
+              foregroundColor: KAppColors.getOnPrimary(context),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
               ),
             ),
           ),
@@ -191,7 +178,7 @@ class AISummarySection extends StatelessWidget {
             size: 20,
             color: KAppColors.getPrimary(context),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: KDesignConstants.spacing12),
           Expanded(
             child: Text(
               text,
@@ -209,7 +196,7 @@ class AISummarySection extends StatelessWidget {
     return Column(
       children: [
         const CircularProgressIndicator(),
-        const SizedBox(height: 12),
+        const SizedBox(height: KDesignConstants.spacing12),
         Text(
           'Generating AI summary...',
           style: KAppTextStyles.bodyMedium.copyWith(
@@ -222,21 +209,21 @@ class AISummarySection extends StatelessWidget {
 
   Widget _buildErrorContent(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: KAppColors.error.withValues(alpha: 0.1),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
-          color: Colors.red.withValues(alpha: 0.3),
+          color: KAppColors.error.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         children: [
           Icon(
             Icons.error_outline,
-            color: Colors.red.shade400,
+            color: KAppColors.error,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: KDesignConstants.spacing12),
           Expanded(
             child: Text(
               'Failed to generate summary. Please try again later.',
@@ -265,7 +252,7 @@ class AISummarySection extends StatelessWidget {
               height: 1.6,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
         ],
 
         // Key points
@@ -277,7 +264,7 @@ class AISummarySection extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           ...summary.keyPoints.asMap().entries.map((entry) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -293,7 +280,7 @@ class AISummarySection extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KDesignConstants.spacing12),
                   Expanded(
                     child: Text(
                       entry.value,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:the_news/config/env_config.dart';
 import 'package:the_news/service/auth_service.dart';
@@ -18,6 +19,8 @@ class ApiClient {
 
   final _env = EnvConfig();
   final _authService = AuthService();
+  DateTime? _networkCooldownUntil;
+  static const Duration _networkCooldown = Duration(seconds: 8);
 
   /// Get the backend base URL
   String get baseUrl {
@@ -58,15 +61,18 @@ class ApiClient {
     Map<String, String>? queryParams,
     Duration timeout = const Duration(seconds: 30),
   }) async {
+    _throwIfNetworkCoolingDown();
     try {
       final uri = Uri.parse(buildUrl(endpoint)).replace(queryParameters: queryParams);
       final headers = requiresAuth ? await _authenticatedHeaders : _commonHeaders;
 
       log('🌐 GET: $uri');
       final response = await http.get(uri, headers: headers).timeout(timeout);
+      _networkCooldownUntil = null;
       _logResponse(response);
       return response;
     } catch (e) {
+      _maybeActivateNetworkCooldown(e);
       log('❌ GET Error: $endpoint - $e');
       rethrow;
     }
@@ -79,6 +85,7 @@ class ApiClient {
     bool requiresAuth = false,
     Duration timeout = const Duration(seconds: 30),
   }) async {
+    _throwIfNetworkCoolingDown();
     try {
       final uri = Uri.parse(buildUrl(endpoint));
       final headers = requiresAuth ? await _authenticatedHeaders : _commonHeaders;
@@ -91,9 +98,11 @@ class ApiClient {
             body: jsonEncode(body),
           )
           .timeout(timeout);
+      _networkCooldownUntil = null;
       _logResponse(response);
       return response;
     } catch (e) {
+      _maybeActivateNetworkCooldown(e);
       log('❌ POST Error: $endpoint - $e');
       rethrow;
     }
@@ -106,6 +115,7 @@ class ApiClient {
     bool requiresAuth = false,
     Duration timeout = const Duration(seconds: 30),
   }) async {
+    _throwIfNetworkCoolingDown();
     try {
       final uri = Uri.parse(buildUrl(endpoint));
       final headers = requiresAuth ? await _authenticatedHeaders : _commonHeaders;
@@ -118,9 +128,11 @@ class ApiClient {
             body: jsonEncode(body),
           )
           .timeout(timeout);
+      _networkCooldownUntil = null;
       _logResponse(response);
       return response;
     } catch (e) {
+      _maybeActivateNetworkCooldown(e);
       log('❌ PUT Error: $endpoint - $e');
       rethrow;
     }
@@ -133,6 +145,7 @@ class ApiClient {
     bool requiresAuth = false,
     Duration timeout = const Duration(seconds: 30),
   }) async {
+    _throwIfNetworkCoolingDown();
     try {
       final uri = Uri.parse(buildUrl(endpoint));
       final headers = requiresAuth ? await _authenticatedHeaders : _commonHeaders;
@@ -145,9 +158,11 @@ class ApiClient {
             body: body != null ? jsonEncode(body) : null,
           )
           .timeout(timeout);
+      _networkCooldownUntil = null;
       _logResponse(response);
       return response;
     } catch (e) {
+      _maybeActivateNetworkCooldown(e);
       log('❌ DELETE Error: $endpoint - $e');
       rethrow;
     }
@@ -160,6 +175,7 @@ class ApiClient {
     bool requiresAuth = false,
     Duration timeout = const Duration(seconds: 30),
   }) async {
+    _throwIfNetworkCoolingDown();
     try {
       final uri = Uri.parse(buildUrl(endpoint));
       final headers = requiresAuth ? await _authenticatedHeaders : _commonHeaders;
@@ -172,12 +188,34 @@ class ApiClient {
             body: jsonEncode(body),
           )
           .timeout(timeout);
+      _networkCooldownUntil = null;
       _logResponse(response);
       return response;
     } catch (e) {
+      _maybeActivateNetworkCooldown(e);
       log('❌ PATCH Error: $endpoint - $e');
       rethrow;
     }
+  }
+
+  void _throwIfNetworkCoolingDown() {
+    final until = _networkCooldownUntil;
+    if (until == null) return;
+    if (DateTime.now().isAfter(until)) {
+      _networkCooldownUntil = null;
+      return;
+    }
+    throw Exception('Backend temporarily unavailable. Retrying shortly.');
+  }
+
+  void _maybeActivateNetworkCooldown(Object error) {
+    final text = error.toString().toLowerCase();
+    final isSocketFailure = error is SocketException ||
+        text.contains('connection refused') ||
+        text.contains('failed host lookup') ||
+        text.contains('network is unreachable');
+    if (!isSocketFailure) return;
+    _networkCooldownUntil = DateTime.now().add(_networkCooldown);
   }
 
   /// Log response details

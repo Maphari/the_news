@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 //? A reusable widget that displays the app logo within a styled container.
@@ -20,10 +21,10 @@ class LogoWidget extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: KAppColors.background,
-        borderRadius: BorderRadius.circular(20),
+        color: KAppColors.getBackground(context),
+        borderRadius: KBorderRadius.xl,
       ),
-      child: Icon(Icons.article_rounded, size: logosize, color: KAppColors.surface),
+      child: Icon(Icons.article_rounded, size: logosize, color: KAppColors.getSurface(context)),
     );
   }
 }

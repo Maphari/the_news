@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 class MindfulMomentCard extends StatelessWidget {
@@ -54,13 +55,13 @@ class MindfulMomentCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            KAppColors.primary.withValues(alpha: 0.15),
-            KAppColors.tertiary.withValues(alpha: 0.15),
+            KAppColors.getPrimary(context).withValues(alpha: 0.15),
+            KAppColors.getTertiary(context).withValues(alpha: 0.15),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
-          color: KAppColors.primary.withValues(alpha: 0.25),
+          color: KAppColors.getPrimary(context).withValues(alpha: 0.25),
           width: 1,
         ),
       ),
@@ -74,15 +75,15 @@ class MindfulMomentCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  KAppColors.primary.withValues(alpha: 0.3),
-                  KAppColors.tertiary.withValues(alpha: 0.3),
+                  KAppColors.getPrimary(context).withValues(alpha: 0.3),
+                  KAppColors.getTertiary(context).withValues(alpha: 0.3),
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               Icons.spa_outlined,
-              color: KAppColors.primary,
+              color: KAppColors.getPrimary(context),
               size: 24,
             ),
           ),
@@ -94,7 +95,7 @@ class MindfulMomentCard extends StatelessWidget {
                 Text(
                   'Mindful Moment',
                   style: KAppTextStyles.labelMedium.copyWith(
-                    color: KAppColors.primary,
+                    color: KAppColors.getPrimary(context),
                     fontWeight: FontWeight.w700,
                     fontSize: 11,
                     letterSpacing: 0.5,
@@ -123,7 +124,7 @@ class MindfulMomentCard extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: KDesignConstants.spacing8),
                     Expanded(
                       child: Text(
                         moment['tip']!,

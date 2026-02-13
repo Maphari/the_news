@@ -69,6 +69,12 @@ class ReadingHistorySyncService extends ChangeNotifier {
       // Save locally first
       await _saveToLocalHistory(entry);
 
+      // Update in-memory cache for immediate UI updates
+      _cachedHistory = [entry, ..._cachedHistory];
+      if (_cachedHistory.length > 1000) {
+        _cachedHistory = _cachedHistory.sublist(0, 1000);
+      }
+
       // Sync to backend in background
       _uploadReadingHistory(userId, [entry]).catchError((e) {
         log('⚠️ Background upload failed: $e');
@@ -189,17 +195,18 @@ class ReadingHistorySyncService extends ChangeNotifier {
       // Upload merged history to backend
       final uploadSuccess = await _uploadReadingHistory(userId, mergedHistory);
 
-      // Save merged history locally
-      if (uploadSuccess) {
-        await _saveFullHistory(mergedHistory);
-        _cachedHistory = mergedHistory;
-        _lastSyncTime = DateTime.now();
-        log('✅ Reading history synced successfully');
-        notifyListeners();
-        return true;
-      }
+      // Save merged history locally regardless of upload result
+      await _saveFullHistory(mergedHistory);
+      _cachedHistory = mergedHistory;
+      _lastSyncTime = DateTime.now();
 
-      return false;
+      if (uploadSuccess) {
+        log('✅ Reading history synced successfully');
+      } else {
+        log('⚠️ Reading history saved locally; remote sync failed');
+      }
+      notifyListeners();
+      return uploadSuccess;
     } catch (e) {
       log('⚠️ Error syncing reading history: $e');
       return false;
@@ -257,6 +264,10 @@ class ReadingHistorySyncService extends ChangeNotifier {
     await syncHistory(userId);
 
     final history = _cachedHistory.isNotEmpty ? _cachedHistory : await _getLocalHistory();
+    if (_cachedHistory.isEmpty && history.isNotEmpty) {
+      _cachedHistory = history;
+      notifyListeners();
+    }
 
     // Calculate stats
     final totalArticlesRead = history.length;
@@ -308,7 +319,7 @@ class ReadingHistorySyncService extends ChangeNotifier {
       await prefs.remove('readingHistory');
 
       // Also clear on backend
-      final response = await _api.delete('user/reading-history/$userId');
+      final _ = await _api.delete('user/reading-history/$userId');
 
       _cachedHistory.clear();
       notifyListeners();

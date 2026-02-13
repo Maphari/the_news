@@ -10,10 +10,14 @@ import {
   EngagementResponse,
 } from "../models/engagement.model";
 import { Timestamp } from "firebase-admin/firestore";
+import { getOptionalString } from "../utils/request.utils";
 
 const engagementCollection = db.collection("articleEngagement");
 const likesCollection = db.collection("userLikes");
 const sharesCollection = db.collection("userShares");
+const userProfilesCollection = db.collection("userProfiles");
+const articlesCollection = db.collection("articles");
+const activityFeedCollection = db.collection("activityFeed");
 
 /**
  * Get engagement data for an article
@@ -21,8 +25,8 @@ const sharesCollection = db.collection("userShares");
  */
 export const getEngagement = async (req: Request, res: Response) => {
   try {
-    const { articleId } = req.params;
-    const { userId } = req.query;
+    const articleId = getOptionalString(req.params.articleId);
+    const userId = getOptionalString(req.query.userId);
 
     if (!articleId) {
       return res.status(400).json({
@@ -220,12 +224,33 @@ export const unlikeArticle = async (req: Request, res: Response) => {
  */
 export const shareArticle = async (req: Request, res: Response) => {
   try {
-    const { userId, articleId, platform }: ShareArticleRequest = req.body;
+    const {
+      userId,
+      articleId,
+      platform,
+      shareToFeed = true,
+      forceReshare = false,
+    }: ShareArticleRequest = req.body;
 
     if (!userId || !articleId) {
       return res.status(400).json({
         success: false,
         message: "userId and articleId are required",
+      });
+    }
+
+    const existingShareQuery = await sharesCollection
+      .where("userId", "==", userId)
+      .where("articleId", "==", articleId)
+      .limit(1)
+      .get();
+    const alreadySharedByUser = !existingShareQuery.empty;
+
+    if (alreadySharedByUser && !forceReshare) {
+      return res.status(200).json({
+        success: false,
+        alreadyShared: true,
+        message: "You already shared this article",
       });
     }
 
@@ -259,8 +284,44 @@ export const shareArticle = async (req: Request, res: Response) => {
       });
     }
 
+    // Create social activity feed entry for shared article
+    if (shareToFeed) {
+      try {
+        const profileDoc = await userProfilesCollection.doc(userId).get();
+        const profileData = profileDoc.exists ? (profileDoc.data() as any) : null;
+        const showActivity = profileData?.privacySettings?.showActivity ?? true;
+        if (showActivity) {
+          let articleData: any | null = null;
+          const articleSnap = await articlesCollection
+            .where("articleId", "==", articleId)
+            .limit(1)
+            .get();
+          if (!articleSnap.empty) {
+            articleData = articleSnap.docs[0].data();
+          }
+
+          await activityFeedCollection.add({
+            userId,
+            username: profileData?.username || profileData?.displayName || userId,
+            userAvatarUrl: profileData?.avatarUrl || null,
+            activityType: "shareArticle",
+            timestamp: Timestamp.now(),
+            articleId,
+            articleTitle: articleData?.title || "an article",
+            articleSourceName: articleData?.sourceName || null,
+            articleImageUrl: articleData?.imageUrl || null,
+            articleUrl: articleData?.link || null,
+            articleDescription: articleData?.description || null,
+          });
+        }
+      } catch (activityError) {
+        console.warn("⚠️ Failed to create share activity:", activityError);
+      }
+    }
+
     return res.status(200).json({
       success: true,
+      alreadyShared: alreadySharedByUser,
       message: "Article shared successfully",
     });
   } catch (error) {
@@ -279,7 +340,7 @@ export const shareArticle = async (req: Request, res: Response) => {
  */
 export const updateCommentCount = async (req: Request, res: Response) => {
   try {
-    const { articleId } = req.params;
+    const articleId = getOptionalString(req.params.articleId);
     const { increment } = req.body; // +1 or -1
 
     if (!articleId) {

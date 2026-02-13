@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/daily_digest_model.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -25,7 +26,7 @@ class DigestCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: KAppColors.getBackground(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: isToday
                 ? KAppColors.getPrimary(context).withValues(alpha: 0.3)
@@ -45,7 +46,7 @@ class DigestCard extends StatelessWidget {
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               decoration: BoxDecoration(
                 color: isToday
                     ? KAppColors.getPrimary(context).withValues(alpha: 0.05)
@@ -64,7 +65,7 @@ class DigestCard extends StatelessWidget {
                         : KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                     size: 20,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: KDesignConstants.spacing8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,7 +77,7 @@ class DigestCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: KDesignConstants.spacing4),
                         Text(
                           timeago.format(digest.generatedAt),
                           style: KAppTextStyles.bodySmall.copyWith(
@@ -100,7 +101,7 @@ class DigestCard extends StatelessWidget {
 
             // Content
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -113,7 +114,7 @@ class DigestCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KDesignConstants.spacing16),
 
                   // Metadata
                   Wrap(
@@ -139,7 +140,7 @@ class DigestCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KDesignConstants.spacing16),
 
                   // Read button
                   Container(
@@ -191,7 +192,7 @@ class DigestCard extends StatelessWidget {
           size: 16,
           color: chipColor,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: KDesignConstants.spacing4),
         Text(
           label,
           style: KAppTextStyles.bodySmall.copyWith(

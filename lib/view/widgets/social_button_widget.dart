@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 class SocialButtonWidget extends StatelessWidget {
@@ -37,7 +38,7 @@ class SocialButtonWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           side: BorderSide(color: KAppColors.getOnBackground(context).withValues(alpha: 0.6)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
           ),
         ),
       ),

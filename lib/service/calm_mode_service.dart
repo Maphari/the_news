@@ -1,7 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:the_news/model/news_article_model.dart';
 
-class CalmModeService {
+class CalmModeService extends ChangeNotifier {
   static final CalmModeService instance = CalmModeService._init();
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
@@ -22,6 +23,7 @@ class CalmModeService {
     if (limitValue != null) {
       _dailyReadingLimit = int.tryParse(limitValue) ?? 30;
     }
+    notifyListeners();
   }
 
   // Calm Mode getters and setters
@@ -30,6 +32,7 @@ class CalmModeService {
   Future<void> setCalmMode(bool enabled) async {
     _isCalmModeEnabled = enabled;
     await _storage.write(key: _calmModeKey, value: enabled.toString());
+    notifyListeners();
   }
 
   Future<void> toggleCalmMode() async {
@@ -42,6 +45,7 @@ class CalmModeService {
   Future<void> setDailyReadingLimit(int minutes) async {
     _dailyReadingLimit = minutes;
     await _storage.write(key: _readingLimitKey, value: minutes.toString());
+    notifyListeners();
   }
 
   // Filter articles based on Calm Mode settings
@@ -56,9 +60,10 @@ class CalmModeService {
         return false;
       }
 
-      // Filter out crisis/doom keywords in title and description
+      // Filter out crisis/doom keywords in title, description, and AI hints
       final combinedText =
-          '${article.title} ${article.description}'.toLowerCase();
+          '${article.title} ${article.description} ${article.aiSummary} ${article.aiTag.join(' ')}'
+              .toLowerCase();
 
       final doomKeywords = [
         'crisis',
@@ -104,7 +109,8 @@ class CalmModeService {
     }
 
     final combinedText =
-        '${article.title} ${article.description}'.toLowerCase();
+        '${article.title} ${article.description} ${article.aiSummary} ${article.aiTag.join(' ')}'
+            .toLowerCase();
 
     final doomKeywords = [
       'crisis',
@@ -163,7 +169,8 @@ class CalmModeService {
 
     // Check for positive keywords (+10 points)
     final combinedText =
-        '${article.title} ${article.description}'.toLowerCase();
+        '${article.title} ${article.description} ${article.aiSummary} ${article.aiTag.join(' ')}'
+            .toLowerCase();
 
     final positiveKeywords = [
       'success',

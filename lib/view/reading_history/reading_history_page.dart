@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide MeasuredPinnedHeaderSliver;
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/reading_history_sync_service.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 import 'package:the_news/view/home/widget/home_app_bar.dart';
 
 class ReadingHistoryPage extends StatefulWidget {
@@ -23,6 +25,19 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
   void initState() {
     super.initState();
     _loadHistory();
+    _historyService.addListener(_onHistoryChanged);
+  }
+
+  @override
+  void dispose() {
+    _historyService.removeListener(_onHistoryChanged);
+    super.dispose();
+  }
+
+  void _onHistoryChanged() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _loadHistory() async {
@@ -81,7 +96,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: KAppColors.error),
             child: const Text('Clear'),
           ),
         ],
@@ -117,29 +132,23 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
         body: SafeArea(
           child: CustomScrollView(
             slivers: [
-              // Header with back button
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Row(
+              MeasuredPinnedHeaderSliver(
+                height: HomeHeader.estimatedHeight(
+                  title: 'Reading History',
+                  subtitle: 'View your reading activity and statistics',
+                  bottom: 20,
+                  subtitleMaxLines: 1,
+                ),
+                child: HomeHeader(
+                  title: 'Reading History',
+                  subtitle: 'View your reading activity and statistics',
+                  showActions: true,
+                  bottom: 20,
+                  subtitleMaxLines: 1,
+                  leading: const AppBackButton(),
+                  viewToggle: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: KAppColors.getOnBackground(context),
-                        ),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Reading History',
-                          style: KAppTextStyles.headlineMedium.copyWith(
-                            color: KAppColors.getOnBackground(context),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
                       IconButton(
                         icon: Icon(
                           Icons.sync,
@@ -156,15 +165,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                       ),
                     ],
                   ),
-                ),
-              ),
-
-              SliverToBoxAdapter(
-                child: HomeHeader(
-                  title: '',
-                  subtitle: 'View your reading activity and statistics',
-                  showActions: false,
-                  bottom: 20,
+                  useSafeArea: false,
                 ),
               ),
 
@@ -190,7 +191,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                             size: 80,
                             color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: KDesignConstants.spacing24),
                           Text(
                             'No Reading History',
                             style: KAppTextStyles.titleLarge.copyWith(
@@ -198,7 +199,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: KDesignConstants.spacing12),
                           Text(
                             'Start reading articles to build your history',
                             style: KAppTextStyles.bodyMedium.copyWith(
@@ -228,7 +229,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                             letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: KDesignConstants.spacing16),
 
                         // Stats Grid
                         Row(
@@ -238,21 +239,21 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                                 'Total Articles',
                                 '${_analytics!['totalArticlesRead']}',
                                 Icons.article_outlined,
-                                const Color(0xFF2196F3),
+                                KAppColors.info,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: KDesignConstants.spacing12),
                             Expanded(
                               child: _buildStatCard(
                                 'Reading Time',
                                 '${_analytics!['totalReadingTimeMinutes']} min',
                                 Icons.schedule,
-                                const Color(0xFF4CAF50),
+                                KAppColors.success,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: KDesignConstants.spacing12),
                         Row(
                           children: [
                             Expanded(
@@ -260,28 +261,28 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                                 'Last 7 Days',
                                 '${_analytics!['last7DaysCount']}',
                                 Icons.calendar_today,
-                                const Color(0xFFFF9800),
+                                KAppColors.warning,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: KDesignConstants.spacing12),
                             Expanded(
                               child: _buildStatCard(
                                 'Last 30 Days',
                                 '${_analytics!['last30DaysCount']}',
                                 Icons.calendar_month,
-                                const Color(0xFF9C27B0),
+                                KAppColors.purple,
                               ),
                             ),
                           ],
                         ),
 
                         if (_analytics!['mostActiveDay'] != null) ...[
-                          const SizedBox(height: 24),
+                          const SizedBox(height: KDesignConstants.spacing24),
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            padding: KDesignConstants.paddingMd,
                             decoration: BoxDecoration(
                               color: KAppColors.getPrimary(context).withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: KBorderRadius.lg,
                               border: Border.all(
                                 color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
                               ),
@@ -293,7 +294,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                                   color: KAppColors.getPrimary(context),
                                   size: 32,
                                 ),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: KDesignConstants.spacing16),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -305,7 +306,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: KDesignConstants.spacing4),
                                       Text(
                                         '${_analytics!['mostActiveDay']}',
                                         style: KAppTextStyles.titleMedium.copyWith(
@@ -347,81 +348,116 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
                   ),
                 ),
 
-                // Article List
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final history = _historyService.cachedHistory;
-                      if (index >= history.length) return null;
-
-                      final entry = history[index];
-                      final timeAgo = _getTimeAgo(entry.readAt);
-
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                entry.articleTitle,
-                                style: KAppTextStyles.bodyMedium.copyWith(
-                                  color: KAppColors.getOnBackground(context),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.access_time,
-                                    size: 14,
-                                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    timeAgo,
-                                    style: KAppTextStyles.labelSmall.copyWith(
-                                      color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Icon(
-                                    Icons.timer,
-                                    size: 14,
-                                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${(entry.readDuration / 60).round()} min',
-                                    style: KAppTextStyles.labelSmall.copyWith(
-                                      color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                if (_historyService.cachedHistory.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Container(
+                        padding: KDesignConstants.paddingMd,
+                        decoration: BoxDecoration(
+                          color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
+                          borderRadius: KBorderRadius.md,
+                          border: Border.all(
+                            color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
                           ),
                         ),
-                      );
-                    },
-                    childCount: _historyService.cachedHistory.length,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.menu_book_outlined,
+                              size: 20,
+                              color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                            ),
+                            const SizedBox(width: KDesignConstants.spacing12),
+                            Expanded(
+                              child: Text(
+                                'No recent articles yet',
+                                style: KAppTextStyles.bodyMedium.copyWith(
+                                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  // Article List
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final history = _historyService.cachedHistory;
+                        if (index >= history.length) return null;
+
+                        final entry = history[index];
+                        final timeAgo = _getTimeAgo(entry.readAt);
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          child: Container(
+                            padding: KDesignConstants.paddingMd,
+                            decoration: BoxDecoration(
+                              color: KAppColors.getOnBackground(context).withValues(alpha: 0.03),
+                              borderRadius: KBorderRadius.md,
+                              border: Border.all(
+                                color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  entry.articleTitle,
+                                  style: KAppTextStyles.bodyMedium.copyWith(
+                                    color: KAppColors.getOnBackground(context),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: KDesignConstants.spacing8),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.access_time,
+                                      size: 14,
+                                      color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                                    ),
+                                    const SizedBox(width: KDesignConstants.spacing4),
+                                    Text(
+                                      timeAgo,
+                                      style: KAppTextStyles.labelSmall.copyWith(
+                                        color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                    const SizedBox(width: KDesignConstants.spacing16),
+                                    Icon(
+                                      Icons.timer,
+                                      size: 14,
+                                      color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                                    ),
+                                    const SizedBox(width: KDesignConstants.spacing4),
+                                    Text(
+                                      '${(entry.readDuration / 60).round()} min',
+                                      style: KAppTextStyles.labelSmall.copyWith(
+                                        color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      childCount: _historyService.cachedHistory.length,
+                    ),
                   ),
-                ),
 
                 // Bottom spacing
                 const SliverToBoxAdapter(
-                  child: SizedBox(height: 40),
+                  child: SizedBox(height: KDesignConstants.spacing40),
                 ),
               ],
             ],
@@ -433,10 +469,10 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
           color: color.withValues(alpha: 0.2),
         ),
@@ -445,7 +481,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 24),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Text(
             value,
             style: KAppTextStyles.titleLarge.copyWith(
@@ -453,7 +489,7 @@ class _ReadingHistoryPageState extends State<ReadingHistoryPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: KDesignConstants.spacing4),
           Text(
             label,
             style: KAppTextStyles.labelSmall.copyWith(

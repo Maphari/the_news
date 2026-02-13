@@ -4,8 +4,9 @@ import 'package:the_news/core/network/api_client.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/news_api_service.dart';
 import 'package:the_news/service/location_service.dart';
+import 'package:the_news/service/calm_mode_service.dart';
 
-/// News provider that handles fetching from API with fallback to dummy data
+/// News provider that handles fetching from API with backend fallback
 /// Uses ApiClient for all network requests following clean architecture
 class NewsProviderService extends ChangeNotifier {
   static final NewsProviderService instance = NewsProviderService._init();
@@ -64,10 +65,15 @@ class NewsProviderService extends ChangeNotifier {
   };
 
   List<ArticleModel> _articles = [];
+  List<ArticleModel> _apiArticles = []; // Fresh articles from API (shown on top)
+  List<ArticleModel> _dbArticles = []; // Older articles from database (shown below)
   String _currentCategory = 'All';
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   String? _error;
   bool _isUsingApi = false;
+  int _dbOffset = 0; // For pagination of database articles
+  static const int _pageSize = 20;
 
   /// Normalize title for comparison
   String _normalizeTitle(String title) {
@@ -96,11 +102,15 @@ class NewsProviderService extends ChangeNotifier {
   }
 
   // Getters
-  List<ArticleModel> get articles => _articles;
+  List<ArticleModel> get articles => _applyCalmFilter(_articles);
+  List<ArticleModel> get apiArticles => _applyCalmFilter(_apiArticles);
+  List<ArticleModel> get dbArticles => _applyCalmFilter(_dbArticles);
   String get currentCategory => _currentCategory;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
   String? get error => _error;
   bool get isUsingApi => _isUsingApi;
+  bool get hasMoreArticles => _dbArticles.length >= _pageSize;
 
   /// Initialize news service
   Future<void> initialize() async {
@@ -109,9 +119,17 @@ class NewsProviderService extends ChangeNotifier {
   }
 
   /// Load articles for current category
-  Future<void> loadArticles({String? category}) async {
+  /// Fetches from both API (latest news on top) and database (older news below)
+  Future<void> loadArticles({String? category, bool refresh = false}) async {
     if (category != null) {
       _currentCategory = category;
+    }
+
+    // Reset pagination on new load
+    if (refresh || category != null) {
+      _dbOffset = 0;
+      _apiArticles = [];
+      _dbArticles = [];
     }
 
     _isLoading = true;
@@ -119,82 +137,47 @@ class NewsProviderService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // First, try to fetch from backend database (fast and reliable)
-      final dbArticles = await _fetchArticlesFromBackend();
-      if (dbArticles.isNotEmpty) {
-        _articles = _deduplicateByTitle(dbArticles);
-        _isUsingApi = false;
-        _error = null;
-        _isLoading = false;
-        notifyListeners();
-
-        // Then try to update with fresh API data in background
-        if (_apiService.isConfigured) {
-          final locationService = LocationService.instance;
-          // Use first preferred country if available
-          String? countryCode;
-          if (locationService.preferredCountries.isNotEmpty) {
-            countryCode = _countryNameToCode[locationService.preferredCountries.first];
-          }
-
-          _apiService.fetchNews(
-            category: _currentCategory == 'All' ? null : _currentCategory,
-            country: countryCode,
-            language: 'en',
-          ).then((apiArticles) {
-            if (apiArticles.isNotEmpty) {
-              // Deduplicate API articles first
-              final dedupedApiArticles = _deduplicateByTitle(apiArticles);
-
-              // Merge: API articles on top, DB articles below (removing duplicates)
-              final apiTitles = dedupedApiArticles.map((a) => _normalizeTitle(a.title)).toSet();
-              final uniqueDbArticles = _articles.where((a) => !apiTitles.contains(_normalizeTitle(a.title))).toList();
-
-              // Combine: API articles first (fresh news), then unique DB articles (older news)
-              _articles = [...dedupedApiArticles, ...uniqueDbArticles];
-              _isUsingApi = true;
-
-              // Save API articles to backend database (non-blocking)
-              _saveArticlesToBackend(dedupedApiArticles);
-              notifyListeners();
-            }
-          }).catchError((e) {
-            debugPrint('Background API fetch failed: $e');
-            // Keep using backend articles, no error shown to user
-          });
-        }
-        return;
+      final locationService = LocationService.instance;
+      String? countryCode;
+      if (locationService.preferredCountries.isNotEmpty) {
+        countryCode = _countryNameToCode[locationService.preferredCountries.first];
       }
 
-      // If backend is empty, try API as fallback
-      if (_apiService.isConfigured) {
-        final locationService = LocationService.instance;
-        // Use first preferred country if available
-        String? countryCode;
-        if (locationService.preferredCountries.isNotEmpty) {
-          countryCode = _countryNameToCode[locationService.preferredCountries.first];
-        }
+      // Fetch from both sources in parallel
+      final futures = await Future.wait([
+        // 1. Fetch fresh articles from API (latest news)
+        _fetchFromApi(countryCode),
+        // 2. Fetch older articles from database
+        _fetchArticlesFromBackend(offset: 0, limit: _pageSize),
+      ]);
 
-        final apiArticles = await _apiService.fetchNews(
-          category: _currentCategory == 'All' ? null : _currentCategory,
-          country: countryCode,
-          language: 'en',
-        );
+      final freshApiArticles = futures[0];
+      final olderDbArticles = futures[1];
 
-        if (apiArticles.isNotEmpty) {
-          _articles = _deduplicateByTitle(apiArticles);
-          _isUsingApi = true;
-          _error = null;
+      // Deduplicate each source
+      _apiArticles = _deduplicateByTitle(freshApiArticles);
 
-          // Save articles to backend database (non-blocking)
-          _saveArticlesToBackend(_articles);
-        } else {
-          _articles = [];
-          _error = 'No articles available. Please check your internet connection.';
-        }
-      } else {
-        _articles = [];
-        _error = 'No articles available. Please configure News API or check backend connection.';
+      // Remove any DB articles that duplicate API articles
+      final apiTitles = _apiArticles.map((a) => _normalizeTitle(a.title)).toSet();
+      _dbArticles = _deduplicateByTitle(olderDbArticles)
+          .where((a) => !apiTitles.contains(_normalizeTitle(a.title)))
+          .toList();
+
+      // Combine: API articles first (fresh), then DB articles (older)
+      _articles = [..._apiArticles, ..._dbArticles];
+      _isUsingApi = _apiArticles.isNotEmpty;
+
+      // Save API articles to backend database for future use (non-blocking)
+      if (_apiArticles.isNotEmpty) {
+        _saveArticlesToBackend(_apiArticles);
+      }
+
+      debugPrint('📰 Loaded ${_apiArticles.length} fresh articles from API');
+      debugPrint('📚 Loaded ${_dbArticles.length} older articles from database');
+      debugPrint('📊 Total: ${_articles.length} articles (API on top, DB below)');
+
+      if (_articles.isEmpty) {
+        _error = 'No articles available. Please check your internet connection.';
       }
     } catch (e) {
       debugPrint('Error loading articles: $e');
@@ -206,11 +189,71 @@ class NewsProviderService extends ChangeNotifier {
     }
   }
 
-  /// Fetch articles from backend database
-  Future<List<ArticleModel>> _fetchArticlesFromBackend() async {
+  /// Load more older articles from database (pagination)
+  Future<void> loadMoreArticles() async {
+    if (_isLoadingMore || !hasMoreArticles) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      _dbOffset += _pageSize;
+      final moreDbArticles = await _fetchArticlesFromBackend(
+        offset: _dbOffset,
+        limit: _pageSize,
+      );
+
+      if (moreDbArticles.isNotEmpty) {
+        // Remove duplicates with existing articles
+        final existingTitles = _articles.map((a) => _normalizeTitle(a.title)).toSet();
+        final uniqueNewArticles = moreDbArticles
+            .where((a) => !existingTitles.contains(_normalizeTitle(a.title)))
+            .toList();
+
+        _dbArticles.addAll(uniqueNewArticles);
+        _articles = [..._apiArticles, ..._dbArticles];
+
+        debugPrint('📚 Loaded ${uniqueNewArticles.length} more articles from database');
+      }
+    } catch (e) {
+      debugPrint('Error loading more articles: $e');
+      _dbOffset -= _pageSize; // Revert offset on error
+    } finally {
+      _isLoadingMore = false;
+      notifyListeners();
+    }
+  }
+
+  /// Fetch fresh articles from API
+  Future<List<ArticleModel>> _fetchFromApi(String? countryCode) async {
+    if (!_apiService.isConfigured) return [];
+
+    try {
+      final apiArticles = await _apiService.fetchNews(
+        category: _currentCategory == 'All' ? null : _currentCategory,
+        country: countryCode,
+        language: 'en',
+      );
+      return apiArticles;
+    } catch (e) {
+      debugPrint('⚠️ API fetch failed: $e');
+      return [];
+    }
+  }
+
+  /// Fetch articles from backend database with pagination
+  /// [offset] - Number of articles to skip (for pagination)
+  /// [limit] - Maximum number of articles to fetch
+  Future<List<ArticleModel>> _fetchArticlesFromBackend({
+    int offset = 0,
+    int limit = 20,
+  }) async {
     try {
       final queryParams = <String, String>{
-        'limit': '50',
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+        'sort': 'pubDate', // Sort by publication date
+        'order': 'desc', // Newest first within DB results
       };
 
       if (_currentCategory != 'All') {
@@ -247,7 +290,7 @@ class NewsProviderService extends ChangeNotifier {
               .map((json) => ArticleModel.fromJson(json as Map<String, dynamic>))
               .toList();
 
-          debugPrint('✅ Fetched ${articles.length} articles from backend database');
+          debugPrint('✅ Fetched ${articles.length} articles from backend (offset: $offset, limit: $limit)');
           return articles;
         }
       }
@@ -276,7 +319,7 @@ class NewsProviderService extends ChangeNotifier {
       // If found results in database, return them
       if (dbResults.isNotEmpty) {
         log('✅ Found ${dbResults.length} results in database');
-        return dbResults;
+        return _applyCalmFilter(dbResults);
       }
 
       // 2. If no results in database, search via API
@@ -288,7 +331,7 @@ class NewsProviderService extends ChangeNotifier {
           log('✅ Found ${apiResults.length} results from API');
           // Save API results to backend for future searches
           _saveArticlesToBackend(apiResults);
-          return apiResults;
+          return _applyCalmFilter(apiResults);
         }
       }
 
@@ -299,17 +342,23 @@ class NewsProviderService extends ChangeNotifier {
       log('⚠️ Error searching articles: $e');
 
       // Fallback to searching in current loaded articles
-      return _articles
+      return _applyCalmFilter(_articles
           .where((article) =>
               article.title.toLowerCase().contains(query.toLowerCase()) ||
               article.description.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+          .toList());
     }
   }
 
-  /// Refresh current articles
+  List<ArticleModel> _applyCalmFilter(List<ArticleModel> articles) {
+    final calmMode = CalmModeService.instance;
+    if (!calmMode.isCalmModeEnabled) return articles;
+    return calmMode.filterArticles(articles);
+  }
+
+  /// Refresh current articles (fetches fresh from both API and database)
   Future<void> refresh() async {
-    await loadArticles();
+    await loadArticles(refresh: true);
   }
 
   /// Clear cache
@@ -321,18 +370,18 @@ class NewsProviderService extends ChangeNotifier {
   /// Get articles by category (for category tabs)
   List<ArticleModel> getArticlesByCategory(String category) {
     if (category == 'All') {
-      return _articles; // Already deduplicated in loadArticles
+      return _applyCalmFilter(_articles); // Already deduplicated in loadArticles
     }
 
-    return _articles
+    return _applyCalmFilter(_articles
         .where((article) => article.category
             .any((cat) => cat.toLowerCase() == category.toLowerCase()))
-        .toList();
+        .toList());
   }
 
   /// Get trending articles (sorted by source priority)
   List<ArticleModel> getTrendingArticles({int limit = 10}) {
-    final sorted = List<ArticleModel>.from(_articles);
+    final sorted = List<ArticleModel>.from(_applyCalmFilter(_articles));
     sorted.sort((a, b) => b.sourcePriority.compareTo(a.sourcePriority));
     return sorted.take(limit).toList();
   }

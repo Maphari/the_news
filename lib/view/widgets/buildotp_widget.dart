@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:flutter/services.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/controller/otp_controller.dart';
@@ -8,6 +9,9 @@ Widget buildOtpField(
   required OtpController otp,
   required BuildContext context,
 }) {
+  final colorScheme = Theme.of(context).colorScheme;
+  final onSurface = KAppColors.getOnSurface(context);
+
   final merged = Listenable.merge([
     otp.textControllers[index],
     otp.focusNodes[index],
@@ -33,43 +37,41 @@ Widget buildOtpField(
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: hasErrorState ? Colors.red : KAppColors.onSurface,
+            color: hasErrorState ? colorScheme.error : onSurface,
             height: 1.0,
           ),
-          cursorColor: hasErrorState ? Colors.red : KAppColors.secondary,
+          cursorColor: hasErrorState ? colorScheme.error : colorScheme.primary,
           cursorWidth: 2,
           cursorHeight: 24,
           decoration: InputDecoration(
             counterText: '',
             filled: true,
             fillColor: hasErrorState 
-                ? Colors.red.withValues(alpha: 0.1)
-                : KAppColors.onSurface.withValues(alpha: 0.05),
+                ? colorScheme.error.withValues(alpha: 0.1)
+                : onSurface.withValues(alpha: 0.05),
             contentPadding: const EdgeInsets.symmetric(vertical: 18),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
               borderSide: BorderSide(
-                color: hasErrorState
-                    ? Colors.red
-                    : KAppColors.onSurface.withValues(alpha: 0.2),
+                color: hasErrorState ? colorScheme.error : onSurface.withValues(alpha: 0.2),
                 width: 1.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
               borderSide: BorderSide(
                 color: hasErrorState
-                    ? Colors.red
+                    ? colorScheme.error
                     : hasValue
-                        ? KAppColors.secondary.withValues(alpha: 0.5)
-                        : KAppColors.onSurface.withValues(alpha: 0.2),
+                        ? colorScheme.primary.withValues(alpha: 0.5)
+                        : onSurface.withValues(alpha: 0.2),
                 width: 1.5,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
               borderSide: BorderSide(
-                color: hasErrorState ? Colors.red : KAppColors.secondary,
+                color: hasErrorState ? colorScheme.error : colorScheme.primary,
                 width: 2,
               ),
             ),

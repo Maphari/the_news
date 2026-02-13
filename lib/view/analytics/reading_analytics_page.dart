@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/service/reading_analytics_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:the_news/utils/share_utils.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:the_news/utils/contrast_check.dart';
 
 /// Analytics dashboard showing reading patterns and statistics
 class ReadingAnalyticsPage extends StatefulWidget {
@@ -66,23 +71,17 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
     final file = File('${dir.path}/reading_analytics_${DateTime.now().millisecondsSinceEpoch}.csv');
     await file.writeAsString(csv.toString());
 
-    await Share.shareXFiles([XFile(file.path)], text: 'My Reading Analytics');
+    await ShareUtils.shareFiles(context, [XFile(file.path)], text: 'My Reading Analytics');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: KAppColors.getOnBackground(context),
-          ),
-        ),
+        leading: const AppBackButton(),
         title: Text(
           'Reading Analytics',
           style: KAppTextStyles.titleLarge.copyWith(
@@ -120,13 +119,13 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildOverviewCards(),
-                const SizedBox(height: 24),
+                const SizedBox(height: KDesignConstants.spacing24),
                 _buildStreakSection(),
-                const SizedBox(height: 24),
+                const SizedBox(height: KDesignConstants.spacing24),
                 _buildReadingTrendChart(),
-                const SizedBox(height: 24),
+                const SizedBox(height: KDesignConstants.spacing24),
                 _buildCategoryBreakdown(),
-                const SizedBox(height: 24),
+                const SizedBox(height: KDesignConstants.spacing24),
                 _buildTopSources(),
               ],
             ),
@@ -147,13 +146,13 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
             KAppColors.getPrimary(context),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: KDesignConstants.spacing12),
         Expanded(
           child: _buildStatCard(
             'Reading Time',
             '${_analyticsService.totalReadingMinutes} min',
             Icons.access_time,
-            const Color(0xFF2196F3),
+            KAppColors.info,
           ),
         ),
       ],
@@ -161,18 +160,16 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    debugCheckContrast(
+      foreground: KAppColors.getOnBackground(context),
+      background: color.withValues(alpha: 0.08),
+      contextLabel: 'Analytics stat card ($title)',
+    );
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.1),
-            color.withValues(alpha: 0.05),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: color.withValues(alpha: 0.2),
         ),
@@ -181,7 +178,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: color, size: 32),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Text(
             value,
             style: KAppTextStyles.displaySmall.copyWith(
@@ -190,7 +187,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
               fontSize: 28,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: KDesignConstants.spacing4),
           Text(
             title,
             style: KAppTextStyles.bodySmall.copyWith(
@@ -206,13 +203,8 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFFFF9800).withValues(alpha: 0.1),
-            const Color(0xFFFF5722).withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
+        color: KAppColors.warning.withValues(alpha: 0.08),
+        borderRadius: KBorderRadius.lg,
       ),
       child: Row(
         children: [
@@ -220,16 +212,16 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: const Color(0xFFFF9800).withValues(alpha: 0.2),
+              color: KAppColors.warning.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(
               Icons.local_fire_department,
-              color: Color(0xFFFF9800),
+              color: KAppColors.warning,
               size: 32,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: KDesignConstants.spacing16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,19 +233,19 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: KDesignConstants.spacing8),
                 Row(
                   children: [
                     _buildStreakBadge(
                       'Current',
                       _analyticsService.currentStreak.toString(),
-                      const Color(0xFFFF9800),
+                      KAppColors.warning,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: KDesignConstants.spacing12),
                     _buildStreakBadge(
                       'Longest',
                       _analyticsService.longestStreak.toString(),
-                      const Color(0xFFFF5722),
+                      KAppColors.orange,
                     ),
                   ],
                 ),
@@ -283,7 +275,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
               fontSize: 18,
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: KDesignConstants.spacing4),
           Text(
             label,
             style: TextStyle(
@@ -326,6 +318,9 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                 });
               },
               style: ButtonStyle(
+                minimumSize: const WidgetStatePropertyAll(
+                  Size(0, KDesignConstants.tabHeight),
+                ),
                 backgroundColor: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) {
                     return KAppColors.getPrimary(context);
@@ -334,7 +329,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                 }),
                 foregroundColor: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) {
-                    return Colors.white;
+                    return KAppColors.darkOnBackground;
                   }
                   return KAppColors.getOnBackground(context);
                 }),
@@ -342,13 +337,13 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: KDesignConstants.spacing16),
         Container(
           padding: const EdgeInsets.all(20),
           height: 250,
           decoration: BoxDecoration(
             color: KAppColors.getBackground(context),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
             ),
@@ -431,14 +426,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                   dotData: const FlDotData(show: true),
                   belowBarData: BarAreaData(
                     show: true,
-                    gradient: LinearGradient(
-                      colors: [
-                        KAppColors.getPrimary(context).withValues(alpha: 0.3),
-                        KAppColors.getPrimary(context).withValues(alpha: 0.0),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
+                    color: KAppColors.getPrimary(context).withValues(alpha: 0.15),
                   ),
                 ),
               ],
@@ -468,13 +456,13 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: KDesignConstants.spacing16),
         Container(
           padding: const EdgeInsets.all(20),
           height: 280,
           decoration: BoxDecoration(
             color: KAppColors.getBackground(context),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
             ),
@@ -489,16 +477,23 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                       final index = entry.key;
                       final categoryEntry = entry.value;
                       final percentage = (categoryEntry.value / total * 100);
+                      final sliceColor = _getCategoryColor(index);
+                      debugCheckContrast(
+                        foreground: KAppColors.getOnBackground(context),
+                        background: sliceColor,
+                        contextLabel: 'Analytics pie slice (${categoryEntry.key})',
+                        minRatio: 3.0,
+                      );
 
                       return PieChartSectionData(
-                        color: _getCategoryColor(index),
+                        color: sliceColor,
                         value: categoryEntry.value.toDouble(),
                         title: '${percentage.toStringAsFixed(0)}%',
                         radius: 60,
-                        titleStyle: const TextStyle(
+                        titleStyle: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: KAppColors.getOnBackground(context),
                         ),
                       );
                     }).toList(),
@@ -507,7 +502,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: KDesignConstants.spacing20),
               Expanded(
                 flex: 2,
                 child: Column(
@@ -528,7 +523,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: KDesignConstants.spacing8),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -583,11 +578,11 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: KDesignConstants.spacing16),
         Container(
           decoration: BoxDecoration(
             color: KAppColors.getBackground(context),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
             ),
@@ -606,7 +601,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                       color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                     ),
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: KDesignConstants.paddingMd,
                     child: Row(
                       children: [
                         Container(
@@ -627,7 +622,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: KDesignConstants.spacing12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,7 +634,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: KDesignConstants.spacing8),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
@@ -652,7 +647,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: KDesignConstants.spacing12),
                         Text(
                           '${sourceEntry.value}',
                           style: KAppTextStyles.titleMedium.copyWith(
@@ -674,10 +669,10 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
 
   Widget _buildEmptyState(String message, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: KDesignConstants.paddingXl,
       decoration: BoxDecoration(
         color: KAppColors.getBackground(context),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
@@ -690,7 +685,7 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
               size: 48,
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             Text(
               message,
               style: KAppTextStyles.bodyMedium.copyWith(
@@ -705,11 +700,11 @@ class _ReadingAnalyticsPageState extends State<ReadingAnalyticsPage> {
 
   Color _getCategoryColor(int index) {
     final colors = [
-      const Color(0xFF2196F3),
-      const Color(0xFF4CAF50),
-      const Color(0xFFFF9800),
-      const Color(0xFF9C27B0),
-      const Color(0xFFE91E63),
+      KAppColors.blue,
+      KAppColors.success,
+      KAppColors.warning,
+      KAppColors.purple,
+      KAppColors.pink,
     ];
     return colors[index % colors.length];
   }

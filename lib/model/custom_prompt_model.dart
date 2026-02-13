@@ -17,7 +17,6 @@ class CustomPromptTemplate {
     this.usageCount = 0,
   });
 
-  // Generate actual prompt by replacing placeholders
   String generatePrompt(Map<String, String> variables) {
     String result = promptTemplate;
     variables.forEach((key, value) {

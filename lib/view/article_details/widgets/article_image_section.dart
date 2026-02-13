@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class ArticleImageSection extends StatelessWidget {
   const ArticleImageSection({
@@ -21,25 +24,25 @@ class ArticleImageSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: KBorderRadius.xxl,
       child: Stack(
         children: [
           // Image
           AspectRatio(
             aspectRatio: 16 / 10,
             child: imageUrl.isNotEmpty
-                ? Image.network(
+                ? SafeNetworkImage(
                     imageUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        color: Colors.grey.shade300,
+                        color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                         child: const Icon(Icons.image, size: 64),
                       );
                     },
                   )
                 : Container(
-                    color: Colors.grey.shade300,
+                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                     child: const Icon(Icons.image, size: 64),
                   ),
           ),
@@ -55,13 +58,13 @@ class ArticleImageSection extends StatelessWidget {
                   onPressed: onLikePressed,
                   isActive: isLiked,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 _buildActionButton(
                   icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                   onPressed: onBookmarkPressed,
                   isActive: isBookmarked,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 _buildActionButton(
                   icon: Icons.share,
                   onPressed: onSharePressed,
@@ -82,14 +85,14 @@ class ArticleImageSection extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.7),
+          color: KAppColors.imageScrim.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(50),
         ),
         child: Icon(
           icon,
-          color: isActive ? Colors.red : Colors.white,
+          color: isActive ? KAppColors.error : KAppColors.onImage,
           size: 22,
         ),
       ),

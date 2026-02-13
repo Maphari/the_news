@@ -10,6 +10,7 @@ import {
   CommentResponse,
 } from "../models/comment.model";
 import { Timestamp } from "firebase-admin/firestore";
+import { getOptionalString } from "../utils/request.utils";
 
 const commentsCollection = db.collection("comments");
 const commentLikesCollection = db.collection("commentLikes");
@@ -21,8 +22,8 @@ const engagementCollection = db.collection("articleEngagement");
  */
 export const getComments = async (req: Request, res: Response) => {
   try {
-    const { articleId } = req.params;
-    const { userId } = req.query;
+    const articleId = getOptionalString(req.params.articleId);
+    const userId = getOptionalString(req.query.userId);
 
     if (!articleId) {
       return res.status(400).json({
@@ -34,12 +35,17 @@ export const getComments = async (req: Request, res: Response) => {
     // Get all comments for this article
     const commentsQuery = await commentsCollection
       .where("articleId", "==", articleId)
-      .orderBy("createdAt", "desc")
       .get();
 
     const comments: CommentResponse[] = [];
 
-    for (const doc of commentsQuery.docs) {
+    const docs = commentsQuery.docs.sort((a, b) => {
+      const aTime = (a.data() as Comment).createdAt?.toMillis?.() ?? 0;
+      const bTime = (b.data() as Comment).createdAt?.toMillis?.() ?? 0;
+      return bTime - aTime;
+    });
+
+    for (const doc of docs) {
       const comment = doc.data() as Comment;
 
       // Check if user liked this comment
@@ -104,12 +110,17 @@ export const addComment = async (req: Request, res: Response) => {
     }
 
     // Create comment
+    const normalizedParentId =
+      typeof parentCommentId === "string" && parentCommentId.trim().length > 0
+        ? parentCommentId
+        : undefined;
+
     const comment: Comment = {
       articleId,
       userId,
       userName,
       text: text.trim(),
-      parentCommentId,
+      parentCommentId: normalizedParentId,
       likeCount: 0,
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -159,7 +170,7 @@ export const addComment = async (req: Request, res: Response) => {
  */
 export const updateComment = async (req: Request, res: Response) => {
   try {
-    const { commentId } = req.params;
+    const commentId = getOptionalString(req.params.commentId);
     const { userId, text }: UpdateCommentRequest = req.body;
 
     if (!commentId || !userId || !text) {
@@ -215,7 +226,7 @@ export const updateComment = async (req: Request, res: Response) => {
  */
 export const deleteComment = async (req: Request, res: Response) => {
   try {
-    const { commentId } = req.params;
+    const commentId = getOptionalString(req.params.commentId);
     const { userId }: DeleteCommentRequest = req.body;
 
     if (!commentId || !userId) {

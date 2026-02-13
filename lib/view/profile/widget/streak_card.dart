@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/achievement_model.dart';
 import 'package:the_news/service/achievements_service.dart';
@@ -34,8 +35,8 @@ class _StreakCardState extends State<StreakCard> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: KAppColors.primary),
+      return Center(
+        child: CircularProgressIndicator(color: KAppColors.getPrimary(context)),
       );
     }
 
@@ -44,19 +45,12 @@ class _StreakCardState extends State<StreakCard> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: KDesignConstants.paddingLg,
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFFFF5722).withValues(alpha: 0.2),
-            const Color(0xFFFF9800).withValues(alpha: 0.2),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: KAppColors.warning.withValues(alpha: 0.15),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
-          color: const Color(0xFFFF5722).withValues(alpha: 0.3),
+          color: KAppColors.orange.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -66,18 +60,18 @@ class _StreakCardState extends State<StreakCard> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.paddingSm,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF5722).withValues(alpha: 0.3),
+                  color: KAppColors.orange.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.local_fire_department,
-                  color: Color(0xFFFF5722),
+                  color: KAppColors.orange,
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: KDesignConstants.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,7 +82,7 @@ class _StreakCardState extends State<StreakCard> {
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: KDesignConstants.spacing4),
                     Text(
                       '${_streak!.currentStreak} ${_streak!.currentStreak == 1 ? "day" : "days"}',
                       style: KAppTextStyles.displaySmall.copyWith(
@@ -102,14 +96,14 @@ class _StreakCardState extends State<StreakCard> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: KDesignConstants.spacing20),
 
           // Streak status
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             decoration: BoxDecoration(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
             ),
             child: Row(
               children: [
@@ -118,11 +112,11 @@ class _StreakCardState extends State<StreakCard> {
                       ? Icons.check_circle
                       : Icons.warning_amber_rounded,
                   color: _streak!.isActiveToday
-                      ? const Color(0xFF4CAF50)
-                      : const Color(0xFFFFA726),
+                      ? KAppColors.success
+                      : KAppColors.warning,
                   size: 20,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: Text(
                     _streak!.isActiveToday
@@ -137,7 +131,7 @@ class _StreakCardState extends State<StreakCard> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
 
           // Longest streak
           Row(
@@ -152,7 +146,7 @@ class _StreakCardState extends State<StreakCard> {
               Text(
                 '${_streak!.longestStreak} ${_streak!.longestStreak == 1 ? "day" : "days"}',
                 style: KAppTextStyles.bodyMedium.copyWith(
-                  color: const Color(0xFFFF5722),
+                  color: KAppColors.orange,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -165,10 +159,10 @@ class _StreakCardState extends State<StreakCard> {
 
   Widget _buildEmptyState() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: KDesignConstants.paddingLg,
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           width: 1,
@@ -181,7 +175,7 @@ class _StreakCardState extends State<StreakCard> {
             size: 48,
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Text(
             'Start Your Reading Streak!',
             style: KAppTextStyles.titleLarge.copyWith(
@@ -189,7 +183,7 @@ class _StreakCardState extends State<StreakCard> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             'Read an article today to begin building your mindful reading habit',
             textAlign: TextAlign.center,

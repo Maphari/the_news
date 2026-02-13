@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/constant/theme/default_theme.dart';
 
 class TopicsWordCloud extends StatelessWidget {
   final List<String> topics;
@@ -23,7 +25,7 @@ class TopicsWordCloud extends StatelessWidget {
                 size: 64,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: KDesignConstants.spacing16),
               Text(
                 'No topics yet',
                 style: Theme.of(context).textTheme.titleMedium,
@@ -36,11 +38,11 @@ class TopicsWordCloud extends StatelessWidget {
 
     return Card(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.cardPadding,
         constraints: const BoxConstraints(minHeight: 200),
         child: Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: KDesignConstants.spacing12,
+          runSpacing: KDesignConstants.spacing12,
           alignment: WrapAlignment.center,
           children: topics.asMap().entries.map((entry) {
             final index = entry.key;
@@ -51,10 +53,13 @@ class TopicsWordCloud extends StatelessWidget {
             final color = _getColor(context, index);
 
             return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: KDesignConstants.spacing12,
+                vertical: KDesignConstants.spacing8,
+              ),
               decoration: BoxDecoration(
                 color: color.withAlpha(30),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: KBorderRadius.lg,
                 border: Border.all(color: color.withAlpha(100)),
               ),
               child: Text(
@@ -86,13 +91,12 @@ class TopicsWordCloud extends StatelessWidget {
       Theme.of(context).colorScheme.primary,
       Theme.of(context).colorScheme.secondary,
       Theme.of(context).colorScheme.tertiary,
-      Colors.blue,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-      Colors.indigo,
-      Colors.pink,
+      KAppColors.blue,
+      KAppColors.green,
+      KAppColors.orange,
+      KAppColors.purple,
+      KAppColors.cyan,
+      KAppColors.pink,
     ];
 
     return colors[index % colors.length];

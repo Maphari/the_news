@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:the_news/constant/theme/enhanced_typography.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
+import 'package:the_news/constant/enhanced_typography.dart';
 import 'package:the_news/service/payment_service.dart';
 import 'package:the_news/service/auth_service.dart';
 import 'package:http/http.dart' as http;
@@ -35,7 +37,7 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
 
     try {
       final userData = await _authService.getCurrentUser();
-      final userId = userData?['id'] as String?;
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
 
       if (userId == null) {
         setState(() {
@@ -83,7 +85,7 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: KAppBar(
         title: const Text('Payment History'),
         actions: [
           IconButton(
@@ -263,7 +265,7 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
                           size: 16,
                           color: statusColor,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: KDesignConstants.spacing4),
                         Text(
                           status.toUpperCase(),
                           style: EnhancedTypography.labelSmall.copyWith(

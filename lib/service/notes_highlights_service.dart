@@ -134,7 +134,10 @@ class NotesHighlightsService extends ChangeNotifier {
 
     notifyListeners();
     await _saveHighlights();
-    log('✨ Highlight added: "${highlight.highlightedText.substring(0, 30)}..."');
+    final previewLength = highlight.highlightedText.length < 30
+        ? highlight.highlightedText.length
+        : 30;
+    log('✨ Highlight added: "${highlight.highlightedText.substring(0, previewLength)}..."');
   }
 
   /// Update an existing highlight

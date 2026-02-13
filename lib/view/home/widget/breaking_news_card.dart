@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/article_access_service.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class BreakingNewsCard extends StatelessWidget {
   const BreakingNewsCard({
@@ -38,18 +40,18 @@ class BreakingNewsCard extends StatelessWidget {
       onTap: () => _navigateToArticleDetail(context),
       child: Container(
         height: 280,
-        margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        margin: const EdgeInsets.fromLTRB(KDesignConstants.spacing16, KDesignConstants.spacing8, KDesignConstants.spacing16, KDesignConstants.spacing16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: KBorderRadius.xl,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: KBorderRadius.xl,
           child: Stack(
             fit: StackFit.expand,
             children: [
               // Background Image
               if (article.imageUrl != null)
-                Image.network(
+                SafeNetworkImage(
                   article.imageUrl!,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
@@ -81,8 +83,8 @@ class BreakingNewsCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.3),
-                      Colors.black.withValues(alpha: 0.8),
+                      KAppColors.darkBackground.withValues(alpha: 0.3),
+                      KAppColors.darkBackground.withValues(alpha: 0.8),
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -91,7 +93,7 @@ class BreakingNewsCard extends StatelessWidget {
 
               // Content
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: KDesignConstants.paddingMd,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,12 +107,12 @@ class BreakingNewsCard extends StatelessWidget {
                           height: 24,
                           margin: const EdgeInsets.only(right: 8),
                           decoration: BoxDecoration(
-                            color: article.sourceIcon.isNotEmpty ? Colors.white : Colors.red,
+                            color: article.sourceIcon.isNotEmpty ? KAppColors.darkOnBackground : Colors.red,
                             shape: BoxShape.circle,
                           ),
                           child: article.sourceIcon.isNotEmpty
                               ? ClipOval(
-                                  child: Image.network(
+                                  child: SafeNetworkImage(
                                     article.sourceIcon,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
@@ -118,7 +120,7 @@ class BreakingNewsCard extends StatelessWidget {
                                         color: Colors.red,
                                         child: const Icon(
                                           Icons.article,
-                                          color: Colors.white,
+                                          color: KAppColors.darkOnBackground,
                                           size: 14,
                                         ),
                                       );
@@ -127,33 +129,33 @@ class BreakingNewsCard extends StatelessWidget {
                                 )
                               : const Icon(
                                   Icons.article,
-                                  color: Colors.white,
+                                  color: KAppColors.darkOnBackground,
                                   size: 14,
                                 ),
                         ),
                         Text(
                           article.sourceName,
                           style: KAppTextStyles.labelMedium.copyWith(
-                            color: Colors.white,
+                            color: KAppColors.darkOnBackground,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: KDesignConstants.spacing8),
                         Text(
                           '• $timeAgo',
                           style: KAppTextStyles.labelMedium.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: KAppColors.darkOnBackground.withValues(alpha: 0.9),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: KDesignConstants.spacing12),
 
                     // Title
                     Text(
                       article.title,
                       style: KAppTextStyles.headlineSmall.copyWith(
-                        color: Colors.white,
+                        color: KAppColors.darkOnBackground,
                         fontWeight: FontWeight.w800,
                         fontSize: 22,
                         height: 1.2,
@@ -161,13 +163,13 @@ class BreakingNewsCard extends StatelessWidget {
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
 
                     // Description
                     Text(
                       article.description,
                       style: KAppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: KAppColors.darkOnBackground.withValues(alpha: 0.9),
                         height: 1.3,
                       ),
                       maxLines: 2,

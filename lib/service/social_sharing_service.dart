@@ -1,19 +1,33 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:the_news/utils/share_utils.dart';
 import 'package:the_news/model/news_article_model.dart';
+import 'package:the_news/service/engagement_service.dart';
+import 'package:the_news/service/auth_service.dart';
 
 /// Service for social sharing and community features
 class SocialSharingService {
   static final instance = SocialSharingService._init();
   SocialSharingService._init();
 
+  final EngagementService _engagementService = EngagementService.instance;
+  final AuthService _authService = AuthService();
+
   /// Share an article via system share sheet
-  Future<void> shareArticle(ArticleModel article, {String? customText}) async {
+  Future<void> shareArticle(
+    ArticleModel article, {
+    String? customText,
+    BuildContext? context,
+  }) async {
     try {
       final text = customText ?? _generateShareText(article);
 
-      await Share.share(text, subject: article.title);
+      if (context != null) {
+        await ShareUtils.shareText(context, text, subject: article.title);
+      } else {
+        await ShareUtils.shareTextWithoutContext(text, subject: article.title);
+      }
 
       log('📤 Article shared: ${article.title}');
     } catch (e) {
@@ -27,11 +41,19 @@ class SocialSharingService {
     required ArticleModel article,
     required String quote,
     String? note,
+    BuildContext? context,
   }) async {
     try {
       final text = _generateQuoteShareText(article, quote, note);
 
-      await Share.share(text, subject: 'Quote from ${article.title}');
+      if (context != null) {
+        await ShareUtils.shareText(context, text, subject: 'Quote from ${article.title}');
+      } else {
+        await ShareUtils.shareTextWithoutContext(
+          text,
+          subject: 'Quote from ${article.title}',
+        );
+      }
 
       log('💬 Quote shared from: ${article.title}');
     } catch (e) {
@@ -44,16 +66,24 @@ class SocialSharingService {
   Future<void> shareWithImage({
     required ArticleModel article,
     String? imagePath,
+    BuildContext? context,
   }) async {
     try {
       if (imagePath != null) {
-        await Share.shareXFiles(
-          [XFile(imagePath)],
-          text: _generateShareText(article),
-          subject: article.title,
-        );
+        if (context != null) {
+          await ShareUtils.shareFiles(
+            context,
+            [XFile(imagePath)],
+            text: _generateShareText(article),
+          );
+        } else {
+          await ShareUtils.shareFilesWithoutContext(
+            [XFile(imagePath)],
+            text: _generateShareText(article),
+          );
+        }
       } else {
-        await shareArticle(article);
+        await shareArticle(article, context: context);
       }
 
       log('📷 Article with image shared: ${article.title}');
@@ -67,13 +97,72 @@ class SocialSharingService {
   Future<void> shareToPlatform({
     required ArticleModel article,
     required SocialPlatform platform,
+    BuildContext? context,
   }) async {
     // This would require platform-specific deep linking
     // For now, use system share and let user choose
     await shareArticle(
       article,
       customText: _generatePlatformSpecificText(article, platform),
+      context: context,
     );
+  }
+
+  /// Record a share (and optionally publish to feed)
+  Future<bool> recordShareActivity(
+    ArticleModel article, {
+    String platform = 'system',
+    bool shareToFeed = true,
+    BuildContext? context,
+  }) async {
+    try {
+      final userData = await _authService.getCurrentUser();
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
+      if (userId == null) return false;
+      final result = await _engagementService.shareArticleWithResult(
+        userId,
+        article.articleId,
+        platform: platform,
+        shareToFeed: shareToFeed,
+      );
+      if (result.success) return true;
+      if (result.alreadyShared && context != null && context.mounted) {
+        final shouldReshare = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Already Shared'),
+            content: const Text(
+              'You already shared this article. Do you want to share it again?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('No'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('Share Again'),
+              ),
+            ],
+          ),
+        );
+        if (shouldReshare == true) {
+          final reshareResult = await _engagementService.shareArticleWithResult(
+            userId,
+            article.articleId,
+            platform: platform,
+            shareToFeed: shareToFeed,
+            forceReshare: true,
+          );
+          return reshareResult.success;
+        }
+        return false;
+      }
+      return false;
+    } catch (e) {
+      log('⚠️ Error recording share activity: $e');
+      return false;
+    }
   }
 
   /// Generate share text for article
@@ -144,7 +233,10 @@ ${article.link}
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => ShareDialog(article: article),
+      builder: (sheetContext) => ShareDialog(
+        article: article,
+        parentContext: context,
+      ),
     );
   }
 }
@@ -153,10 +245,22 @@ ${article.link}
 enum SocialPlatform { twitter, facebook, linkedin, whatsapp, email }
 
 /// Share dialog widget
-class ShareDialog extends StatelessWidget {
-  const ShareDialog({super.key, required this.article});
+class ShareDialog extends StatefulWidget {
+  const ShareDialog({
+    super.key,
+    required this.article,
+    required this.parentContext,
+  });
 
   final ArticleModel article;
+  final BuildContext parentContext;
+
+  @override
+  State<ShareDialog> createState() => _ShareDialogState();
+}
+
+class _ShareDialogState extends State<ShareDialog> {
+  bool _shareToFeed = true;
 
   @override
   Widget build(BuildContext context) {
@@ -184,6 +288,27 @@ class ShareDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
+            // Share to feed toggle
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Share to feed',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+                Switch(
+                  value: _shareToFeed,
+                  onChanged: (value) {
+                    setState(() => _shareToFeed = value);
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
             // Share options
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -191,9 +316,23 @@ class ShareDialog extends StatelessWidget {
                 _ShareButton(
                   icon: Icons.share,
                   label: 'System',
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
-                    SocialSharingService.instance.shareArticle(article);
+                    final canShare = await SocialSharingService.instance
+                        .recordShareActivity(
+                      widget.article,
+                      platform: 'system',
+                      shareToFeed: _shareToFeed,
+                      context: widget.parentContext,
+                    );
+                    if (canShare) {
+                      if (!widget.parentContext.mounted) return;
+                      await SocialSharingService.instance
+                          .shareArticle(
+                            widget.article,
+                            context: widget.parentContext,
+                          );
+                    }
                   },
                 ),
                 _ShareButton(
@@ -207,23 +346,45 @@ class ShareDialog extends StatelessWidget {
                 _ShareButton(
                   icon: Icons.email,
                   label: 'Email',
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
-                    SocialSharingService.instance.shareToPlatform(
-                      article: article,
-                      platform: SocialPlatform.email,
+                    final canShare = await SocialSharingService.instance
+                        .recordShareActivity(
+                      widget.article,
+                      platform: 'email',
+                      shareToFeed: _shareToFeed,
+                      context: widget.parentContext,
                     );
+                    if (canShare) {
+                      if (!widget.parentContext.mounted) return;
+                      await SocialSharingService.instance.shareToPlatform(
+                        article: widget.article,
+                        platform: SocialPlatform.email,
+                        context: widget.parentContext,
+                      );
+                    }
                   },
                 ),
                 _ShareButton(
                   icon: Icons.chat,
                   label: 'Message',
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
-                    SocialSharingService.instance.shareToPlatform(
-                      article: article,
-                      platform: SocialPlatform.whatsapp,
+                    final canShare = await SocialSharingService.instance
+                        .recordShareActivity(
+                      widget.article,
+                      platform: 'whatsapp',
+                      shareToFeed: _shareToFeed,
+                      context: widget.parentContext,
                     );
+                    if (canShare) {
+                      if (!widget.parentContext.mounted) return;
+                      await SocialSharingService.instance.shareToPlatform(
+                        article: widget.article,
+                        platform: SocialPlatform.whatsapp,
+                        context: widget.parentContext,
+                      );
+                    }
                   },
                 ),
               ],
@@ -234,7 +395,7 @@ class ShareDialog extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: () {
                 Navigator.pop(context);
-                _showCustomShareDialog(context);
+                _showCustomShareDialog(widget.parentContext);
               },
               icon: const Icon(Icons.edit_note),
               label: const Text('Add Note and Share'),
@@ -251,7 +412,7 @@ class ShareDialog extends StatelessWidget {
   void _showCustomShareDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => CustomShareDialog(article: article),
+      builder: (context) => CustomShareDialog(article: widget.article),
     );
   }
 }
@@ -307,6 +468,7 @@ class CustomShareDialog extends StatefulWidget {
 
 class _CustomShareDialogState extends State<CustomShareDialog> {
   final _noteController = TextEditingController();
+  bool _shareToFeed = true;
 
   @override
   void dispose() {
@@ -318,14 +480,36 @@ class _CustomShareDialogState extends State<CustomShareDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Add Your Note'),
-      content: TextField(
-        controller: _noteController,
-        decoration: const InputDecoration(
-          hintText: 'Why are you sharing this?',
-          border: OutlineInputBorder(),
-        ),
-        maxLines: 3,
-        maxLength: 280,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _noteController,
+            decoration: const InputDecoration(
+              hintText: 'Why are you sharing this?',
+              border: OutlineInputBorder(),
+            ),
+            maxLines: 3,
+            maxLength: 280,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Share to feed',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              Switch(
+                value: _shareToFeed,
+                onChanged: (value) {
+                  setState(() => _shareToFeed = value);
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       actions: [
         TextButton(
@@ -333,7 +517,7 @@ class _CustomShareDialogState extends State<CustomShareDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: () {
+          onPressed: () async {
             final customText =
                 '''
 ${widget.article.title}
@@ -343,10 +527,20 @@ ${widget.article.title}
 ${widget.article.link}
 ''';
             Navigator.pop(context);
-            SocialSharingService.instance.shareArticle(
+            final canShare = await SocialSharingService.instance
+                .recordShareActivity(
               widget.article,
-              customText: customText,
+              platform: 'custom',
+              shareToFeed: _shareToFeed,
+              context: context.mounted ? context : null,
             );
+            if (canShare) {
+              await SocialSharingService.instance.shareArticle(
+                widget.article,
+                customText: customText,
+                context: context.mounted ? context : null,
+              );
+            }
           },
           child: const Text('Share'),
         ),

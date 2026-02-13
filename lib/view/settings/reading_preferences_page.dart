@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/reading_preferences_model.dart';
 import 'package:the_news/service/reading_preferences_service.dart';
+import 'package:the_news/service/realtime_comments_service.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
 
 /// Reading preferences customization page
 class ReadingPreferencesPage extends StatefulWidget {
@@ -13,16 +17,19 @@ class ReadingPreferencesPage extends StatefulWidget {
 
 class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
   final ReadingPreferencesService _prefsService = ReadingPreferencesService.instance;
+  final RealtimeCommentsService _realtimeCommentsService = RealtimeCommentsService.instance;
 
   @override
   void initState() {
     super.initState();
     _prefsService.addListener(_onPreferencesChanged);
+    _realtimeCommentsService.addListener(_onPreferencesChanged);
   }
 
   @override
   void dispose() {
     _prefsService.removeListener(_onPreferencesChanged);
+    _realtimeCommentsService.removeListener(_onPreferencesChanged);
     super.dispose();
   }
 
@@ -34,16 +41,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
-        backgroundColor: KAppColors.getBackground(context),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: KAppColors.getOnBackground(context),
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: KAppBar(
         title: Text(
           'Reading Preferences',
           style: KAppTextStyles.titleLarge.copyWith(
@@ -71,37 +69,46 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
             ),
           ),
         ],
-      ),
+        backgroundColor: KAppColors.getBackground(context),
+        elevation: 0,
+        leading: AppBackButton(onPressed: () => Navigator.pop(context),),
+          ),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: KDesignConstants.paddingLg,
         children: [
           // Preview card
           _buildPreviewCard(),
-          const SizedBox(height: 32),
+          const SizedBox(height: KDesignConstants.spacing32),
 
           // Font Size
           _buildSectionHeader('Font Size', Icons.format_size),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           _buildFontSizeSelector(),
-          const SizedBox(height: 32),
+          const SizedBox(height: KDesignConstants.spacing32),
 
           // Font Family
           _buildSectionHeader('Font Family', Icons.font_download),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           _buildFontFamilySelector(),
-          const SizedBox(height: 32),
+          const SizedBox(height: KDesignConstants.spacing32),
 
           // Line Spacing
           _buildSectionHeader('Line Spacing', Icons.format_line_spacing),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           _buildLineSpacingSelector(),
-          const SizedBox(height: 32),
+          const SizedBox(height: KDesignConstants.spacing32),
 
           // Reading Theme
           _buildSectionHeader('Reading Theme', Icons.palette_outlined),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           _buildReadingThemeSelector(),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing32),
+
+          // Comments
+          _buildSectionHeader('Comments', Icons.forum_outlined),
+          const SizedBox(height: KDesignConstants.spacing16),
+          _buildRealtimeCommentsToggle(),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
       ),
     );
@@ -126,7 +133,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
@@ -141,7 +148,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           Text(
             'The Future of News',
             style: TextStyle(
@@ -152,7 +159,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
               fontFamily: fontFamily,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             'This is how your articles will look with your current settings. Adjust the font size, family, and spacing to find what works best for you.',
             style: TextStyle(
@@ -175,7 +182,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
           size: 20,
           color: KAppColors.getPrimary(context),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: KDesignConstants.spacing8),
         Text(
           title,
           style: KAppTextStyles.titleMedium.copyWith(
@@ -201,7 +208,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
               color: isSelected
                   ? KAppColors.getPrimary(context)
                   : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
               border: Border.all(
                 color: isSelected
                     ? KAppColors.getPrimary(context)
@@ -217,16 +224,16 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
                     fontSize: size.size,
                     fontWeight: FontWeight.bold,
                     color: isSelected
-                        ? Colors.white
+                        ? KAppColors.darkOnBackground
                         : KAppColors.getOnBackground(context),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: KDesignConstants.spacing4),
                 Text(
                   size.label,
                   style: KAppTextStyles.labelSmall.copyWith(
                     color: isSelected
-                        ? Colors.white
+                        ? KAppColors.darkOnBackground
                         : KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                     fontWeight: FontWeight.w600,
                   ),
@@ -248,12 +255,12 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
           child: InkWell(
             onTap: () => _prefsService.setFontFamily(family),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               decoration: BoxDecoration(
                 color: isSelected
                     ? KAppColors.getPrimary(context).withValues(alpha: 0.1)
                     : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
                 border: Border.all(
                   color: isSelected
                       ? KAppColors.getPrimary(context)
@@ -275,7 +282,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
                       color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                       size: 20,
                     ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KDesignConstants.spacing12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,12 +324,12 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
           child: InkWell(
             onTap: () => _prefsService.setLineSpacing(spacing),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               decoration: BoxDecoration(
                 color: isSelected
                     ? KAppColors.getPrimary(context).withValues(alpha: 0.1)
                     : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: KBorderRadius.md,
                 border: Border.all(
                   color: isSelected
                       ? KAppColors.getPrimary(context)
@@ -344,7 +351,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
                       color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
                       size: 20,
                     ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KDesignConstants.spacing12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -394,10 +401,10 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
           onTap: () => _prefsService.setReadingTheme(theme),
           child: Container(
             width: (MediaQuery.of(context).size.width - 72) / 2,
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
               border: Border.all(
                 color: isSelected
                     ? KAppColors.getPrimary(context)
@@ -427,7 +434,7 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
                       ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: KDesignConstants.spacing8),
                 Text(
                   theme.label,
                   style: KAppTextStyles.labelMedium.copyWith(
@@ -440,6 +447,50 @@ class _ReadingPreferencesPageState extends State<ReadingPreferencesPage> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildRealtimeCommentsToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: KAppColors.getOnBackground(context).withValues(alpha: 0.04),
+        borderRadius: KBorderRadius.lg,
+        border: Border.all(
+          color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Live comment updates',
+                  style: KAppTextStyles.titleSmall.copyWith(
+                    color: KAppColors.getOnBackground(context),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Automatically refresh comments while reading.',
+                  style: KAppTextStyles.bodySmall.copyWith(
+                    color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _realtimeCommentsService.isEnabled,
+            onChanged: (value) async {
+              await _realtimeCommentsService.setEnabled(value);
+            },
+          ),
+        ],
+      ),
     );
   }
 }

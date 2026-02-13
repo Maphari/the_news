@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:flutter/services.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:the_news/utils/share_utils.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/highlight_model.dart';
 import 'package:the_news/service/notes_highlights_service.dart';
+import 'package:the_news/view/widgets/app_back_button.dart';
+import 'package:the_news/view/widgets/pill_tab.dart';
+import 'package:the_news/view/widgets/app_search_bar.dart';
 
 /// Library page for viewing all highlights and notes
 class NotesHighlightsLibraryPage extends StatefulWidget {
@@ -73,13 +78,7 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
-        backgroundColor: KAppColors.getBackground(context),
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: KAppColors.getOnBackground(context)),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: KAppBar(
         title: Text(
           'My Library',
           style: KAppTextStyles.titleLarge.copyWith(
@@ -98,17 +97,69 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
             ],
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: KAppColors.getPrimary(context),
-          unselectedLabelColor: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-          indicatorColor: KAppColors.getPrimary(context),
-          tabs: [
-            Tab(text: 'Highlights (${_service.totalHighlightsCount})'),
-            Tab(text: 'Notes (${_service.totalNotesCount})'),
-          ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(KDesignConstants.tabHeight + 12),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: AnimatedBuilder(
+              animation: _tabController,
+              builder: (context, _) {
+                final currentIndex = _tabController.index;
+                return Row(
+                  children: [
+                    Expanded(
+                      child: PillTabContainer(
+                        selected: currentIndex == 0,
+                        onTap: () => _tabController.animateTo(0),
+                        borderRadius: KBorderRadius.xl,
+                        child: Text(
+                          'Highlights (${_service.totalHighlightsCount})',
+                          textAlign: TextAlign.center,
+                          style: KAppTextStyles.labelMedium.copyWith(
+                            color: currentIndex == 0
+                                ? KAppColors.getOnPrimary(context)
+                                : KAppColors.getOnBackground(context)
+                                    .withValues(alpha: 0.65),
+                            fontWeight: currentIndex == 0
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: KDesignConstants.spacing8),
+                    Expanded(
+                      child: PillTabContainer(
+                        selected: currentIndex == 1,
+                        onTap: () => _tabController.animateTo(1),
+                        borderRadius: KBorderRadius.xl,
+                        child: Text(
+                          'Notes (${_service.totalNotesCount})',
+                          textAlign: TextAlign.center,
+                          style: KAppTextStyles.labelMedium.copyWith(
+                            color: currentIndex == 1
+                                ? KAppColors.getOnPrimary(context)
+                                : KAppColors.getOnBackground(context)
+                                    .withValues(alpha: 0.65),
+                            fontWeight: currentIndex == 1
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
         ),
-      ),
+        backgroundColor: KAppColors.getBackground(context),
+        elevation: 0,
+        leading: AppBackButton(onPressed: () => Navigator.pop(context),),
+          
+        ),
+        
       body: Column(
         children: [
           // Search bar
@@ -134,42 +185,24 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
 
   Widget _buildSearchBar() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: TextField(
+      padding: KDesignConstants.paddingMd,
+      child: AppSearchBar(
         controller: _searchController,
         onChanged: (_) => _updateFilteredLists(),
-        decoration: InputDecoration(
-          hintText: 'Search highlights and notes...',
-          prefixIcon: Icon(Icons.search, color: KAppColors.getOnBackground(context).withValues(alpha: 0.5)),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: KAppColors.getOnBackground(context).withValues(alpha: 0.5)),
-                  onPressed: () {
-                    _searchController.clear();
-                    _updateFilteredLists();
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
+        hintText: 'Search highlights and notes...',
       ),
     );
   }
 
   Widget _buildColorFilter() {
     return Container(
-      height: 60,
+      height: KDesignConstants.tabHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
           _buildColorChip(null, 'All'),
-          const SizedBox(width: 8),
+          const SizedBox(width: KDesignConstants.spacing8),
           ...HighlightColor.values.map((color) => Padding(
             padding: const EdgeInsets.only(right: 8),
             child: _buildColorChip(color, color.label),
@@ -181,22 +214,28 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
 
   Widget _buildColorChip(HighlightColor? color, String label) {
     final isSelected = _selectedColor == color;
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) {
-        setState(() {
-          _selectedColor = color;
-          _updateFilteredLists();
-        });
-      },
-      backgroundColor: color != null
-          ? Color(color.value).withValues(alpha: 0.2)
-          : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-      selectedColor: color != null
-          ? Color(color.value).withValues(alpha: 0.4)
-          : KAppColors.getPrimary(context).withValues(alpha: 0.2),
-      checkmarkColor: KAppColors.getOnBackground(context),
+    return SizedBox(
+      height: KDesignConstants.tabHeight,
+      child: FilterChip(
+        label: Text(label),
+        selected: isSelected,
+        onSelected: (_) {
+          setState(() {
+            _selectedColor = color;
+            _updateFilteredLists();
+          });
+        },
+        backgroundColor: color != null
+            ? Color(color.value).withValues(alpha: 0.2)
+            : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+        selectedColor: color != null
+            ? Color(color.value).withValues(alpha: 0.4)
+            : KAppColors.getPrimary(context).withValues(alpha: 0.2),
+        checkmarkColor: KAppColors.getOnBackground(context),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
     );
   }
 
@@ -211,14 +250,14 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
               size: 64,
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
             Text(
               'No highlights yet',
               style: KAppTextStyles.titleMedium.copyWith(
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             Text(
               'Select text in articles to create highlights',
               style: KAppTextStyles.bodySmall.copyWith(
@@ -231,7 +270,7 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       itemCount: _filteredHighlights.length,
       itemBuilder: (context, index) {
         final highlight = _filteredHighlights[index];
@@ -254,14 +293,14 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
               size: 64,
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
             Text(
               'No notes yet',
               style: KAppTextStyles.titleMedium.copyWith(
                 color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             Text(
               'Add notes to save your thoughts on articles',
               style: KAppTextStyles.bodySmall.copyWith(
@@ -274,7 +313,7 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: KDesignConstants.paddingMd,
       itemCount: _filteredNotes.length,
       itemBuilder: (context, index) {
         final note = _filteredNotes[index];
@@ -290,7 +329,11 @@ class _NotesHighlightsLibraryPageState extends State<NotesHighlightsLibraryPage>
     switch (action) {
       case 'export_text':
         final text = _service.exportAsText();
-        await Share.share(text, subject: 'My Highlights & Notes');
+        await ShareUtils.shareText(
+          context,
+          text,
+          subject: 'My Highlights & Notes',
+        );
         break;
       case 'export_json':
         final json = _service.exportAsJson();
@@ -349,14 +392,14 @@ class _HighlightCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       color: Color(highlight.color.value).withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         side: BorderSide(
           color: Color(highlight.color.value).withValues(alpha: 0.3),
           width: 2,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.paddingMd,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -370,7 +413,7 @@ class _HighlightCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: KDesignConstants.spacing8),
                 Expanded(
                   child: Text(
                     highlight.articleTitle,
@@ -391,7 +434,7 @@ class _HighlightCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             Text(
               highlight.highlightedText,
               style: KAppTextStyles.bodyMedium.copyWith(
@@ -400,9 +443,9 @@ class _HighlightCard extends StatelessWidget {
               ),
             ),
             if (highlight.note != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: KDesignConstants.spacing12),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: KDesignConstants.paddingSm,
                 decoration: BoxDecoration(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
@@ -415,7 +458,7 @@ class _HighlightCard extends StatelessWidget {
                       size: 16,
                       color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: KDesignConstants.spacing8),
                     Expanded(
                       child: Text(
                         highlight.note!,
@@ -429,7 +472,7 @@ class _HighlightCard extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             Text(
               _formatDate(highlight.createdAt),
               style: KAppTextStyles.labelSmall.copyWith(
@@ -474,13 +517,13 @@ class _NoteCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         side: BorderSide(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: KDesignConstants.paddingMd,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -506,7 +549,7 @@ class _NoteCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             Text(
               note.content,
               style: KAppTextStyles.bodyMedium.copyWith(
@@ -515,7 +558,7 @@ class _NoteCard extends StatelessWidget {
               ),
             ),
             if (note.tags.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: KDesignConstants.spacing12),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -533,7 +576,7 @@ class _NoteCard extends StatelessWidget {
                 )).toList(),
               ),
             ],
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
             Text(
               _formatDate(note.createdAt),
               style: KAppTextStyles.labelSmall.copyWith(

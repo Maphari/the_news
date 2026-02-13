@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/service/followed_publishers_service.dart';
 import 'package:the_news/view/publisher/publisher_profile_page.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class AuthorRow extends StatefulWidget {
   const AuthorRow({
@@ -100,7 +102,7 @@ class _AuthorRowState extends State<AuthorRow> {
                 backgroundColor: widget.avatarColor ?? KAppColors.getPrimary(context),
                 radius: 20,
                 child: ClipOval(
-                  child: Image.network(
+                  child: SafeNetworkImage(
                     widget.sourceIcon!,
                     width: 40,
                     height: 40,
@@ -112,8 +114,8 @@ class _AuthorRowState extends State<AuthorRow> {
                           _getInitials(widget.authorName),
                           style: KAppTextStyles.titleMedium.copyWith(
                             color: Theme.of(context).brightness == Brightness.dark
-                                ? Colors.black
-                                : Colors.white,
+                                ? KAppColors.darkBackground
+                                : KAppColors.darkOnBackground,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -129,14 +131,14 @@ class _AuthorRowState extends State<AuthorRow> {
                   _getInitials(widget.authorName),
                   style: KAppTextStyles.titleMedium.copyWith(
                     color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.black
-                        : Colors.white,
+                        ? KAppColors.darkBackground
+                        : KAppColors.darkOnBackground,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: KDesignConstants.spacing12),
         Expanded(
           child: GestureDetector(
             onTap: _navigateToPublisherPage,
@@ -146,15 +148,15 @@ class _AuthorRowState extends State<AuthorRow> {
                 Text(
                   'Published by',
                   style: KAppTextStyles.labelSmall.copyWith(
-                    color: (widget.textColor ?? Colors.black).withValues(alpha: 0.6),
+                    color: (widget.textColor ?? KAppColors.darkBackground).withValues(alpha: 0.6),
                   ),
                 ),
                 Text(
                   widget.authorName,
                   style: KAppTextStyles.titleSmall.copyWith(
-                    color: widget.textColor ?? Colors.black,
+                    color: widget.textColor ?? KAppColors.darkBackground,
                     decoration: TextDecoration.underline,
-                    decorationColor: (widget.textColor ?? Colors.black).withValues(alpha: 0.3),
+                    decorationColor: (widget.textColor ?? KAppColors.darkBackground).withValues(alpha: 0.3),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -174,7 +176,7 @@ class _AuthorRowState extends State<AuthorRow> {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation(widget.avatarColor ?? (widget.textColor ?? Colors.black)),
+                      valueColor: AlwaysStoppedAnimation(widget.avatarColor ?? (widget.textColor ?? KAppColors.darkBackground)),
                     ),
                   ),
                 ),
@@ -184,15 +186,15 @@ class _AuthorRowState extends State<AuthorRow> {
                   onPressed: _handleFollowToggle,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isFollowed
-                        ? (widget.textColor ?? Colors.black).withValues(alpha: 0.15)
-                        : widget.avatarColor ?? (widget.textColor ?? Colors.black),
+                        ? (widget.textColor ?? KAppColors.darkBackground).withValues(alpha: 0.15)
+                        : widget.avatarColor ?? (widget.textColor ?? KAppColors.darkBackground),
                     shape: const StadiumBorder(),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   ),
                   child: Text(
                     isFollowed ? 'Following' : 'Follow',
                     style: KAppTextStyles.labelLarge.copyWith(
-                      color: isFollowed ? (widget.textColor ?? Colors.black) : Colors.white,
+                      color: isFollowed ? (widget.textColor ?? KAppColors.darkBackground) : KAppColors.darkOnBackground,
                     ),
                   ),
                 ),

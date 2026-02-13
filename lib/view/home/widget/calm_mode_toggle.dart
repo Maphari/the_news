@@ -52,21 +52,14 @@ class _CalmModeToggleState extends State<CalmModeToggle> {
           curve: Curves.easeInOut,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            gradient: _isEnabled
-                ? LinearGradient(
-                    colors: [
-                      const Color(0xFF4CAF50).withValues(alpha: 0.3),
-                      const Color(0xFF8BC34A).withValues(alpha: 0.3),
-                    ],
-                  )
-                : null,
+            gradient: null,
             color: _isEnabled
-                ? null
+                ? KAppColors.success.withValues(alpha: 0.12)
                 : KAppColors.getOnBackground(context).withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(35),
             border: Border.all(
               color: _isEnabled
-                  ? const Color(0xFF4CAF50).withValues(alpha: 0.5)
+                  ? KAppColors.success.withValues(alpha: 0.5)
                   : KAppColors.getOnBackground(context).withValues(alpha: 0.2),
               width: 1.5,
             ),
@@ -78,7 +71,7 @@ class _CalmModeToggleState extends State<CalmModeToggle> {
                 _isEnabled ? Icons.wb_sunny : Icons.wb_sunny_outlined,
                 size: 18,
                 color: _isEnabled
-                    ? const Color(0xFF4CAF50)
+                    ? KAppColors.success
                     : KAppColors.getOnBackground(context).withValues(alpha: 0.6),
               ),
               const SizedBox(width: 6),
@@ -86,7 +79,7 @@ class _CalmModeToggleState extends State<CalmModeToggle> {
                 duration: const Duration(milliseconds: 300),
                 style: KAppTextStyles.labelSmall.copyWith(
                   color: _isEnabled
-                      ? const Color(0xFF4CAF50)
+                      ? KAppColors.success
                       : KAppColors.getOnBackground(context).withValues(alpha: 0.6),
                   fontWeight: FontWeight.w600,
                   fontSize: 11,

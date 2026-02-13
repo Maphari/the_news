@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/service/clickbait_detector_service.dart';
 import 'package:the_news/service/solution_detector_service.dart';
 import 'package:the_news/routes/app_routes.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 class CompactArticleItem extends StatelessWidget {
   const CompactArticleItem({
@@ -50,11 +52,11 @@ class CompactArticleItem extends StatelessWidget {
 
   Color _getCredibilityColor(int sourcePriority) {
     if (sourcePriority >= 800000) {
-      return const Color(0xFF4CAF50);
+      return KAppColors.success;
     } else if (sourcePriority >= 500000) {
-      return const Color(0xFFFFA726);
+      return KAppColors.warning;
     } else {
-      return const Color(0xFFEF5350);
+      return KAppColors.error;
     }
   }
 
@@ -68,23 +70,23 @@ class CompactArticleItem extends StatelessWidget {
     }
   }
 
-  Color _getCategoryColor() {
+  Color _getCategoryColor({required BuildContext context}) {
     final category = article.category.toString().toLowerCase();
     switch (category) {
       case 'technology':
-        return KAppColors.tertiary;
+        return KAppColors.getTertiary(context);
       case 'business':
-        return KAppColors.secondary;
+        return KAppColors.getSecondary(context);
       case 'sports':
-        return const Color(0xFFFFC5C9);
+        return KAppColors.red;
       case 'entertainment':
-        return const Color(0xFFFFD4A3);
+        return KAppColors.orange;
       case 'science':
-        return const Color(0xFFC5D9FF);
+        return KAppColors.blue;
       case 'health':
-        return const Color(0xFFFFB8B8);
+        return KAppColors.pink;
       default:
-        return KAppColors.primary;
+        return KAppColors.getPrimary(context);
     }
   }
 
@@ -133,10 +135,10 @@ class CompactArticleItem extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-          color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+          color: KAppColors.success.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+            color: KAppColors.success.withValues(alpha: 0.3),
             width: 0.5,
           ),
         ),
@@ -146,13 +148,13 @@ class CompactArticleItem extends StatelessWidget {
             const Icon(
               Icons.wb_sunny_outlined,
               size: 9,
-              color: Color(0xFF4CAF50),
+              color: KAppColors.success,
             ),
             const SizedBox(width: 3),
             Text(
               'GOOD',
               style: KAppTextStyles.labelSmall.copyWith(
-                color: const Color(0xFF4CAF50),
+                color: KAppColors.success,
                 fontWeight: FontWeight.w700,
                 fontSize: 8,
               ),
@@ -174,7 +176,7 @@ class CompactArticleItem extends StatelessWidget {
 
     final label = solutionDetector.getBadgeLabel(badgeType);
     final icon = solutionDetector.getBadgeIcon(badgeType);
-    const color = Color(0xFF4CAF50); // Green for solution-focused
+    const color = KAppColors.success;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -228,10 +230,10 @@ class CompactArticleItem extends StatelessWidget {
 
     if (score >= 70) {
       label = 'CLICK';
-      color = const Color(0xFFEF5350);
+      color = KAppColors.error;
     } else {
       label = 'SENS';
-      color = const Color(0xFFFFA726);
+      color = KAppColors.warning;
     }
 
     return Container(
@@ -275,14 +277,14 @@ class CompactArticleItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeAgo = _getTimeAgo(article.pubDate);
     final readTime = _estimateReadTime(article.content);
-    final categoryColor = _getCategoryColor();
+    final categoryColor = _getCategoryColor(context: context);
 
     return InkWell(
       onTap: () => _navigateToArticleDetail(context),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: KBorderRadius.lg,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(12),
+        padding: KDesignConstants.paddingSm,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -292,7 +294,7 @@ class CompactArticleItem extends StatelessWidget {
               categoryColor.withValues(alpha: 0.03),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: categoryColor.withValues(alpha: 0.15),
             width: 1,
@@ -307,15 +309,15 @@ class CompactArticleItem extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   border: Border.all(
                     color: categoryColor.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
+                  borderRadius: KBorderRadius.md,
+                  child: SafeNetworkImage(
                     article.imageUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
@@ -340,7 +342,7 @@ class CompactArticleItem extends StatelessWidget {
                   ),
                 ),
               ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
 
             // Article content
             Expanded(
@@ -396,7 +398,7 @@ class CompactArticleItem extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
 
                   // Description
                   Text(

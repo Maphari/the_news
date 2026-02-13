@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/story_cluster_model.dart';
 import 'package:the_news/view/perspectives/widgets/bias_indicator_widget.dart';
@@ -28,7 +29,7 @@ class SourceCredibilitySheet extends StatelessWidget {
         color: KAppColors.getBackground(context),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      padding: const EdgeInsets.all(24),
+      padding:KDesignConstants.paddingLg,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +45,7 @@ class SourceCredibilitySheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           // Source name
           Text(
@@ -54,11 +55,11 @@ class SourceCredibilitySheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
 
           // Credibility score
           _buildCredibilityScore(context),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           // Bias indicator
           Row(
@@ -70,25 +71,25 @@ class SourceCredibilitySheet extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               BiasIndicatorWidget(bias: credibility.bias),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Text(
             credibility.bias.description,
             style: KAppTextStyles.bodySmall.copyWith(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           // Description
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: KDesignConstants.paddingMd,
             decoration: BoxDecoration(
               color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: KBorderRadius.md,
             ),
             child: Text(
               credibility.credibilityDescription,
@@ -97,7 +98,7 @@ class SourceCredibilitySheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
 
           // Strengths
           if (credibility.strengths.isNotEmpty) ...[
@@ -106,9 +107,9 @@ class SourceCredibilitySheet extends StatelessWidget {
               'Strengths',
               Icons.check_circle,
               credibility.strengths,
-              const Color(0xFF4CAF50),
+              KAppColors.success,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
           ],
 
           // Weaknesses
@@ -118,14 +119,14 @@ class SourceCredibilitySheet extends StatelessWidget {
               'Weaknesses',
               Icons.warning,
               credibility.weaknesses,
-              const Color(0xFFFF9800),
+              KAppColors.warning,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: KDesignConstants.spacing16),
           ],
 
           // Note
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: KDesignConstants.paddingSm,
             decoration: BoxDecoration(
               color: KAppColors.getPrimary(context).withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(8),
@@ -140,7 +141,7 @@ class SourceCredibilitySheet extends StatelessWidget {
                   size: 16,
                   color: KAppColors.getPrimary(context),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: KDesignConstants.spacing8),
                 Expanded(
                   child: Text(
                     'Ratings are based on journalistic standards, fact-checking, and historical accuracy',
@@ -153,7 +154,7 @@ class SourceCredibilitySheet extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: KDesignConstants.spacing24),
         ],
       ),
     );
@@ -185,7 +186,7 @@ class SourceCredibilitySheet extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: KDesignConstants.spacing12),
         Stack(
           children: [
             Container(
@@ -207,7 +208,7 @@ class SourceCredibilitySheet extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Text(
           '$percentage% credibility',
           style: KAppTextStyles.bodySmall.copyWith(
@@ -219,10 +220,10 @@ class SourceCredibilitySheet extends StatelessWidget {
   }
 
   Color _getCredibilityColor() {
-    if (credibility.credibilityScore >= 0.8) return const Color(0xFF4CAF50);
-    if (credibility.credibilityScore >= 0.6) return const Color(0xFF2196F3);
-    if (credibility.credibilityScore >= 0.4) return const Color(0xFFFF9800);
-    return const Color(0xFFF44336);
+    if (credibility.credibilityScore >= 0.8) return KAppColors.success;
+    if (credibility.credibilityScore >= 0.6) return KAppColors.info;
+    if (credibility.credibilityScore >= 0.4) return KAppColors.warning;
+    return KAppColors.error;
   }
 
   Widget _buildSection(
@@ -242,7 +243,7 @@ class SourceCredibilitySheet extends StatelessWidget {
               size: 20,
               color: color,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: KDesignConstants.spacing8),
             Text(
               title,
               style: KAppTextStyles.labelMedium.copyWith(
@@ -252,7 +253,7 @@ class SourceCredibilitySheet extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         ...items.map((item) => Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: Row(
@@ -265,7 +266,7 @@ class SourceCredibilitySheet extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Expanded(
                 child: Text(
                   item,

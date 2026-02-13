@@ -1,4 +1,5 @@
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:flutter/material.dart';
 
 class NavIcon extends StatelessWidget {
@@ -36,12 +37,12 @@ class NavIcon extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white,
-                    Colors.white.withValues(alpha: 0.9),
+                    KAppColors.darkOnBackground,
+                    KAppColors.darkOnBackground.withValues(alpha: 0.9),
                   ],
                 )
               : null,
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: KBorderRadius.full,
           boxShadow: isSelected
               ? [
                   BoxShadow(
@@ -55,8 +56,8 @@ class NavIcon extends StatelessWidget {
         child: Icon(
           isSelected ? filledIcon : outlinedIcon,
           color: isSelected
-              ? Colors.black
-              : Colors.white.withValues(alpha: 0.6),
+              ? KAppColors.darkBackground
+              : KAppColors.darkOnBackground.withValues(alpha: 0.6),
           size: 24,
         ),
       ),

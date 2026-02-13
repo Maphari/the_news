@@ -11,12 +11,17 @@ import 'dart:io';
 import 'package:the_news/config/env_config.dart';
 import 'package:the_news/model/auth_results_model.dart';
 import 'package:the_news/model/auth_userdata_model.dart';
+import 'package:the_news/service/notification_service.dart';
 
-//? baseurl for the server
-final EnvConfig _config = EnvConfig();
-String? get backendUrl => _config.get('API_BASE_URL');
+//! NOTE: AuthService uses direct HTTP calls instead of ApiClient to avoid
+//! circular dependency. ApiClient depends on AuthService for tokens,
+//! so AuthService cannot depend on ApiClient.
 
 class AuthService {
+  //? Base URL for auth endpoints
+  final EnvConfig _env = EnvConfig();
+  String get _baseUrl => _env.get('API_BASE_URL') ?? '';
+
   //? Secure storage for tokens
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   //? Keys for storage
@@ -28,8 +33,15 @@ class AuthService {
 
   //? Singleton pattern
   static final AuthService _instance = AuthService._internal();
+  static AuthService get instance => _instance;
   factory AuthService() => _instance;
   AuthService._internal();
+
+  //? Common headers for auth requests
+  Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
 
   //? Initialization
   Future<void> _ensureInitialized() {
@@ -60,9 +72,9 @@ class AuthService {
 
       //? Make a request to your backend to verify the token
       final response = await http.get(
-        Uri.parse('$backendUrl/auth/validate-token'),
+        Uri.parse('$_baseUrl/auth/validate-token'),
         headers: {
-          'Content-Type': 'application/json',
+          ..._headers,
           'Authorization': 'Bearer $token',
         },
       );
@@ -112,10 +124,10 @@ class AuthService {
         );
       }
 
-      //? Send token to your backend
+      //? Send token to your backend (direct HTTP - no auth needed for login)
       final response = await http.post(
-        Uri.parse('$backendUrl/auth/google'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$_baseUrl/auth/google'),
+        headers: _headers,
         body: jsonEncode({
           'accessToken': tokens.accessToken,
           'provider': 'Google',
@@ -182,10 +194,10 @@ class AuthService {
         );
       }
 
-      //? Send to your backend
+      //? Send to your backend (direct HTTP - no auth needed for login)
       final response = await http.post(
-        Uri.parse('$backendUrl/auth/apple'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('$_baseUrl/auth/apple'),
+        headers: _headers,
         body: jsonEncode({
           'identityToken': credential.identityToken,
           'authorizationCode': credential.authorizationCode,
@@ -267,6 +279,36 @@ class AuthService {
     }
   }
 
+  //? Change password (requires current password)
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await authenticatedRequest(
+      endpoint: '/auth/change-password',
+      method: 'POST',
+      body: {
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      },
+    );
+
+    if (response.statusCode != 200) {
+      String message = 'Failed to change password';
+      if (response.body.isNotEmpty) {
+        try {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          message = (data['message'] ?? data['error'] ?? message).toString();
+        } catch (_) {
+          message = response.body;
+        }
+      }
+      throw Exception(message);
+    }
+  }
+
   Future<void> clearSecureStorage() async {
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userKey);
@@ -276,6 +318,14 @@ class AuthService {
   Future<void> signOut() async {
     try {
       await _ensureInitialized();
+
+      final userData = await getCurrentUser();
+      final userId = userData?['id'] ?? userData?['userId'];
+      if (userId is String && userId.isNotEmpty) {
+        try {
+          await NotificationService.instance.unregisterToken(userId);
+        } catch (_) {}
+      }
 
       //? Sign out from Google
       await GoogleSignInPlatform.instance.disconnect(const DisconnectParams());
@@ -288,7 +338,7 @@ class AuthService {
     }
   }
 
-  //? AUTHENTICATED REQUESTS (works for all auth methods)
+  //? AUTHENTICATED REQUESTS (uses direct HTTP to avoid circular dependency)
   Future<http.Response> authenticatedRequest({
     required String endpoint,
     String method = 'GET',
@@ -300,12 +350,11 @@ class AuthService {
       throw Exception('Not authenticated');
     }
 
+    final uri = Uri.parse('$_baseUrl$endpoint');
     final headers = {
-      'Content-Type': 'application/json',
+      ..._headers,
       'Authorization': 'Bearer $token',
     };
-
-    final uri = Uri.parse('$backendUrl$endpoint');
 
     switch (method.toUpperCase()) {
       case 'GET':

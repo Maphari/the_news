@@ -5,9 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:the_news/service/premium_features_service.dart';
+import 'package:the_news/core/network/api_client.dart';
 
 /// AI provider options
 enum AIProvider {
+  proxy, // Server-managed AI (no user API key needed)
   githubGpt4o, // GitHub Models - GPT-4o-mini (Free)
   githubDeepseek, // GitHub Models - DeepSeek (Free)
   githubLlama, // GitHub Models - Llama 3.1 (Free)
@@ -33,6 +35,7 @@ class AIService {
   String? _claudeApiKey;
 
   AIProvider _currentProvider = AIProvider.none;
+  bool _proxyEnabled = false;
 
   // Cache for AI responses
   final Map<String, _CachedResponse> _cache = {};
@@ -46,18 +49,31 @@ class AIService {
   AIProvider get currentProvider => _currentProvider;
   bool get isConfigured => _getApiKey() != null;
   bool get autoSelectEnabled => _autoSelectEnabled;
+  bool get proxyEnabled => _proxyEnabled;
   // ignore: library_private_types_in_public_api
   Map<AIProvider, _ProviderHealth> get providerHealth => _providerHealth;
 
   /// Initialize AI service with API keys
   Future<void> initialize({AIProvider? defaultProvider}) async {
     await dotenv.load();
+    final prefs = await SharedPreferences.getInstance();
+
+    _proxyEnabled = prefs.getBool('ai_proxy_enabled') ?? false;
+    _autoSelectEnabled = prefs.getBool('ai_auto_select') ?? true;
 
     // GitHub token can be used for all GitHub Models
-    _githubToken = dotenv.env['GITHUB_PAT_KEY'] ?? ''; // Reusing OPENAI_AI_KEY for GitHub PAT
-    _openaiApiKey = dotenv.env['OPENAI_DIRECT_KEY'] ?? ''; // Separate key for direct OpenAI
-    _geminiApiKey = dotenv.env['GEMINI_AI_KEY'] ?? '';
-    _claudeApiKey = dotenv.env['CLAUDE_AI_KEY'] ?? '';
+    _githubToken = (prefs.getString('ai_github_pat')?.trim().isNotEmpty == true)
+        ? prefs.getString('ai_github_pat')
+        : (dotenv.env['GITHUB_PAT_KEY'] ?? '');
+    _openaiApiKey = (prefs.getString('ai_openai_key')?.trim().isNotEmpty == true)
+        ? prefs.getString('ai_openai_key')
+        : (dotenv.env['OPENAI_DIRECT_KEY'] ?? '');
+    _geminiApiKey = (prefs.getString('ai_gemini_key')?.trim().isNotEmpty == true)
+        ? prefs.getString('ai_gemini_key')
+        : (dotenv.env['GEMINI_AI_KEY'] ?? '');
+    _claudeApiKey = (prefs.getString('ai_claude_key')?.trim().isNotEmpty == true)
+        ? prefs.getString('ai_claude_key')
+        : (dotenv.env['CLAUDE_AI_KEY'] ?? '');
 
     // Initialize health tracking for all providers
     _initializeProviderHealth();
@@ -65,12 +81,17 @@ class AIService {
     if (defaultProvider != null) {
       _currentProvider = defaultProvider;
       _autoSelectEnabled = false;
+    } else if (_proxyEnabled) {
+      _currentProvider = AIProvider.proxy;
+      _autoSelectEnabled = false;
     } else if (_autoSelectEnabled) {
       // Auto-select best available provider
       _currentProvider = _selectBestProvider();
     } else {
       // Fallback to first available provider (prefer free GitHub Models)
-      if (_githubToken != null && _githubToken!.isNotEmpty) {
+      if (_proxyEnabled) {
+        _currentProvider = AIProvider.proxy;
+      } else if (_githubToken != null && _githubToken!.isNotEmpty) {
         _currentProvider = AIProvider.githubGpt4o; // Default to GPT-4o-mini (free)
       } else if (_openaiApiKey != null && _openaiApiKey!.isNotEmpty) {
         _currentProvider = AIProvider.openai;
@@ -104,6 +125,11 @@ class AIService {
   AIProvider _selectBestProvider() {
     final availableProviders = <AIProvider>[];
 
+    // Server proxy (preferred when enabled)
+    if (_proxyEnabled) {
+      availableProviders.add(AIProvider.proxy);
+    }
+
     // GitHub Models (Free) - prioritize these
     if (_githubToken != null && _githubToken!.isNotEmpty) {
       availableProviders.add(AIProvider.githubGpt4o);
@@ -130,6 +156,7 @@ class AIService {
     // If no health data yet, prefer free GitHub Models
     if (_providerHealth.values.every((h) => h.successCount == 0 && h.errorCount == 0)) {
       // Prefer GPT-4o-mini (most capable free model)
+      if (availableProviders.contains(AIProvider.proxy)) return AIProvider.proxy;
       if (availableProviders.contains(AIProvider.githubGpt4o)) return AIProvider.githubGpt4o;
       if (availableProviders.contains(AIProvider.githubDeepseek)) return AIProvider.githubDeepseek;
       if (availableProviders.contains(AIProvider.githubLlama)) return AIProvider.githubLlama;
@@ -161,6 +188,9 @@ class AIService {
   /// Enable or disable auto-selection
   void setAutoSelection(bool enabled) {
     _autoSelectEnabled = enabled;
+    SharedPreferences.getInstance().then(
+      (prefs) => prefs.setBool('ai_auto_select', enabled),
+    );
     if (enabled) {
       final newProvider = _selectBestProvider();
       if (newProvider != _currentProvider) {
@@ -190,9 +220,32 @@ class AIService {
     log('🤖 AI provider changed to: $provider');
   }
 
+  /// Check if server-side proxy is available
+  Future<bool> checkProxyHealth() async {
+    try {
+      final response = await ApiClient.instance.get('/ai/health');
+      if (!ApiClient.instance.isSuccess(response)) return false;
+      final data = ApiClient.instance.parseJson(response);
+      return data['success'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void setProxyEnabled(bool enabled) {
+    _proxyEnabled = enabled;
+    if (enabled) {
+      _currentProvider = AIProvider.proxy;
+    } else if (_currentProvider == AIProvider.proxy) {
+      _currentProvider = AIProvider.none;
+    }
+  }
+
   /// Get API key for current provider
   String? _getApiKey() {
     switch (_currentProvider) {
+      case AIProvider.proxy:
+        return _proxyEnabled ? 'proxy' : null;
       case AIProvider.githubGpt4o:
       case AIProvider.githubDeepseek:
       case AIProvider.githubLlama:
@@ -664,6 +717,9 @@ Analysis:''';
       String response;
 
       switch (provider) {
+        case AIProvider.proxy:
+          response = await _callProxy(prompt, maxTokens);
+          break;
         case AIProvider.githubGpt4o:
           response = await _callGitHubModel(prompt, maxTokens, 'gpt-4o-mini');
           break;
@@ -734,6 +790,14 @@ Analysis:''';
     }
   }
 
+  //! EXTERNAL API CALLS - GEMINI.md EXCEPTION
+  //! The following methods call EXTERNAL third-party APIs (OpenAI, Google, Anthropic, GitHub)
+  //! These cannot use ApiClient because:
+  //! 1. They have different base URLs (not API_BASE_URL)
+  //! 2. They use different authentication schemes (API keys, not Bearer tokens)
+  //! 3. They have different request/response formats
+  //! Direct http.post usage here is intentional and necessary.
+
   /// Call GitHub Models API (Free)
   Future<String> _callGitHubModel(String prompt, int maxTokens, String modelName) async {
     final token = _githubToken;
@@ -766,6 +830,29 @@ Analysis:''';
 
     final data = jsonDecode(response.body);
     return data['choices'][0]['message']['content'] as String;
+  }
+
+  /// Call server-side proxy (no client API key required)
+  Future<String> _callProxy(String prompt, int maxTokens) async {
+    final response = await ApiClient.instance.post(
+      '/ai/generate',
+      body: {
+        'prompt': prompt,
+        'maxTokens': maxTokens,
+      },
+      requiresAuth: false,
+    );
+
+    if (!ApiClient.instance.isSuccess(response)) {
+      throw Exception('Proxy AI request failed: ${response.statusCode}');
+    }
+
+    final data = ApiClient.instance.parseJson(response);
+    final result = data['result'] as String?;
+    if (result == null || result.isEmpty) {
+      throw Exception('Proxy AI response empty');
+    }
+    return result;
   }
 
   /// Call OpenAI API
@@ -902,6 +989,9 @@ Analysis:''';
   /// Get cost estimate for digest generation
   double estimateCost(int articleCount) {
     switch (_currentProvider) {
+      case AIProvider.proxy:
+        // Server-managed costs handled by backend
+        return 0.0;
       case AIProvider.githubGpt4o:
       case AIProvider.githubDeepseek:
       case AIProvider.githubLlama:

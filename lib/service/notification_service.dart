@@ -9,6 +9,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:the_news/core/network/api_client.dart';
 import 'package:the_news/service/notification_navigation_service.dart';
 
 /// Service for managing push notifications and local notifications
@@ -18,10 +19,12 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final ApiClient _api = ApiClient.instance;
 
   bool _isInitialized = false;
   String? _fcmToken;
   String? _backendBaseUrl;
+  String? _registeredUserId;
 
   // Notification preferences
   bool _breakingNewsEnabled = true;
@@ -85,19 +88,38 @@ class NotificationService {
 
       log('📱 Notification permission status: ${settings.authorizationStatus}');
 
-      // Get FCM token for this device
-      _fcmToken = await _firebaseMessaging.getToken();
-      log('📱 FCM Token: $_fcmToken');
+      // Get FCM token for this device (retry until APNS is ready)
+      await _ensureFcmToken();
 
       // Listen to token refresh
       _firebaseMessaging.onTokenRefresh.listen((newToken) {
         log('🔄 FCM Token refreshed: $newToken');
         _fcmToken = newToken;
-        _sendTokenToBackend(newToken);
+        _sendTokenToBackend(newToken, userId: _registeredUserId);
       });
     } catch (e) {
       log('⚠️ Error requesting permissions: $e');
     }
+  }
+
+  Future<String?> _ensureFcmToken({int maxAttempts = 6}) async {
+    if (_fcmToken != null) return _fcmToken;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        _fcmToken = await _firebaseMessaging.getToken();
+        if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+          log('📱 FCM Token (attempt $attempt): $_fcmToken');
+          return _fcmToken;
+        }
+      } catch (e) {
+        log('⚠️ FCM token not available yet (attempt $attempt): $e');
+      }
+      await Future.delayed(Duration(seconds: attempt < 3 ? 2 : 3));
+    }
+
+    log('❌ FCM token unavailable after $maxAttempts attempts');
+    return null;
   }
 
   /// Initialize local notifications
@@ -153,7 +175,7 @@ class NotificationService {
       _showLocalNotification(
         title: message.notification!.title ?? 'The News',
         body: message.notification!.body ?? '',
-        payload: message.data.toString(),
+        payload: jsonEncode(message.data),
       );
 
       // Save to notification history
@@ -543,21 +565,47 @@ class NotificationService {
     log('✅ Notification preferences updated');
   }
 
+  /// Fetch notification preferences from backend and cache locally
+  Future<Map<String, bool>> fetchPreferencesFromBackend(String userId) async {
+    try {
+      final response = await _api.get(
+        'notifications/preferences/$userId',
+        requiresAuth: true,
+        timeout: const Duration(seconds: 20),
+      );
+
+      if (_api.isSuccess(response)) {
+        final data = _api.parseJson(response);
+        final prefs = data['preferences'] as Map<String, dynamic>? ?? {};
+        _breakingNewsEnabled = prefs['breakingNews'] ?? _breakingNewsEnabled;
+        _dailyDigestEnabled = prefs['dailyDigest'] ?? _dailyDigestEnabled;
+        _publisherUpdatesEnabled = prefs['publisherUpdates'] ?? _publisherUpdatesEnabled;
+        _commentRepliesEnabled = prefs['commentReplies'] ?? _commentRepliesEnabled;
+        await _savePreferences();
+      } else if (response.statusCode == 401) {
+        log('⚠️ Notifications preferences unauthorized (401). Skipping remote fetch.');
+      }
+    } catch (e) {
+      log('⚠️ Error fetching notification preferences: $e');
+    }
+
+    return getPreferences();
+  }
+
   /// Sync preferences with backend
   Future<void> _syncPreferencesWithBackend(String userId) async {
-    if (_backendBaseUrl == null) return;
-
     try {
-      await http.post(
-        Uri.parse('$_backendBaseUrl/notifications/preferences'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
+      await _api.post(
+        'notifications/preferences',
+        requiresAuth: true,
+        body: {
           'userId': userId,
           'breakingNews': _breakingNewsEnabled,
           'dailyDigest': _dailyDigestEnabled,
           'publisherUpdates': _publisherUpdatesEnabled,
           'commentReplies': _commentRepliesEnabled,
-        }),
+        },
+        timeout: const Duration(seconds: 20),
       );
       log('✅ Preferences synced with backend');
     } catch (e) {
@@ -568,11 +616,18 @@ class NotificationService {
   /// Register FCM token with backend
   Future<bool> registerToken(String userId) async {
     if (_fcmToken == null) {
+      await _ensureFcmToken();
+    }
+    if (_fcmToken == null) {
       log('❌ No FCM token available');
       return false;
     }
 
-    return await _sendTokenToBackend(_fcmToken!, userId: userId);
+    final success = await _sendTokenToBackend(_fcmToken!, userId: userId);
+    if (success) {
+      _registeredUserId = userId;
+    }
+    return success;
   }
 
   /// Send FCM token to backend
@@ -616,6 +671,7 @@ class NotificationService {
           'userId': userId,
         }),
       );
+      _registeredUserId = null;
       log('✅ FCM token unregistered');
     } catch (e) {
       log('⚠️ Error unregistering token: $e');

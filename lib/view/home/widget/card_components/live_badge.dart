@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 
 class LiveBadge extends StatelessWidget {
@@ -10,7 +11,7 @@ class LiveBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.red,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
       ),
       child: Text(
         'LIVE',

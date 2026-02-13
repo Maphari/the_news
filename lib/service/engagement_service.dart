@@ -200,7 +200,30 @@ class EngagementService extends ChangeNotifier {
   }
 
   /// Share an article
-  Future<bool> shareArticle(String userId, String articleId, {String? platform}) async {
+  Future<bool> shareArticle(
+    String userId,
+    String articleId, {
+    String? platform,
+    bool shareToFeed = true,
+    bool forceReshare = false,
+  }) async {
+    final result = await shareArticleWithResult(
+      userId,
+      articleId,
+      platform: platform,
+      shareToFeed: shareToFeed,
+      forceReshare: forceReshare,
+    );
+    return result.success;
+  }
+
+  Future<ShareArticleResult> shareArticleWithResult(
+    String userId,
+    String articleId, {
+    String? platform,
+    bool shareToFeed = true,
+    bool forceReshare = false,
+  }) async {
     try {
       log('📤 Sharing article: $articleId');
 
@@ -210,12 +233,17 @@ class EngagementService extends ChangeNotifier {
           'userId': userId,
           'articleId': articleId,
           'platform': platform ?? 'unknown',
+          'shareToFeed': shareToFeed,
+          'forceReshare': forceReshare,
         },
         timeout: const Duration(seconds: 10),
       );
 
       if (_api.isSuccess(response)) {
         final data = _api.parseJson(response);
+        if (data['alreadyShared'] == true) {
+          return const ShareArticleResult(success: false, alreadyShared: true);
+        }
         if (data['success'] == true) {
           // Update cache
           if (_engagementCache.containsKey(articleId)) {
@@ -230,15 +258,18 @@ class EngagementService extends ChangeNotifier {
           }
           notifyListeners();
           log('✅ Article shared successfully');
-          return true;
+          return ShareArticleResult(
+            success: true,
+            alreadyShared: data['alreadyShared'] as bool? ?? false,
+          );
         }
       }
 
       log('⚠️ Failed to share article: ${_api.getErrorMessage(response)}');
-      return false;
+      return const ShareArticleResult(success: false);
     } catch (e) {
       log('⚠️ Error sharing article: $e');
-      return false;
+      return const ShareArticleResult(success: false);
     }
   }
 
@@ -311,4 +342,14 @@ class EngagementService extends ChangeNotifier {
     notifyListeners();
     log('🧹 Cleared engagement cache');
   }
+}
+
+class ShareArticleResult {
+  const ShareArticleResult({
+    required this.success,
+    this.alreadyShared = false,
+  });
+
+  final bool success;
+  final bool alreadyShared;
 }

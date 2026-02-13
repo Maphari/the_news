@@ -5,6 +5,7 @@ enum ActivityType {
   addToList,
   followUser,
   shareList,
+  shareArticle,
   commentArticle,
   likeArticle,
 }
@@ -42,6 +43,8 @@ class ActivityFeedItem {
         return 'followed a user';
       case ActivityType.shareList:
         return 'shared a reading list';
+      case ActivityType.shareArticle:
+        return 'shared an article';
       case ActivityType.commentArticle:
         return 'commented on an article';
       case ActivityType.likeArticle:
@@ -50,6 +53,10 @@ class ActivityFeedItem {
   }
 
   String? get articleTitle => metadata['articleTitle'] as String?;
+  String? get articleSourceName => metadata['articleSourceName'] as String?;
+  String? get articleImageUrl => metadata['articleImageUrl'] as String?;
+  String? get articleUrl => metadata['articleUrl'] as String?;
+  String? get articleDescription => metadata['articleDescription'] as String?;
   String? get articleId => metadata['articleId'] as String?;
   String? get listName => metadata['listName'] as String?;
   String? get listId => metadata['listId'] as String?;
@@ -69,6 +76,29 @@ class ActivityFeedItem {
   }
 
   factory ActivityFeedItem.fromMap(Map<String, dynamic> map) {
+    final metadata = Map<String, dynamic>.from(map['metadata'] ?? {});
+
+    // Backward compatibility: some APIs send fields at top-level
+    void mergeIfPresent(String key) {
+      final value = map[key];
+      if (value != null) {
+        metadata[key] = value;
+      }
+    }
+
+    mergeIfPresent('articleId');
+    mergeIfPresent('articleTitle');
+    mergeIfPresent('articleSourceName');
+    mergeIfPresent('articleImageUrl');
+    mergeIfPresent('articleUrl');
+    mergeIfPresent('articleDescription');
+    mergeIfPresent('listId');
+    mergeIfPresent('listName');
+    mergeIfPresent('followedUserId');
+    mergeIfPresent('followedUsername');
+    mergeIfPresent('commentId');
+    mergeIfPresent('commentText');
+
     return ActivityFeedItem(
       id: map['id'] as String,
       userId: map['userId'] as String,
@@ -79,7 +109,7 @@ class ActivityFeedItem {
         orElse: () => ActivityType.readArticle,
       ),
       timestamp: DateTime.parse(map['timestamp'] as String),
-      metadata: Map<String, dynamic>.from(map['metadata'] ?? {}),
+      metadata: metadata,
     );
   }
 

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { db } from '../config/firebase.connection';
 import * as admin from 'firebase-admin';
+import { getOptionalString } from '../utils/request.utils';
 
 /**
  * Register FCM token for a user
@@ -125,7 +126,13 @@ export const savePreferences = async (req: Request, res: Response) => {
  */
 export const getPreferences = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
 
     const preferencesDoc = await db.collection('notificationPreferences').doc(userId).get();
 
@@ -618,14 +625,20 @@ export const saveNotificationHistory = async (req: Request, res: Response) => {
  */
 export const getNotificationHistory = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
-    const { limit = '50' } = req.query;
+    const userId = getOptionalString(req.params.userId);
+    const limitValue = getOptionalString(req.query.limit) || '50';
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
 
     const notificationsSnapshot = await db
       .collection('notificationHistory')
       .where('userId', '==', userId)
       .orderBy('timestamp', 'desc')
-      .limit(parseInt(limit as string))
+      .limit(parseInt(limitValue, 10))
       .get();
 
     const notifications = notificationsSnapshot.docs.map((doc) => doc.data());
@@ -651,7 +664,13 @@ export const getNotificationHistory = async (req: Request, res: Response) => {
  */
 export const markNotificationAsRead = async (req: Request, res: Response) => {
   try {
-    const { notificationId } = req.params;
+    const notificationId = getOptionalString(req.params.notificationId);
+    if (!notificationId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Notification ID is required',
+      });
+    }
 
     await db.collection('notificationHistory').doc(notificationId).update({
       read: true,
@@ -680,7 +699,13 @@ export const markNotificationAsRead = async (req: Request, res: Response) => {
  */
 export const deleteNotificationHistory = async (req: Request, res: Response) => {
   try {
-    const { notificationId } = req.params;
+    const notificationId = getOptionalString(req.params.notificationId);
+    if (!notificationId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Notification ID is required',
+      });
+    }
 
     await db.collection('notificationHistory').doc(notificationId).delete();
 
@@ -706,7 +731,13 @@ export const deleteNotificationHistory = async (req: Request, res: Response) => 
  */
 export const clearAllNotifications = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
 
     // Get all notifications for the user
     const notificationsSnapshot = await db
@@ -748,7 +779,13 @@ export const clearAllNotifications = async (req: Request, res: Response) => {
  */
 export const getUnreadCount = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = getOptionalString(req.params.userId);
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required',
+      });
+    }
 
     const notificationsSnapshot = await db
       .collection('notificationHistory')

@@ -1,6 +1,8 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/service/experience_service.dart';
 
 /// Service for managing Text-to-Speech functionality
 /// Provides article narration with playback controls
@@ -9,6 +11,8 @@ class TextToSpeechService extends ChangeNotifier {
   TextToSpeechService._init();
 
   final FlutterTts _flutterTts = FlutterTts();
+  final AuthService _authService = AuthService.instance;
+  final ExperienceService _experienceService = ExperienceService.instance;
 
   // Playback state
   TtsState _ttsState = TtsState.stopped;
@@ -119,11 +123,31 @@ class TextToSpeechService extends ChangeNotifier {
   }
 
   /// Speak the given text
-  Future<void> speak(String text) async {
+  Future<void> speak(
+    String text, {
+    String? articleId,
+    String? voice,
+    String? language,
+  }) async {
     if (text.isEmpty) return;
 
     try {
       _currentText = text;
+      final normalizedArticleId = articleId?.trim() ?? '';
+      if (normalizedArticleId.isNotEmpty) {
+        final userData = await _authService.getCurrentUser();
+        final userId = (userData?['id'] ?? userData?['userId'])?.toString();
+        if (userId != null && userId.isNotEmpty) {
+          await _experienceService
+              .createTtsPresign(
+                userId: userId,
+                articleId: normalizedArticleId,
+                voice: voice,
+                language: language,
+              )
+              .timeout(const Duration(seconds: 2));
+        }
+      }
 
       // Clean the text for better speech
       final cleanedText = _cleanTextForSpeech(text);

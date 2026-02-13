@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/news_article_model.dart';
 import 'package:the_news/model/register_login_success_model.dart';
@@ -21,7 +22,7 @@ class ArticleMetadataSection extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: KAppColors.getOnBackground(context).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: KBorderRadius.xl,
         border: Border.all(
           color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
         ),
@@ -32,7 +33,7 @@ class ArticleMetadataSection extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.info_outline, color: KAppColors.getOnBackground(context).withValues(alpha: 0.7), size: 20),
-              const SizedBox(width: 12),
+              const SizedBox(width: KDesignConstants.spacing12),
               Text(
                 'Article Information',
                 style: KAppTextStyles.titleMedium.copyWith(
@@ -42,21 +43,21 @@ class ArticleMetadataSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           _buildSourceRow(context),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildMetadataRow('Category', article.category.join(', '), context),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildMetadataRow('Country', article.country.join(', '), context),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildMetadataRow('Language', article.language.toUpperCase(), context),
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildMetadataRow('Published', _formatDate(article.pubDate), context),
           if (article.aiOrg != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: KDesignConstants.spacing12),
             _buildMetadataRow('Organization', article.aiOrg!, context),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: KDesignConstants.spacing12),
           _buildMetadataRow('Source Priority', article.sourcePriority.toString(), context),
         ],
       ),

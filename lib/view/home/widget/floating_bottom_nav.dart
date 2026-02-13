@@ -1,4 +1,5 @@
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'nav_icon.dart';
@@ -19,9 +20,9 @@ class GlassBottomNav extends StatelessWidget {
       bottom: true,
       child: Container(
         height: 70, 
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), 
+        margin: EdgeInsets.symmetric(horizontal: KDesignConstants.spacing16, vertical: KDesignConstants.spacing8), 
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: KBorderRadius.full,
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
@@ -30,11 +31,11 @@ class GlassBottomNav extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withValues(alpha: 0.15),
-                    Colors.white.withValues(alpha: 0.05),
+                    KAppColors.getOnBackground(context).withValues(alpha: 0.15),
+                    KAppColors.getOnBackground(context).withValues(alpha: 0.05),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(30),
+                borderRadius: KBorderRadius.full,
                 border: Border.all(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.2),
                   width: 1.5,

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:flutter/services.dart';
 
 class AnimatedButton extends StatefulWidget {
@@ -107,7 +108,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
           decoration: BoxDecoration(
             gradient: widget.gradient,
             color: widget.backgroundColor,
-            borderRadius: widget.borderRadius ?? BorderRadius.circular(16),
+            borderRadius: widget.borderRadius ?? KBorderRadius.lg,
             border: widget.borderColor != null
                 ? Border.all(
                     color: widget.borderColor!,
@@ -118,7 +119,7 @@ class _AnimatedButtonState extends State<AnimatedButton>
                 ? []
                 : [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
+                      color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -200,7 +201,7 @@ class _BouncingIconState extends State<BouncingIcon>
 class PulsingDot extends StatefulWidget {
   const PulsingDot({
     super.key,
-    this.color = const Color(0xFF4CAF50),
+    this.color = const Color(0xFF10B981),
     this.size = 8,
   });
 

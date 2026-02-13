@@ -24,8 +24,10 @@ class RecommendationService {
     }
 
     final recommendedArticles = <ArticleModel, double>{};
-    final savedCategories =
-        savedArticles.map((article) => article.category).toSet();
+    final savedCategories = savedArticles
+        .expand((article) => article.category)
+        .map((category) => category.toLowerCase())
+        .toSet();
 
     for (final article in allArticles) {
       double score = 0;
@@ -36,7 +38,10 @@ class RecommendationService {
       }
 
       // Score based on saved categories
-      if (savedCategories.contains(article.category)) {
+      final hasCategoryMatch = article.category
+          .map((category) => category.toLowerCase())
+          .any(savedCategories.contains);
+      if (hasCategoryMatch) {
         score += 1.5;
       }
 

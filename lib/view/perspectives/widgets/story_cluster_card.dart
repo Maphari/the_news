@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/model/story_cluster_model.dart';
 import 'package:the_news/view/perspectives/perspective_comparison_page.dart';
@@ -30,7 +31,7 @@ class StoryClusterCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: KAppColors.getBackground(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: KBorderRadius.lg,
           border: Border.all(
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
           ),
@@ -47,7 +48,7 @@ class StoryClusterCard extends StatelessWidget {
           children: [
             // Header with category and diversity score
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               decoration: BoxDecoration(
                 color: KAppColors.getPrimary(context).withValues(alpha: 0.05),
                 borderRadius: const BorderRadius.only(
@@ -62,7 +63,7 @@ class StoryClusterCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: KAppColors.getPrimary(context).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: KBorderRadius.md,
                     ),
                     child: Text(
                       cluster.category.label,
@@ -81,7 +82,7 @@ class StoryClusterCard extends StatelessWidget {
 
             // Story content
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -95,7 +96,7 @@ class StoryClusterCard extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: KDesignConstants.spacing12),
 
                   // Story description
                   Text(
@@ -106,7 +107,7 @@ class StoryClusterCard extends StatelessWidget {
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KDesignConstants.spacing16),
 
                   // Metadata row
                   Row(
@@ -117,21 +118,21 @@ class StoryClusterCard extends StatelessWidget {
                         size: 16,
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: KDesignConstants.spacing4),
                       Text(
                         '${cluster.articleCount} articles',
                         style: KAppTextStyles.bodySmall.copyWith(
                           color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: KDesignConstants.spacing16),
                       // Last updated
                       Icon(
                         Icons.access_time,
                         size: 16,
                         color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: KDesignConstants.spacing4),
                       Text(
                         timeago.format(cluster.lastUpdated),
                         style: KAppTextStyles.bodySmall.copyWith(
@@ -140,7 +141,7 @@ class StoryClusterCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: KDesignConstants.spacing16),
 
                   // Bias distribution
                   _buildBiasDistribution(context, articlesByBias),
@@ -150,7 +151,7 @@ class StoryClusterCard extends StatelessWidget {
 
             // View button
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: KDesignConstants.paddingMd,
               decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
@@ -190,7 +191,7 @@ class StoryClusterCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: KBorderRadius.md,
         border: Border.all(
           color: color.withValues(alpha: 0.3),
         ),
@@ -203,7 +204,7 @@ class StoryClusterCard extends StatelessWidget {
             size: 16,
             color: color,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: KDesignConstants.spacing4),
           Text(
             '$percentage% diverse',
             style: KAppTextStyles.labelSmall.copyWith(
@@ -217,9 +218,9 @@ class StoryClusterCard extends StatelessWidget {
   }
 
   Color _getDiversityColor(double score) {
-    if (score >= 0.7) return const Color(0xFF4CAF50); // Green - high diversity
-    if (score >= 0.4) return const Color(0xFFFF9800); // Orange - medium diversity
-    return const Color(0xFFE91E63); // Pink - low diversity
+    if (score >= 0.7) return KAppColors.success; // High diversity
+    if (score >= 0.4) return KAppColors.warning; // Medium diversity
+    return KAppColors.error; // Low diversity
   }
 
   Widget _buildBiasDistribution(
@@ -236,7 +237,7 @@ class StoryClusterCard extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: KDesignConstants.spacing8),
         Wrap(
           spacing: 8,
           runSpacing: 8,

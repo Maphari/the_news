@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/view/social/user_profile_page.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/model/register_login_success_model.dart';
 import 'package:the_news/model/user_profile_model.dart';
 import 'package:the_news/service/social_features_backend_service.dart';
-import 'package:the_news/view/social/user_profile_view_page.dart';
+import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/utils/image_utils.dart';
+import 'package:the_news/view/widgets/app_search_bar.dart';
 
 class UserSearchPage extends StatefulWidget {
   const UserSearchPage({super.key, required this.currentUser});
@@ -17,10 +22,26 @@ class UserSearchPage extends StatefulWidget {
 class _UserSearchPageState extends State<UserSearchPage> {
   final SocialFeaturesBackendService _socialService = SocialFeaturesBackendService.instance;
   final TextEditingController _searchController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   List<UserProfile> _searchResults = [];
   bool _isSearching = false;
   bool _hasSearched = false;
+  String? _currentUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUserId();
+  }
+
+  Future<void> _loadCurrentUserId() async {
+    final currentUser = await _authService.getCurrentUser();
+    if (!mounted) return;
+    setState(() {
+      _currentUserId = currentUser?['id'] as String? ?? currentUser?['userId'] as String?;
+    });
+  }
 
   @override
   void dispose() {
@@ -65,7 +86,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: KAppColors.getBackground(context),
-      appBar: AppBar(
+      appBar: KAppBar(
         backgroundColor: KAppColors.getBackground(context),
         elevation: 0,
         title: Text(
@@ -80,53 +101,17 @@ class _UserSearchPageState extends State<UserSearchPage> {
         children: [
           // Search Bar
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
+            padding: KDesignConstants.paddingMd,
+            child: AppSearchBar(
               controller: _searchController,
+              hintText: 'Search by username or name...',
               onChanged: (value) {
-                // Debounce search
                 Future.delayed(const Duration(milliseconds: 500), () {
                   if (_searchController.text == value) {
                     _performSearch(value);
                   }
                 });
               },
-              decoration: InputDecoration(
-                hintText: 'Search by username or name...',
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-                ),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: KAppColors.getOnBackground(context).withValues(alpha: 0.5),
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchResults = [];
-                            _hasSearched = false;
-                          });
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: KAppColors.secondary.withValues(alpha: 0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: KAppColors.primary, width: 2),
-                ),
-              ),
             ),
           ),
 
@@ -151,9 +136,9 @@ class _UserSearchPageState extends State<UserSearchPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation(KAppColors.primary),
+            valueColor: AlwaysStoppedAnimation(KAppColors.getPrimary(context)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Text(
             'Searching...',
             style: KAppTextStyles.bodyMedium.copyWith(
@@ -175,7 +160,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
             size: 80,
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Text(
             'Find Friends',
             style: KAppTextStyles.headlineMedium.copyWith(
@@ -183,9 +168,9 @@ class _UserSearchPageState extends State<UserSearchPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48),
+            padding: const EdgeInsets.symmetric(horizontal: KDesignConstants.spacing48),
             child: Text(
               'Search for users by username or display name to connect with them',
               style: KAppTextStyles.bodyMedium.copyWith(
@@ -209,7 +194,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
             size: 80,
             color: KAppColors.getOnBackground(context).withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: KDesignConstants.spacing16),
           Text(
             'No users found',
             style: KAppTextStyles.headlineMedium.copyWith(
@@ -217,9 +202,9 @@ class _UserSearchPageState extends State<UserSearchPage> {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: KDesignConstants.spacing8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 48),
+            padding: const EdgeInsets.symmetric(horizontal: KDesignConstants.spacing48),
             child: Text(
               'Try a different search term',
               style: KAppTextStyles.bodyMedium.copyWith(
@@ -235,31 +220,33 @@ class _UserSearchPageState extends State<UserSearchPage> {
 
   Widget _buildResultsList() {
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: KDesignConstants.paddingHorizontalMd,
       itemCount: _searchResults.length,
       itemBuilder: (context, index) {
         final user = _searchResults[index];
-        final isCurrentUser = user.userId == widget.currentUser.userId;
+        final currentUserId = _currentUserId ?? widget.currentUser.userId;
+        final isCurrentUser = user.userId == currentUserId;
 
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          color: KAppColors.secondary.withValues(alpha: 0.3),
+          margin: const EdgeInsets.only(bottom: KDesignConstants.spacing12),
+          color: KAppColors.getOnBackground(context).withValues(alpha: 0.04),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: KBorderRadius.md,
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: KDesignConstants.spacing16,
+              vertical: KDesignConstants.spacing8,
+            ),
             leading: CircleAvatar(
               radius: 28,
-              backgroundColor: KAppColors.primary.withValues(alpha: 0.2),
-              backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-                  ? NetworkImage(user.avatarUrl!)
-                  : null,
+              backgroundColor: KAppColors.getPrimary(context).withValues(alpha: 0.2),
+              backgroundImage: resolveImageProvider(user.avatarUrl),
               child: user.avatarUrl == null || user.avatarUrl!.isEmpty
                   ? Text(
                       user.displayName.isNotEmpty ? user.displayName[0].toUpperCase() : 'U',
                       style: KAppTextStyles.headlineSmall.copyWith(
-                        color: KAppColors.primary,
+                        color: KAppColors.getPrimary(context),
                         fontWeight: FontWeight.bold,
                       ),
                     )
@@ -275,7 +262,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 2),
+                const SizedBox(height: KDesignConstants.spacing4),
                 Text(
                   '@${user.username}',
                   style: KAppTextStyles.bodyMedium.copyWith(
@@ -283,7 +270,7 @@ class _UserSearchPageState extends State<UserSearchPage> {
                   ),
                 ),
                 if (user.bio != null && user.bio!.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: KDesignConstants.spacing4),
                   Text(
                     user.bio!,
                     style: KAppTextStyles.bodySmall.copyWith(
@@ -297,15 +284,18 @@ class _UserSearchPageState extends State<UserSearchPage> {
             ),
             trailing: isCurrentUser
                 ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: KDesignConstants.spacing12,
+                      vertical: KDesignConstants.spacing4,
+                    ),
                     decoration: BoxDecoration(
-                      color: KAppColors.primary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
+                      color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
+                      borderRadius: KBorderRadius.sm,
                     ),
                     child: Text(
                       'You',
                       style: TextStyle(
-                        color: KAppColors.primary,
+                        color: KAppColors.getPrimary(context),
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -322,9 +312,8 @@ class _UserSearchPageState extends State<UserSearchPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => UserProfileViewPage(
-                          currentUser: widget.currentUser,
-                          profileUserId: user.userId,
+                        builder: (context) => UserProfilePage(
+                          userId: user.userId,
                         ),
                       ),
                     );

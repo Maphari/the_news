@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/view/widgets/social_button_widget.dart';
 
@@ -29,7 +30,7 @@ class RegisterLoginBottomSectionWidget extends StatelessWidget {
           children: [
             Expanded(child: Divider(color: KAppColors.getOnBackground(context).withValues(alpha: 0.6))),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding:KDesignConstants.paddingHorizontalMd,
               child: Text(
                 'Or $formType with',
                 style: TextStyle(color: KAppColors.getOnBackground(context).withValues(alpha: 0.3), fontSize: 14),
@@ -39,7 +40,7 @@ class RegisterLoginBottomSectionWidget extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: KDesignConstants.spacing24),
 
         //? Social Sign Up Buttons
         Row(
@@ -50,7 +51,7 @@ class RegisterLoginBottomSectionWidget extends StatelessWidget {
               onPressed: onPressedGoogle,
               iconData: Icons.g_mobiledata,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: KDesignConstants.spacing12),
             SocialButtonWidget(
               buttonText: 'Apple',
               imagePath: 'assets/image/apple_icon.png',
@@ -60,7 +61,7 @@ class RegisterLoginBottomSectionWidget extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: KDesignConstants.spacing24),
 
         //? Login Link
         Row(
@@ -77,7 +78,7 @@ class RegisterLoginBottomSectionWidget extends StatelessWidget {
               child: Text(
                 toFormType,
                 style: TextStyle(
-                  color: KAppColors.onSurface,
+                  color: KAppColors.getOnSurface(context),
                   fontWeight: FontWeight.w600,
                 ),
               ),

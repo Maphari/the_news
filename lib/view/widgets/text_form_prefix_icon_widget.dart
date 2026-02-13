@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 
 class TextFormPrefixIconWidget extends StatelessWidget {
   const TextFormPrefixIconWidget({
@@ -17,21 +18,22 @@ class TextFormPrefixIconWidget extends StatelessWidget {
   final String? Function(String?) valiadateName;
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return TextFormField(
       controller: controller,
-      style: TextStyle(color: Color.fromARGB(255, 168, 167, 167),),
+      style: TextStyle(color: colorScheme.onSurface),
       keyboardType: labelText == 'Email' ? TextInputType.emailAddress : TextInputType.text,
       decoration: InputDecoration(
         labelText: labelText,
         hintText: hintText,
         prefixIcon: Icon(
           prefixIcon,
-          color: Color.fromARGB(255, 168, 167, 167),
+          color: colorScheme.onSurfaceVariant,
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(borderRadius: KBorderRadius.md),
         filled: true,
-        fillColor: const Color.fromARGB(255, 25, 24, 24),
-        labelStyle: TextStyle(color: Color.fromARGB(255, 168, 167, 167)),
+        fillColor: colorScheme.surfaceContainerHighest,
+        labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
       ),
       validator: valiadateName,
     );

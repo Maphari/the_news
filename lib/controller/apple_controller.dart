@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:the_news/routes/app_routes.dart';
 import 'package:the_news/service/auth_service.dart';
+import 'package:the_news/service/disliked_articles_service.dart';
+import 'package:the_news/service/followed_publishers_service.dart';
+import 'package:the_news/service/saved_articles_service.dart';
 import 'package:the_news/view/widgets/show_message_widget.dart';
 
 final _authService = AuthService();
+final _followedPublishersService = FollowedPublishersService.instance;
+final _savedArticlesService = SavedArticlesService.instance;
+final _dislikedArticlesService = DislikedArticlesService.instance;
 
 //? APPLE SIGN IN HANDLER
 Future<bool> handleAppleSignIn(BuildContext context) async {
@@ -18,6 +24,16 @@ Future<bool> handleAppleSignIn(BuildContext context) async {
         message: 'Successfully signed in with Apple',
       );
 
+      if (result.user != null) {
+        await _followedPublishersService.loadFollowedPublishers(
+          result.user!.id,
+        );
+        await _savedArticlesService.loadSavedArticles(result.user!.id);
+        await _dislikedArticlesService.loadDislikedArticles(result.user!.id);
+      }
+
+      if (!context.mounted) return false;
+      
       AppRoutes.navigateTo(
         context,
         AppRoutes.home,

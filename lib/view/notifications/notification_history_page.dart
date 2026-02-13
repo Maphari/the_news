@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
+import 'package:the_news/view/widgets/k_app_bar.dart';
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:the_news/core/network/api_client.dart';
 import 'package:the_news/utils/statusbar_helper_utils.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../service/auth_service.dart';
+import 'package:the_news/view/widgets/safe_network_image.dart';
 
 /// Notification History Page - Displays user's notification history
 /// Uses ApiClient for all network requests following clean architecture
@@ -37,7 +40,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
 
     try {
       final userData = await _authService.getCurrentUser();
-      final userId = userData?['id'] as String?;
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
 
       if (userId == null) {
         setState(() {
@@ -49,6 +52,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
 
       final response = await _api.get(
         'notifications/history/$userId',
+        requiresAuth: true,
         timeout: const Duration(seconds: 30),
       );
 
@@ -79,6 +83,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
       final response = await _api.patch(
         'notifications/history/$notificationId/read',
         body: {},
+        requiresAuth: true,
         timeout: const Duration(seconds: 10),
       );
 
@@ -105,6 +110,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
     try {
       final response = await _api.delete(
         'notifications/history/$notificationId',
+        requiresAuth: true,
         timeout: const Duration(seconds: 10),
       );
 
@@ -143,7 +149,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: KAppColors.error),
             child: const Text('Clear All'),
           ),
         ],
@@ -154,12 +160,13 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
 
     try {
       final userData = await _authService.getCurrentUser();
-      final userId = userData?['id'] as String?;
+      final userId = userData?['id'] as String? ?? userData?['userId'] as String?;
 
       if (userId == null) return;
 
       final response = await _api.delete(
         'notifications/history/user/$userId',
+        requiresAuth: true,
         timeout: const Duration(seconds: 10),
       );
 
@@ -197,14 +204,14 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
         expand: false,
         builder: (context, scrollController) => SingleChildScrollView(
           controller: scrollController,
-          padding: const EdgeInsets.all(24),
+          padding:KDesignConstants.paddingLg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   _getNotificationIcon(notification['type']),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: KDesignConstants.spacing12),
                   Expanded(
                     child: Text(
                       notification['title'] ?? 'Notification',
@@ -217,23 +224,23 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: KDesignConstants.spacing16),
               if (notification['imageUrl'] != null) ...[
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
+                  borderRadius: KBorderRadius.md,
+                  child: SafeNetworkImage(
                     notification['imageUrl'],
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: KDesignConstants.spacing16),
               ],
               Text(
                 notification['body'] ?? '',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: KDesignConstants.spacing16),
               Row(
                 children: [
                   Icon(
@@ -241,7 +248,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                     size: 16,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: KDesignConstants.spacing4),
                   Text(
                     timeago.format(DateTime.parse(notification['timestamp'])),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -250,7 +257,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: KDesignConstants.spacing24),
               Row(
                 children: [
                   if (notification['read'] == false)
@@ -264,7 +271,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                         label: const Text('Mark as Read'),
                       ),
                     ),
-                  if (notification['read'] == false) const SizedBox(width: 8),
+                  if (notification['read'] == false) const SizedBox(width: KDesignConstants.spacing8),
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: () {
@@ -273,7 +280,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                       },
                       icon: const Icon(Icons.delete_outline),
                       style: FilledButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: KAppColors.error,
                       ),
                       label: const Text('Delete'),
                     ),
@@ -290,15 +297,15 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
   Icon _getNotificationIcon(String? type) {
     switch (type) {
       case 'breaking_news':
-        return const Icon(Icons.campaign, color: Colors.red, size: 28);
+        return const Icon(Icons.campaign, color: KAppColors.error, size: 28);
       case 'daily_digest':
-        return const Icon(Icons.article, color: Colors.blue, size: 28);
+        return const Icon(Icons.article, color: KAppColors.info, size: 28);
       case 'publisher_update':
-        return const Icon(Icons.newspaper, color: Colors.green, size: 28);
+        return const Icon(Icons.newspaper, color: KAppColors.success, size: 28);
       case 'comment_reply':
-        return const Icon(Icons.comment, color: Colors.orange, size: 28);
+        return const Icon(Icons.comment, color: KAppColors.warning, size: 28);
       default:
-        return const Icon(Icons.notifications, color: Colors.grey, size: 28);
+        return Icon(Icons.notifications, color: KAppColors.getOnBackground(context).withValues(alpha: 0.5), size: 28);
     }
   }
 
@@ -324,7 +331,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
       backgroundColor: screenBackgroundColor,
       child: Scaffold(
         backgroundColor: screenBackgroundColor,
-        appBar: AppBar(
+        appBar: KAppBar(
           centerTitle: false,
           title: const Text('Notification History'),
           actions: [
@@ -348,13 +355,13 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                       size: 64,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KDesignConstants.spacing16),
                     Text(
                       _error!,
                       style: Theme.of(context).textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KDesignConstants.spacing16),
                     FilledButton.icon(
                       onPressed: _loadNotificationHistory,
                       icon: const Icon(Icons.refresh),
@@ -373,12 +380,12 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                       size: 64,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: KDesignConstants.spacing16),
                     Text(
                       'No notifications yet',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: KDesignConstants.spacing8),
                     Text(
                       'You\'ll see your notifications here',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -392,7 +399,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                 onRefresh: _loadNotificationHistory,
                 child: ListView.builder(
                   itemCount: _notifications.length,
-                  padding: const EdgeInsets.all(16),
+                  padding: KDesignConstants.paddingMd,
                   itemBuilder: (context, index) {
                     final notification = _notifications[index];
                     final isRead = notification['read'] == true;
@@ -404,10 +411,10 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
                         decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(12),
+                          color: KAppColors.error,
+                          borderRadius: KBorderRadius.md,
                         ),
-                        child: const Icon(Icons.delete, color: Colors.white),
+                        child: const Icon(Icons.delete, color: KAppColors.onImage),
                       ),
                       onDismissed: (direction) {
                         _deleteNotification(notification['id']);
@@ -425,14 +432,14 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                             }
                             _showNotificationDetails(notification);
                           },
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: KBorderRadius.md,
                           child: Padding(
-                            padding: const EdgeInsets.all(16),
+                            padding: KDesignConstants.paddingMd,
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _getNotificationIcon(notification['type']),
-                                const SizedBox(width: 16),
+                                const SizedBox(width: KDesignConstants.spacing16),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,7 +473,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                                             ),
                                         ],
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: KDesignConstants.spacing4),
                                       Text(
                                         notification['body'] ?? '',
                                         style: Theme.of(
@@ -475,7 +482,7 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                                         maxLines: 2,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: KDesignConstants.spacing8),
                                       Row(
                                         children: [
                                           Text(
@@ -492,9 +499,9 @@ class _NotificationHistoryPageState extends State<NotificationHistoryPage> {
                                                   fontWeight: FontWeight.w500,
                                                 ),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: KDesignConstants.spacing8),
                                           const Text('•'),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: KDesignConstants.spacing8),
                                           Text(
                                             timeago.format(
                                               DateTime.parse(

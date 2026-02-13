@@ -1,5 +1,6 @@
 import 'package:the_news/constant/theme/default_theme.dart';
 import 'package:flutter/material.dart';
+import 'package:the_news/constant/design_constants.dart';
 import 'package:the_news/service/mood_tracking_service.dart';
 import 'package:the_news/utils/haptic_service.dart';
 
@@ -55,19 +56,12 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
       backgroundColor: Colors.transparent,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 400),
-        padding: const EdgeInsets.all(24),
+        padding: KDesignConstants.paddingLg,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF1A1A2E).withValues(alpha: 0.98),
-              const Color(0xFF16213E).withValues(alpha: 0.98),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(24),
+          color: KAppColors.getBackground(context),
+          borderRadius: KBorderRadius.xxl,
           border: Border.all(
-            color: KAppColors.primary.withValues(alpha: 0.3),
+            color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -78,17 +72,10 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    KAppColors.primary.withValues(alpha: 0.25),
-                    KAppColors.tertiary.withValues(alpha: 0.25),
-                  ],
-                ),
+                color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: KAppColors.primary.withValues(alpha: 0.4),
+                  color: KAppColors.getPrimary(context).withValues(alpha: 0.4),
                   width: 2,
                 ),
               ),
@@ -96,11 +83,11 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
                 widget.isPreReading
                     ? Icons.favorite_outline
                     : Icons.psychology_outlined,
-                color: KAppColors.primary,
+                color: KAppColors.getPrimary(context),
                 size: 32,
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: KDesignConstants.spacing20),
 
             // Title
             Text(
@@ -115,7 +102,7 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: KDesignConstants.spacing8),
 
             // Subtitle
             Text(
@@ -131,12 +118,12 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
             ),
 
             if (widget.articleTitle != null && widget.isPreReading) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: KDesignConstants.spacing12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: KAppColors.getOnBackground(context).withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: KBorderRadius.md,
                   border: Border.all(
                     color: KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                     width: 1,
@@ -156,17 +143,17 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
               ),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Mood grid
             _buildMoodGrid(),
 
             if (_selectedMood != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: KDesignConstants.spacing24),
               _buildIntensitySlider(),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: KDesignConstants.spacing24),
 
             // Buttons
             Row(
@@ -180,7 +167,7 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
                     },
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: KDesignConstants.spacing12),
                 Expanded(
                   child: _buildButton(
                     label: 'Continue',
@@ -230,23 +217,16 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
           child: Container(
             decoration: BoxDecoration(
               gradient: isSelected
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        KAppColors.primary.withValues(alpha: 0.3),
-                        KAppColors.tertiary.withValues(alpha: 0.3),
-                      ],
-                    )
+                  ? null
                   : null,
               color: isSelected
-                  ? null
-                  : Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
+                  ? KAppColors.getPrimary(context).withValues(alpha: 0.2)
+                  : KAppColors.getOnBackground(context).withValues(alpha: 0.05),
+              borderRadius: KBorderRadius.lg,
               border: Border.all(
                 color: isSelected
-                    ? KAppColors.primary.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.1),
+                    ? KAppColors.getPrimary(context).withValues(alpha: 0.5)
+                    : KAppColors.getOnBackground(context).withValues(alpha: 0.1),
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -266,8 +246,8 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
                     mood.label,
                     style: TextStyle(
                       color: isSelected
-                          ? Colors.white
-                          : Colors.white.withValues(alpha: 0.7),
+                          ? KAppColors.getOnBackground(context)
+                          : KAppColors.getOnBackground(context).withValues(alpha: 0.7),
                       fontSize: 9,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     ),
@@ -302,17 +282,10 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    KAppColors.primary.withValues(alpha: 0.25),
-                    KAppColors.tertiary.withValues(alpha: 0.25),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
+                color: KAppColors.getPrimary(context).withValues(alpha: 0.2),
+                borderRadius: KBorderRadius.md,
                 border: Border.all(
-                  color: KAppColors.primary.withValues(alpha: 0.3),
+                  color: KAppColors.getPrimary(context).withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),
@@ -327,13 +300,13 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: KDesignConstants.spacing12),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: KAppColors.primary,
-            inactiveTrackColor: Colors.white.withValues(alpha: 0.1),
-            thumbColor: KAppColors.primary,
-            overlayColor: KAppColors.primary.withValues(alpha: 0.2),
+            activeTrackColor: KAppColors.getPrimary(context),
+            inactiveTrackColor: KAppColors.darkOnBackground.withValues(alpha: 0.1),
+            thumbColor: KAppColors.getPrimary(context),
+            overlayColor: KAppColors.getPrimary(context).withValues(alpha: 0.2),
             trackHeight: 6,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
           ),
@@ -382,28 +355,21 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
       color: Colors.transparent,
       child: InkWell(
         onTap: isEnabled ? onPressed : null,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: KBorderRadius.lg,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             gradient: isPrimary && isEnabled
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      KAppColors.primary.withValues(alpha: 0.6),
-                      KAppColors.tertiary.withValues(alpha: 0.6),
-                    ],
-                  )
+                ? null
                 : null,
             color: isPrimary && isEnabled
-                ? null
-                : Colors.white.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(16),
+                ? KAppColors.getPrimary(context)
+                : KAppColors.getOnBackground(context).withValues(alpha: 0.08),
+            borderRadius: KBorderRadius.lg,
             border: Border.all(
               color: isPrimary && isEnabled
-                  ? KAppColors.primary.withValues(alpha: 0.7)
-                  : Colors.white.withValues(alpha: 0.25),
+                  ? KAppColors.getPrimary(context).withValues(alpha: 0.7)
+                  : KAppColors.getOnBackground(context).withValues(alpha: 0.25),
               width: 1.5,
             ),
           ),
@@ -411,8 +377,8 @@ class _MoodCheckInDialogState extends State<MoodCheckInDialog> {
             label,
             style: TextStyle(
               color: isEnabled
-                  ? Colors.white
-                  : Colors.white.withValues(alpha: 0.5),
+                  ? (isPrimary ? KAppColors.getOnPrimary(context) : KAppColors.getOnBackground(context))
+                  : KAppColors.getOnBackground(context).withValues(alpha: 0.5),
               fontSize: 15,
               fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
             ),
